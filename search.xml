@@ -2,7 +2,7 @@
 <search>
   <entry>
     <title>深入JAVA语言—CAS原理剖析</title>
-    <url>/2020/01/05/%E6%B7%B1%E5%85%A5JAVA%E8%AF%AD%E8%A8%80%E2%80%94CAS%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90/</url>
+    <url>duval1024.github.io/2020/01/05/%E6%B7%B1%E5%85%A5JAVA%E8%AF%AD%E8%A8%80%E2%80%94CAS%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90/</url>
     <content><![CDATA[<p>JAVA的并发编程包（java.util.concurrent）中的源码大量用到CAS操作。<br>CAS操作使得JAVA可以低成本地实现并发操作。<br>本文将深入探讨CAS操作的实现原理。</p>
 <a id="more"></a>
 
@@ -43,7 +43,7 @@
   </entry>
   <entry>
     <title>2020年大事记</title>
-    <url>/2020/01/01/2020%E5%A4%A7%E4%BA%8B%E8%AE%B0/</url>
+    <url>duval1024.github.io/2020/01/01/2020%E5%A4%A7%E4%BA%8B%E8%AE%B0/</url>
     <content><![CDATA[<p>有时候会对时间的消逝感到恐惧，比方说：<br>非典疫情已经过去17年；<br>汶川地震已经过去12年；<br>英国脱欧公投已经过去4年；<br>……</p>
 <p>很多历历在目的事情，恍惚间已经过去很久。<br>希望借此文，牢记这些发生在2020年的事情。</p>
 <a id="more"></a>
@@ -70,7 +70,7 @@
   </entry>
   <entry>
     <title>Spring源码分析3-对Bean循环依赖的处理</title>
-    <url>/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/</url>
+    <url>duval1024.github.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/</url>
     <content><![CDATA[<p>本文主要是分析Spring如何处理循环依赖，分别从构造器注入循环依赖、setter注入循环依赖、prototype范围的循环依赖三个方面进行详细分析。</p>
 <a id="more"></a>
 
@@ -160,13 +160,13 @@
         <category>Spring</category>
       </categories>
       <tags>
-        <tag>Spring</tag>
         <tag>源码分析</tag>
+        <tag>Spring</tag>
       </tags>
   </entry>
   <entry>
     <title>梯子自建</title>
-    <url>/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/</url>
+    <url>duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/</url>
     <content><![CDATA[<p>技术圈子的人离不开谷歌搜索，然而在国内因为GreatWall的缘故，用不了谷歌，这时候就需要梯子（V.P.N)。网上有很多免费的VPN，比如lantern等。免费的虽然不用花钱，但是不稳定，说不定哪天就停了。后来笔者也去购买一些商用的梯子，像云梯、红杏、影梭等等。收费梯子胜在稳定，而且比较快，还提供多条各国线路选择，但是容易跑路，毕竟国内形势一严峻，这些梯子哗啦啦全跑路了。</p>
 <a id="more"></a>
 
@@ -226,7 +226,7 @@
   </entry>
   <entry>
     <title>Spring源码分析1-RESTfulWeb启动过程</title>
-    <url>/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/</url>
+    <url>duval1024.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/</url>
     <content><![CDATA[<p>Spring框架用的很多了，但是没有深入研究过原理。因为对原理不了解，如果遇到复杂的应用情景，需要修改Spring源码；或者是奇怪的报错，需要通过源码来进行分析的时候，就只能束手无策了。所以现在开始正式阅读Spring源码，这是系列的第一篇，希望能坚持下去。</p>
 <a id="more"></a>
 <p><strong>说在前边：本文是我阅读RestfulWeb启动过程写的流水账，瑕疵多多。</strong></p>
@@ -357,13 +357,13 @@
         <category>Spring</category>
       </categories>
       <tags>
-        <tag>Spring</tag>
         <tag>源码分析</tag>
+        <tag>Spring</tag>
       </tags>
   </entry>
   <entry>
     <title>Spring源码分析2-上下文刷新过程分析</title>
-    <url>/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/</url>
+    <url>duval1024.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/</url>
     <content><![CDATA[<p>上一篇《<a href="https://duvalcc.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">Spring源码分析1-RESTfulWeb启动过程</a>》已经对RESTfulWeb的启动过程进行了概览。其中跳过了比较复杂的上下文刷新过程，这篇文章将对上下文刷新过程进行详细分析。请看！</p>
 <a id="more"></a>
 <p><strong>说在前边：本文是我阅读RestfulWeb启动过程写的流水账，瑕疵多多。</strong></p>
@@ -674,13 +674,13 @@
         <category>Spring</category>
       </categories>
       <tags>
-        <tag>Spring</tag>
         <tag>源码分析</tag>
+        <tag>Spring</tag>
       </tags>
   </entry>
   <entry>
     <title>携程Apollo精彩摘要</title>
-    <url>/2018/06/15/%E6%90%BA%E7%A8%8BApollo%E7%B2%BE%E5%BD%A9%E6%91%98%E8%A6%81/</url>
+    <url>duval1024.github.io/2018/06/15/%E6%90%BA%E7%A8%8BApollo%E7%B2%BE%E5%BD%A9%E6%91%98%E8%A6%81/</url>
     <content><![CDATA[<p>&emsp;Apollo非常适合作为初学者第一个通读源码学习的分布式中间件产品。最近在读携程阿波罗的源码，看到这份源码写得非常漂亮。代码的模块划分、对象封装、内部数据分层等等地方，都有很多精妙优雅的设计。这里作一些简单记录，以后编码的时候可以借鉴一下。</p>
 <a id="more"></a>
 
@@ -713,7 +713,7 @@
   </entry>
   <entry>
     <title>maven深入学习</title>
-    <url>/2018/06/08/maven%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0/</url>
+    <url>duval1024.github.io/2018/06/08/maven%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h1 id="maven深入学习"><a href="#maven深入学习" class="headerlink" title="maven深入学习"></a>maven深入学习</h1><p>maven在工作中接触得比较多，但是很多细节的东西并没有认真研究，现在抽时间搞清楚下。这篇文章主要是探讨maven POM里边的细节。</p>
 <a id="more"></a>
 
@@ -783,7 +783,7 @@
   </entry>
   <entry>
     <title>Redis入门</title>
-    <url>/2018/06/01/Redis%E5%85%A5%E9%97%A8/</url>
+    <url>duval1024.github.io/2018/06/01/Redis%E5%85%A5%E9%97%A8/</url>
     <content><![CDATA[<p>Redis 是一个遵循BSD协议的开源的内存数据存储系统，一般用作数据库、缓存或者消息代理。它支持的数据结构包括字符串、哈希表、链表、集合、<br>有序集合（以及范围查询）、点图、hyperloglogs、地理位置坐标（以及半径查询）。Redis内置了主从复制、Lua脚本语言、LRU算法、事务以及<br>不同等级的磁盘持久化，并且通过Redis哨兵提供了高可用特性，通过Resdis Cluster提供了自动分区功能。</p>
 <a id="more"></a>
 
@@ -859,7 +859,7 @@
   </entry>
   <entry>
     <title>Java和智能合约的交互</title>
-    <url>/2018/02/22/Java%E5%92%8C%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6%E7%9A%84%E4%BA%A4%E4%BA%92/</url>
+    <url>duval1024.github.io/2018/02/22/Java%E5%92%8C%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6%E7%9A%84%E4%BA%A4%E4%BA%92/</url>
     <content><![CDATA[<h2 id="Java和智能合约的交互"><a href="#Java和智能合约的交互" class="headerlink" title="Java和智能合约的交互"></a>Java和智能合约的交互</h2><h3 id="web3j"><a href="#web3j" class="headerlink" title="web3j"></a>web3j</h3><blockquote>
 <p>web3j is a lightweight, highly modular, reactive, type safe Java and Android library for working with Smart Contracts and integrating with clients (nodes) on the Ethereum network.<br>web3j 是一个轻量级、模块化、响应式的Java 和 android 库，可以用来和智能合约以及以太坊节点进行交互。</p>
 </blockquote>
@@ -937,7 +937,7 @@
   </entry>
   <entry>
     <title>Drools Workbench7.4.1使用</title>
-    <url>/2017/11/06/Drools-Workbench-7-4-1-%E4%BD%BF%E7%94%A8/</url>
+    <url>duval1024.github.io/2017/11/06/Drools-Workbench-7-4-1-%E4%BD%BF%E7%94%A8/</url>
     <content><![CDATA[<p> 上一篇文章已经介绍如何部署 Drools Workbench7.4.1。这篇文章让我们学习如何利用Drools Workbench7.4.1去新建一个drools规则项目，编写规则和kmodule.xml，然后编译部署发布到maven仓库，再用我们的java代码去远程获取maven仓库中的drools jar包。Let`s go!</p>
 <a id="more"></a>
 <h2 id="创建Team"><a href="#创建Team" class="headerlink" title="创建Team"></a>创建Team</h2><p><img src="http://upload-images.jianshu.io/upload_images/2651681-551e2bf5c22ef9c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
@@ -983,7 +983,7 @@
   </entry>
   <entry>
     <title>Drools Workbench 7.4.1 部署</title>
-    <url>/2017/11/03/Drools-Workbench-7-4-1-%E9%83%A8%E7%BD%B2/</url>
+    <url>duval1024.github.io/2017/11/03/Drools-Workbench-7-4-1-%E9%83%A8%E7%BD%B2/</url>
     <content><![CDATA[<p>折腾了下Drools Workbench 7.4.1的部署，网上并没有相关资料，记录之。</p>
 <h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h2><p><a href="http://mirror.bit.edu.cn/apache/tomcat/tomcat-8/v8.5.23/bin/apache-tomcat-8.5.23.tar.gz" target="_blank" rel="noopener">apache-tomcat-8.5.23</a> （用tomcat7启动会有奇怪问题）<br><a href="http://download.jboss.org/drools/release/7.4.1.Final/" target="_blank" rel="noopener">kie-drools-wb-7.4.1.Final-tomcat8.war</a><br><a href="http://download.csdn.net/download/duval_yang/10103027" target="_blank" rel="noopener">drools 启动依赖jar</a></p>
 <a id="more"></a>
@@ -1025,7 +1025,7 @@
   </entry>
   <entry>
     <title>深入了解Drools</title>
-    <url>/2017/10/23/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3Drools/</url>
+    <url>duval1024.github.io/2017/10/23/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3Drools/</url>
     <content><![CDATA[<h2 id="深入了解Drools"><a href="#深入了解Drools" class="headerlink" title="深入了解Drools"></a>深入了解Drools</h2><h3 id="简单介绍"><a href="#简单介绍" class="headerlink" title="简单介绍"></a>简单介绍</h3><p>  笔者正在做风控系统，风控系统里边存在非常多的规则（比如：age &lt; 16 || age &gt; 50  -&gt; REJECT ）。最便捷的实现就是用 if-else 来写，但是随着规则的增加以及需求的变动，代码将变得越来越难阅读和变动。这时候就要引入Drools等规则引擎了。Drools就是为了解决业务代码和业务规则分离的引擎。</p>
 <a id="more"></a>
 
@@ -1114,7 +1114,7 @@
   </entry>
   <entry>
     <title>Azkaban 源码分析和插件实现</title>
-    <url>/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/</url>
+    <url>duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<h2 id="Azkaban简介"><a href="#Azkaban简介" class="headerlink" title="Azkaban简介"></a>Azkaban简介</h2><blockquote>
 <p><strong>Azkaban</strong> was implemented at LinkedIn to solve the problem of Hadoop job dependencies. We had jobs that needed to run in  order, from ETL jobs to data analytics products.<br>Initially a single server solution, with the increased number of Hadoop users over the years, Azkaban has evolved to be a more robust solution.</p>
 </blockquote>
@@ -1207,7 +1207,7 @@
   </entry>
   <entry>
     <title>gradle自定义打包项目tar包</title>
-    <url>/2017/09/18/gradle%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%93%E5%8C%85%E9%A1%B9%E7%9B%AEtar%E5%8C%85/</url>
+    <url>duval1024.github.io/2017/09/18/gradle%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%93%E5%8C%85%E9%A1%B9%E7%9B%AEtar%E5%8C%85/</url>
     <content><![CDATA[<h3 id="gradle-自定义打包项目tar包"><a href="#gradle-自定义打包项目tar包" class="headerlink" title="gradle 自定义打包项目tar包"></a>gradle 自定义打包项目tar包</h3><p>本文主要是想介绍如何使用gradle管理java项目，并实现自定义打包部署tar包的完整过程。使用的打包项目是一个springboot 项目，其他java 项目同理适用。</p>
 <a id="more"></a>
 
@@ -1231,7 +1231,7 @@
   </entry>
   <entry>
     <title>Java 线程池详解</title>
-    <url>/2017/08/10/Java-%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AF%A6%E8%A7%A3/</url>
+    <url>duval1024.github.io/2017/08/10/Java-%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%AF%A6%E8%A7%A3/</url>
     <content><![CDATA[<h2 id="Java-线程池"><a href="#Java-线程池" class="headerlink" title="Java 线程池"></a>Java 线程池</h2><p>Java 线程池模型的关键几个类和接口包括：Executor，Executors，ExecutorService，ThreadPoolExecutor，Future，Callable </p>
 <a id="more"></a>
 
@@ -1291,7 +1291,7 @@
   </entry>
   <entry>
     <title>JVM性能监控工具总结</title>
-    <url>/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/</url>
+    <url>duval1024.github.io/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/</url>
     <content><![CDATA[<p>最近在温故《深入理解Java虚拟机》,对第四章的工具进行笔记记录，备忘。</p>
 <a id="more"></a>
 
@@ -1344,7 +1344,7 @@
   </entry>
   <entry>
     <title>mysql的limit优化和流式查询</title>
-    <url>/2017/03/30/mysql%E7%9A%84limit%E4%BC%98%E5%8C%96%E5%92%8C%E6%B5%81%E5%BC%8F%E6%9F%A5%E8%AF%A2/</url>
+    <url>duval1024.github.io/2017/03/30/mysql%E7%9A%84limit%E4%BC%98%E5%8C%96%E5%92%8C%E6%B5%81%E5%BC%8F%E6%9F%A5%E8%AF%A2/</url>
     <content><![CDATA[<p>遇到一个需求是需要将整个表的数据逐行读取出来进行处理。</p>
 <h2 id="使用-limit"><a href="#使用-limit" class="headerlink" title="使用 limit"></a>使用 limit</h2><p>一开始实现是使用limit来做，每个循环结束后将offset+= 100，如下：</p>
 <a id="more"></a>
@@ -1386,7 +1386,7 @@
   </entry>
   <entry>
     <title>基于HiveSever2的Azkaban插件的实现思路</title>
-    <url>/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/</url>
+    <url>duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/</url>
     <content><![CDATA[<p>关键字：HiveSever2、Azkaban插件</p>
 <p>&emsp;&emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。</p>
 <h2 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h2><p>&emsp;&emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer. <br>&emsp;&emsp;HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。下边是Hive官网原文描述：</p>
@@ -1441,7 +1441,7 @@
   </entry>
   <entry>
     <title>Azkaban Learning</title>
-    <url>/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/</url>
+    <url>duval1024.github.io/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h1 id="Azkaban"><a href="#Azkaban" class="headerlink" title="Azkaban"></a>Azkaban</h1><p>关键字：Azkaban简介、大数据作业调度系统</p>
 <p>这篇文章适合对azkaban有一定了解的人阅读。建议先粗读：<br>AZ开发文档：<a href="http://azkaban.github.io/azkaban/docs/latest/#overview" target="_blank" rel="noopener">http://azkaban.github.io/azkaban/docs/latest/#overview</a><br>强子哥的源码分析：<a href="https://my.oschina.net/qiangzigege/blog/653198" target="_blank" rel="noopener">https://my.oschina.net/qiangzigege/blog/653198</a><br>(以下内容部分摘自上两个链接)</p>
 <p>azkaban源码： git clone <a href="https://github.com/azkaban/azkaban.git" target="_blank" rel="noopener">https://github.com/azkaban/azkaban.git</a></p>
