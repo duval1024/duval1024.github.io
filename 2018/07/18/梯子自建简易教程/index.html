@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="duval1024.github.io/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="duval1024.github.io/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="duval1024.github.io/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="duval1024.github.io/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="duval1024.github.io/css/main.css">
+
+
+<link rel="stylesheet" href="duval1024.github.io/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="duval1024.github.io/lib/pace/pace-theme-center-atom.min.css">
+  <script src="duval1024.github.io/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://duval1024.github.io').hostname,
+    root: 'duval1024.github.io/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="技术圈子的人离不开谷歌搜索，然而在国内因为GreatWall的缘故，用不了谷歌，这时候就需要梯子（V.P.N)。网上有很多免费的VPN，比如lantern等。免费的虽然不用花钱，但是不稳定，说不定哪天就停了。后来笔者也去购买一些商用的梯子，像云梯、红杏、影梭等等。收费梯子胜在稳定，而且比较快，还提供多条各国线路选择，但是容易跑路，毕竟国内形势一严峻，这些梯子哗啦啦全跑路了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="梯子自建">
+<meta property="og:url" content="https://duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Duval">
+<meta property="og:description" content="技术圈子的人离不开谷歌搜索，然而在国内因为GreatWall的缘故，用不了谷歌，这时候就需要梯子（V.P.N)。网上有很多免费的VPN，比如lantern等。免费的虽然不用花钱，但是不稳定，说不定哪天就停了。后来笔者也去购买一些商用的梯子，像云梯、红杏、影梭等等。收费梯子胜在稳定，而且比较快，还提供多条各国线路选择，但是容易跑路，毕竟国内形势一严峻，这些梯子哗啦啦全跑路了。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://duval1024.github.io/images/buy.jpg">
+<meta property="og:image" content="https://duval1024.github.io/images/config.jpg">
+<meta property="og:image" content="https://duval1024.github.io/images/review.jpg">
+<meta property="og:image" content="https://duval1024.github.io/images/ip.jpg">
+<meta property="og:image" content="https://duval1024.github.io/images/end.png">
+<meta property="og:image" content="https://duval1024.github.io/images/ssr.jpg">
+<meta property="article:published_time" content="2018-07-18T05:16:01.000Z">
+<meta property="article:modified_time" content="2020-02-05T04:23:53.740Z">
+<meta property="article:author" content="Duval">
+<meta property="article:tag" content="梯子">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://duval1024.github.io/images/buy.jpg">
+
+<link rel="canonical" href="https://duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>梯子自建 | Duval</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="duval1024.github.io/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Duval</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">技术与生活</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="duval1024.github.io/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="duval1024.github.io/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="Duval">
+      <meta itemprop="description" content="记录技术，分享生活">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Duval">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          梯子自建
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-07-18 13:16:01" itemprop="dateCreated datePublished" datetime="2018-07-18T13:16:01+08:00">2018-07-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="duval1024.github.io/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index">
+                    <span itemprop="name">工具</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/" class="post-meta-item leancloud_visitors" data-flag-title="梯子自建" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>技术圈子的人离不开谷歌搜索，然而在国内因为GreatWall的缘故，用不了谷歌，这时候就需要梯子（V.P.N)。网上有很多免费的VPN，比如lantern等。免费的虽然不用花钱，但是不稳定，说不定哪天就停了。后来笔者也去购买一些商用的梯子，像云梯、红杏、影梭等等。收费梯子胜在稳定，而且比较快，还提供多条各国线路选择，但是容易跑路，毕竟国内形势一严峻，这些梯子哗啦啦全跑路了。</p>
+<a id="more"></a>
+
+<p>尝过免费or付费梯子之后，都不能让人满意，笔者开始自建梯子，终于找到了最满意的方式。这里介绍全网最简易的梯子搭建教程。</p>
+<p>通俗地说，梯子其实就是一个中介，本地电脑或者手机终端的请求，全部转发到中介那里，中介再将请求转发到服务器上。抽象下，就是A要发信息给C，但是A到C不可达，但是A到B可达，B到C可达，那么A先将信息发给B，再将信息发给C，C回信给B，B再回信给A。从而使得原来不可达的A和C可以通讯。</p>
+<p>从上边可以看到，其实最关键的地方有两点：<br>1.稳定可靠的B<br>2.让A转发信息给B</p>
+<p>只要解决这两点就可以实现一个稳定而可靠的梯子了。原理讲到这，好的，下边摆上教程：</p>
+<h2 id="搭建梯子"><a href="#搭建梯子" class="headerlink" title="搭建梯子"></a>搭建梯子</h2><h3 id="购买服务器"><a href="#购买服务器" class="headerlink" title="购买服务器"></a>购买服务器</h3><p>这个服务器其实就是充当中介的角色，要使得本地电脑或终端能够访问到这台服务器，这台服务器又能稳定访问到墙外的资源。笔者曾经买过<a href="https://www.vultr.com/" target="_blank" rel="noopener">vultr</a>和<a href="https://cn.aliyun.com/" target="_blank" rel="noopener">阿里云</a>,前者买的是美国洛杉矶节点，但发现vultr非常不稳定，梯子效果非常差，后者买过香港节点，然而阿里云运维检测出使用了梯子，又给我发邮件让我把梯子下掉。后来，我发现了<a href="https://hostus.us/" target="_blank" rel="noopener">hostus</a>，非常稳定，5.95$/quarter,每个月十几块钱，便宜！买买买。</p>
+<p>在hostus上，可以看到分为三种服务器类型OPENVZ、KVM、FULLY三种，OPENVZ最便宜，但是不能装锐速加速器。笔者亲测，根本不用加速器，所以直接买OPENVZ就行了。<br><img src="/images/buy.jpg" alt="服务器三种类型"></p>
+<p>服务器配置，你可以直接选最低的应该也没问题，笔者选择稍微充裕的7.95刀配置，每月500G，不经常煲国外视频的话，几个人一起用绰绰有余。<br><img src="/images/config.jpg" alt="配置"></p>
+<p>一般来说，选择日本、新加坡、香港这些带宽比较好，离国内有比较近的地方的服务器会比较好。笔者有自己的想法，所以选的是伦敦节点，亲测速度也是可以接受的。这里还要记得填自己的服务器名（随意填)，以及密码，一定要保存好密码，登录服务器使用。。<br><img src="/images/review.jpg" alt="配置密码用户名"></p>
+<p>然后就是下单支付什么的，支持支付宝，非常简单不说了。</p>
+<p>下单完了，在你的个人页面里边，可以看到你的服务器信息，最关键的是拿到IP地址，然后看到你的服务器已经是Active状态。<br><img src="/images/ip.jpg" alt="IP"></p>
+<p>好了，把你的IP地址记录下来，下一步用。</p>
+<h3 id="登录服务器"><a href="#登录服务器" class="headerlink" title="登录服务器"></a>登录服务器</h3><p>现在要登录你的服务器，Windows下使用<a href="https://www.netsarang.com/products/xsh_overview.html" target="_blank" rel="noopener">xshell</a>来登录。官网下载不了xshell的话，随便找个腾讯管家应用应该都能下载到。打开xshell，新建会话，填进服务器IP地址，端口号默认22，保存，另外登录用户名默认是root用户，密码是上边保存的服务器密码，然后回车一下，就登陆到服务器了。（密码不会显示出来的）</p>
+<p>具体移步别人的教程吧，不详细说了。<a href="https://blog.csdn.net/py_tamir/article/details/78802378" target="_blank" rel="noopener">https://blog.csdn.net/py_tamir/article/details/78802378</a></p>
+<h3 id="安装梯子"><a href="#安装梯子" class="headerlink" title="安装梯子"></a>安装梯子</h3><p>只需要执行下边这条命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">wget --no-check-certificate https://freed.ga/github/shadowsocksR.sh; bash shadowsocksR.sh</span><br></pre></td></tr></table></figure>
+<p>ps:20180803有朋友反映这条脚本已经失效，请自行安装shadowsocks</p>
+<p>注：如果提示没有安装wget，请执行:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install wget</span><br></pre></td></tr></table></figure>
+<p>如果还有其他报错请联系<a href="duval_cc@163.com">我</a>更新。</p>
+<p>然后根据提示，自己填自己喜欢的SSR密码或者端口就行，协议什么的都按照默认的，直接回车下一步。</p>
+<p>最后出现这图就代表完成了。保存好图里的配置。<br><img src="/images/end.png" alt="结束"></p>
+<h2 id="本地连接梯子"><a href="#本地连接梯子" class="headerlink" title="本地连接梯子"></a>本地连接梯子</h2><p>本地连接梯子需要使用shadowsocks客户端，例如安卓系统，请移步<a href="https://github.com/shadowsocks/shadowsocks-android/releases" target="_blank" rel="noopener">https://github.com/shadowsocks/shadowsocks-android/releases</a> 挑最新版本的apk下载就行了。</p>
+<p>安装好shadowsocks客户端，在客户端上新建一个连接，填自己的配置，填完点击纸飞机（启动标志）</p>
+<p><img src="/images/ssr.jpg" alt="连接服务器"></p>
+<p>然后就可以愉快地翻墙了。</p>
+<p>Windows端的shadowsocks下载应该在[这里](<a href="https://github.com/shadowsocks/shadowsocks-go/releases）" target="_blank" rel="noopener">https://github.com/shadowsocks/shadowsocks-go/releases）</a></p>
+<h2 id="More"><a href="#More" class="headerlink" title="More"></a>More</h2><h3 id="锐速加速器"><a href="#锐速加速器" class="headerlink" title="锐速加速器"></a>锐速加速器</h3><p>笔者选择伦敦节点，速度是可以接受的。如果按照上述步骤可能你还是觉得不够快，那么你可以考虑安装加速器，注意OPENCV类型的服务器无法安装加速器，请购买KVM或者FULL类型服务器。具体步骤请网上搜索。</p>
+<h3 id="多账户配置"><a href="#多账户配置" class="headerlink" title="多账户配置"></a>多账户配置</h3><p>如果这个VPN你想和多人共享，那就需要配置多套账号，然后分配一些给别人使用。倘若你买个高配的服务器，几个人使用，费用分摊开也会是非常划算的事情。下面教下怎么进行多账号配置。</p>
+<p>修改配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/shadowsocks.json</span><br></pre></td></tr></table></figure>
+
+<p>配置参考：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"server"</span>: <span class="string">"0.0.0.0"</span>,</span><br><span class="line">    <span class="attr">"server_ipv6"</span>: <span class="string">"::"</span>,</span><br><span class="line">    <span class="attr">"local_address"</span>: <span class="string">"127.0.0.1"</span>,</span><br><span class="line">    <span class="attr">"local_port"</span>: <span class="number">1081</span>,</span><br><span class="line">    <span class="attr">"timeout"</span>: <span class="number">120</span>,</span><br><span class="line">    <span class="attr">"udp_timeout"</span>: <span class="number">60</span>,</span><br><span class="line">    <span class="attr">"method"</span>: <span class="string">"chacha20"</span>,</span><br><span class="line">    <span class="attr">"protocol"</span>: <span class="string">"auth_sha1_v4"</span>,</span><br><span class="line">    <span class="attr">"protocol_param"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"obfs"</span>: <span class="string">"tls1.2_ticket_auth"</span>,</span><br><span class="line">    <span class="attr">"obfs_param"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"dns_ipv6"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"connect_verbose_info"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"redirect"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"fast_open"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"port_password"</span>:&#123;</span><br><span class="line">        <span class="attr">"8989"</span>: <span class="string">"test123"</span>,</span><br><span class="line">        <span class="attr">"9898"</span>: <span class="string">"test1234"</span></span><br><span class="line">     &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>port_password 字段就是填端口和密码的，定义多少行就有多少个账号。</p>
+<p>修改完配置后，需要重启服务，先找出进程id：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@duvalcc ~]<span class="comment"># ps -ef|grep shadowsocks</span></span><br><span class="line">root     12236 12206  0 01:00 pts/0    00:00:01 /usr/bin/python /usr/bin/ssserver -c /etc/shadowsocks.json start</span><br><span class="line">root     12363 12307  0 03:56 pts/1    00:00:00 grep --color=auto shadowsocks</span><br></pre></td></tr></table></figure>
+<p>从上图可以看到pid=12336，根据你获取到的pid，杀掉这个进程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">kill</span> 12236</span><br></pre></td></tr></table></figure>
+
+<p>然后重启服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup ssserver -c /etc/shadowsocks.json start &amp;</span><br></pre></td></tr></table></figure>
+
+<p>然后多账户就配置完毕了。</p>
+<p>你只要把IP地址、端口和密码对（port_password）、加密方式 分享给别人，就可以一起共享这个VPN。</p>
+<p><strong>免责声明</strong></p>
+<p>本文本着交流学习目的而编写，请勿用于商业或非法用途。<br>另外，使用VPN不受法律保护，如造成损失，本人概不负责。</p>
+
+    </div>
+
+    
+    
+    
+      
+
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Duval
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/" title="梯子自建">https://duval1024.github.io/2018/07/18/梯子自建简易教程/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="duval1024.github.io/tags/%E6%A2%AF%E5%AD%90/" rel="tag"># 梯子</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="duval1024.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" rel="prev" title="Spring源码分析1-RESTfulWeb启动过程">
+      <i class="fa fa-chevron-left"></i> Spring源码分析1-RESTfulWeb启动过程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="duval1024.github.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" rel="next" title="Spring源码分析3-对Bean循环依赖的处理">
+      Spring源码分析3-对Bean循环依赖的处理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#搭建梯子"><span class="nav-number">1.</span> <span class="nav-text">搭建梯子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#购买服务器"><span class="nav-number">1.1.</span> <span class="nav-text">购买服务器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#登录服务器"><span class="nav-number">1.2.</span> <span class="nav-text">登录服务器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装梯子"><span class="nav-number">1.3.</span> <span class="nav-text">安装梯子</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#本地连接梯子"><span class="nav-number">2.</span> <span class="nav-text">本地连接梯子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#More"><span class="nav-number">3.</span> <span class="nav-text">More</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#锐速加速器"><span class="nav-number">3.1.</span> <span class="nav-text">锐速加速器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多账户配置"><span class="nav-number">3.2.</span> <span class="nav-text">多账户配置</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Duval"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">Duval</p>
+  <div class="site-description" itemprop="description">记录技术，分享生活</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="duval1024.github.io/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Duval</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">206k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:07</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="duval1024.github.io/lib/anime.min.js"></script>
+  <script src="duval1024.github.io/lib/velocity/velocity.min.js"></script>
+  <script src="duval1024.github.io/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="duval1024.github.io/js/utils.js"></script>
+
+<script src="duval1024.github.io/js/motion.js"></script>
+
+
+<script src="duval1024.github.io/js/schemes/muse.js"></script>
+
+
+<script src="duval1024.github.io/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="duval1024.github.io/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="duval1024.github.io/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="duval1024.github.io/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="duval1024.github.io/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="duval1024.github.io/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="duval1024.github.io/css/main.css">
+
+
+<link rel="stylesheet" href="duval1024.github.io/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="duval1024.github.io/lib/pace/pace-theme-center-atom.min.css">
+  <script src="duval1024.github.io/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://duval1024.github.io').hostname,
+    root: 'duval1024.github.io/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Azkaban简介 Azkaban was implemented at LinkedIn to solve the problem of Hadoop job dependencies. We had jobs that needed to run in  order, from ETL jobs to data analytics products.Initially a single ser">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Azkaban 源码分析和插件实现">
+<meta property="og:url" content="https://duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="Duval">
+<meta property="og:description" content="Azkaban简介 Azkaban was implemented at LinkedIn to solve the problem of Hadoop job dependencies. We had jobs that needed to run in  order, from ETL jobs to data analytics products.Initially a single ser">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BB%A3%E7%A0%81%E6%B5%81%E7%A8%8B.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png">
+<meta property="article:published_time" content="2017-09-21T09:36:01.000Z">
+<meta property="article:modified_time" content="2020-02-03T03:19:54.152Z">
+<meta property="article:author" content="Duval">
+<meta property="article:tag" content="Azkaban">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+
+<link rel="canonical" href="https://duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Azkaban 源码分析和插件实现 | Duval</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="duval1024.github.io/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Duval</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">技术与生活</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="duval1024.github.io/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="duval1024.github.io/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="Duval">
+      <meta itemprop="description" content="记录技术，分享生活">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Duval">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Azkaban 源码分析和插件实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-21 17:36:01" itemprop="dateCreated datePublished" datetime="2017-09-21T17:36:01+08:00">2017-09-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="duval1024.github.io/categories/Azkaban/" itemprop="url" rel="index">
+                    <span itemprop="name">Azkaban</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/" class="post-meta-item leancloud_visitors" data-flag-title="Azkaban 源码分析和插件实现" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Azkaban简介"><a href="#Azkaban简介" class="headerlink" title="Azkaban简介"></a>Azkaban简介</h2><blockquote>
+<p><strong>Azkaban</strong> was implemented at LinkedIn to solve the problem of Hadoop job dependencies. We had jobs that needed to run in  order, from ETL jobs to data analytics products.<br>Initially a single server solution, with the increased number of Hadoop users over the years, Azkaban has evolved to be a more robust solution.</p>
+</blockquote>
+<blockquote>
+<p>Azkaban 是由Linkedln公司为了解决hadoop 作业之间的依赖而实现的。因为有一些ETL作业以及数据分析产品需要按照一定的顺序去执行。<br>随着hadoop用户的逐年增加，Azkaban从一个简单的服务解决方案发展成为一个更加健壮鲁棒的方案。</p>
+</blockquote>
+<a id="more"></a>
+
+<h2 id="azkaban架构分析"><a href="#azkaban架构分析" class="headerlink" title="azkaban架构分析"></a>azkaban架构分析</h2><p>&emsp;Azkaban的系统架构非常简单主要由三个组件组成：</p>
+<ul>
+<li><strong>WebServer</strong> ：提供API，提供分发作业、调度作业和监控报警等功能；</li>
+<li><strong>Executor</strong> ：对WebServer 暴露 API ，提供执行作业的功能，支持作业插件；</li>
+<li><strong>MySQL</strong> ：数据存储，实现Web 和 Exec之间的数据共享和部分状态的同步。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="azkaban架构图"></li>
+</ul>
+<h2 id="Azkaban-WebServer"><a href="#Azkaban-WebServer" class="headerlink" title="Azkaban WebServer"></a>Azkaban WebServer</h2><p>&emsp;对azkaban WebServer的各个功能详细介绍如下：</p>
+<h3 id="提供API调用"><a href="#提供API调用" class="headerlink" title="提供API调用"></a>提供API调用</h3><p>&emsp;在azkaban-webserver工程中，可以非常清晰地看到对外暴露的Servlet，其中最主要的几个是：</p>
+<ul>
+<li><strong>ExecutorServlet</strong> 主要提供立即执行作业、取消作业流、暂停作业流、获取流或节点日志等接口</li>
+<li><strong>ScheduleServlet</strong> 主要提供设置调度、设置Sla报警规则、获取调度信息等接口</li>
+<li><strong>HistoryServlet</strong> 主要提供查看作业流执行历史的接口</li>
+<li><strong>ProjectManagerServlet</strong> 主要提供上传项目zip包、下载项目zip包、删除项目、获取流的DAG等接口<h3 id="分发作业"><a href="#分发作业" class="headerlink" title="分发作业"></a>分发作业</h3></li>
+</ul>
+<p>&emsp;ExecutorManager 主要承担这部分的功能，所有类型的作业（包括立即执行和调度执行）,都会通过<em>submitExecutableFlow(ExecutableFlow exflow, String userId)</em>这个方法进行提交。</p>
+<p>&emsp;在该方法中，我们可以看到：如果是多执行节点模式下，执行实例先放进分发队列中，然后通过线程定时取出实例<em>（processQueuedFlows）</em>，选择某个执行节点之后，再通过<em>dispatch</em>方法进行执行分发<em>（selectExecutorAndDispatchFlow）</em>；如果是单执行节点模式下，就立即调用<em>dispatch</em>方法进行分发。生产环境一般采用多节点模式。核心代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (isMultiExecutorMode()) &#123;   <span class="comment">//多节点模式，放进队列，等待线程轮询</span></span><br><span class="line">    <span class="comment">//Take MultiExecutor route</span></span><br><span class="line">    executorLoader.addActiveExecutableReference(reference);</span><br><span class="line">    queuedFlows.enqueue(exflow, reference);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;                       <span class="comment">//单节点模式，直接调用dispatch方法执行</span></span><br><span class="line">    <span class="comment">// assign only local executor we have</span></span><br><span class="line">    Executor choosenExecutor = activeExecutors.iterator().next();</span><br><span class="line">    executorLoader.addActiveExecutableReference(reference);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        dispatch(reference, exflow, choosenExecutor);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">        executorLoader.removeActiveExecutableReference(reference.getExecId());</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;从上边看到执行实例都经过了dispatch方法。因为Web 和Exec之间是通过mysql进行数据共享的，大部分的数据都在dispatch之前预先写进了mysql。所以dispatch进行作业分发的逻辑非常简单，就是简单地通过HTTP请求传递实例的execId等信息，其余所需要的数据都通过数据库读写完成传递。</p>
+<h3 id="调度作业"><a href="#调度作业" class="headerlink" title="调度作业"></a>调度作业</h3><p>&emsp;调度作业是调度系统的最重要的功能之一，也是Azkaban里相对复杂的一个模块。调度是通过ScheduleManager对外暴露，对应着的结构是Schedule；对内是通过TriggerManager来实现，对应着的结构是Trigger。</p>
+<p>&emsp;所有的调度信息都通过ScheduleManager.scheduleFlow传入,可以看到传入参数包含了项目id、项目名字、流名字、第一次调度时间戳、时区、调度周期、下一次执行时间、提交时间、提交人。对于一个调度来说，最关键的信息无非是第一次调度时间和调度周期。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public Schedule scheduleFlow(final int scheduleId, final int projectId,</span><br><span class="line">      final String projectName, final String flowName, final String status,</span><br><span class="line">      final long firstSchedTime, final DateTimeZone timezone,</span><br><span class="line">      final ReadablePeriod period, final long lastModifyTime,</span><br><span class="line">      final long nextExecTime, final long submitTime, final String submitUser)</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;从scheduleFlow 往下可以看到调用了TriggerBasedScheduleLoader.insertSchedule。这个方法里边先是将Schedule转换成了Trigger，然后将Trigger放到了TriggerManager里边。scheduleToTrigger方法写的非常简洁巧妙，读者可自行鉴赏，此处不作细致分析。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertSchedule</span><span class="params">(Schedule s)</span> <span class="keyword">throws</span> ScheduleManagerException </span>&#123;</span><br><span class="line">   Trigger t = scheduleToTrigger(s);</span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">     triggerManager.insertTrigger(t, t.getSubmitUser());</span><br><span class="line">     s.setScheduleId(t.getTriggerId());</span><br><span class="line">   &#125; <span class="keyword">catch</span> (TriggerManagerException e) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ScheduleManagerException(<span class="string">"Failed to insert new schedule!"</span>, e);</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;我们在继续看看Trigger被塞到TriggerManager做了些啥。从下边可以看到，先是调用triggerLoader写进数据库，然后就放到了一个线程runnerThread中去轮询了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertTrigger</span><span class="params">(Trigger t)</span> <span class="keyword">throws</span> TriggerManagerException </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (syncObj) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        triggerLoader.addTrigger(t);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (TriggerLoaderException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> TriggerManagerException(e);</span><br><span class="line">      &#125;</span><br><span class="line">      runnerThread.addTrigger(t);</span><br><span class="line">      triggerIdMap.put(t.getTriggerId(), t);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;接下来就显而易见了，这个线程TriggerScannerThread  runnerThread 定期检查Trigger是否应该触发（onTriggerTrigger）或者终止（onTriggerExpire）。</p>
+<p>&emsp;Trigger触发的时候就会调用自己的action.doAction()，调度任务的Trigger的action一般都是ExecuteFlowAction，其doAction方法主要做了两个事情，第一个是构建执行实例ExecutableFlow，第二个是如果该调度设置了报警规则，则构建SlaTrigger，并将trigger放进线程runnerThread 里。</p>
+<p>&emsp;构建执行实例完成后，可以看到调用了executorManager.submitExecutableFlow(exflow, submitUser) 进行作业分发，这样子，就跟上文提到的作业分发殊途同归。下边不再分析。</p>
+<h3 id="WebServer总结"><a href="#WebServer总结" class="headerlink" title="WebServer总结"></a>WebServer总结</h3><p>&emsp;下边用一张图简单总结代码流程：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BB%A3%E7%A0%81%E6%B5%81%E7%A8%8B.png" alt="image.png"></p>
+<h2 id="Azkaban-Executor"><a href="#Azkaban-Executor" class="headerlink" title="Azkaban Executor"></a>Azkaban Executor</h2><p>&emsp;对Azkaban Executor的各个功能详细介绍如下：</p>
+<h3 id="提供-API-调用"><a href="#提供-API-调用" class="headerlink" title="提供 API 调用"></a>提供 API 调用</h3><p>  Azkaban3.0后就开始支持多执行节点部署。单个执行节点比较简单，对web暴露的API也比较少，主要是：</p>
+<ul>
+<li><strong>ExecutorServlet</strong> 主要提供执行、取消、暂停、日志查询等接口。</li>
+</ul>
+<h3 id="执行作业"><a href="#执行作业" class="headerlink" title="执行作业"></a>执行作业</h3><p>&emsp;上边提及到WebServer通过dispatch方法进行作业分发。这里简单看下执行节点接收到作业执行请求之后的流程是怎样的。我们在ExecutorServlet中看到所有的执行作业请求都经过handleAjaxExecute方法，这个方法简单地将实例唯一的execId传递给FlowRunnerManager：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">handleAjaxExecute</span><span class="params">(HttpServletRequest req,</span></span></span><br><span class="line"><span class="function"><span class="params">      Map&lt;String, Object&gt; respMap, <span class="keyword">int</span> execId)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      flowRunnerManager.submitFlow(execId);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      logger.error(e);</span><br><span class="line">      respMap.put(RESPONSE_ERROR, e.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;FlowRunnerManager 通过submitFlow方法提交工作流去执行。先是构建执行实例ExecutableFlow，然后准备执行目录setupFlow(flow)，然后生成FlowRunner，然后提交到线程池去运行executorService.submit(runner)。（代码颇长，略过）</p>
+<p>&emsp;FlowRunner本身实现了Runnable，其run方法里边调用了 runFlow方法，runFlow方法内容如下。方法里按照Flow的层次结构以宽度优先的顺序访问DAG图的每一个job，并逐个job提交执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">runFlow</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    logger.info(<span class="string">"Starting flows"</span>);</span><br><span class="line">    runReadyJob(<span class="keyword">this</span>.flow);</span><br><span class="line">    updateFlow();</span><br><span class="line">    <span class="keyword">while</span> (!flowFinished) &#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (mainSyncObj) &#123;</span><br><span class="line">        <span class="keyword">if</span> (flowPaused) &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            mainSyncObj.wait(CHECK_WAIT_MS);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">if</span> (retryFailedJobs) &#123;</span><br><span class="line">            retryAllFailures();</span><br><span class="line">          &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!progressGraph()) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              mainSyncObj.wait(CHECK_WAIT_MS);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    executorService.shutdown();</span><br><span class="line">    updateFlow();</span><br><span class="line">    logger.info(<span class="string">"Finished Flow"</span>);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;对于单个job，最后构造一个JobRunner去执行执行这个作业，每个JobRunner也是实现了Runnable。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> JobRunner <span class="title">createJobRunner</span><span class="params">(ExecutableNode node)</span> </span>&#123;</span><br><span class="line">   File path = <span class="keyword">new</span> File(execDir, node.getJobSource());</span><br><span class="line"></span><br><span class="line">   JobRunner jobRunner =</span><br><span class="line">       <span class="keyword">new</span> JobRunner(node, path.getParentFile(), executorLoader,</span><br><span class="line">           jobtypeManager);</span><br><span class="line">   <span class="keyword">if</span> (watcher != <span class="keyword">null</span>) &#123;</span><br><span class="line">     jobRunner.setPipeline(watcher, pipelineLevel);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">if</span> (validateUserProxy) &#123;</span><br><span class="line">     jobRunner.setValidatedProxyUsers(proxyUsers);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   jobRunner.setDelayStart(node.getDelayedExecution());</span><br><span class="line">   jobRunner.setLogSettings(logger, jobLogFileSize, jobLogNumFiles);</span><br><span class="line">   jobRunner.addListener(listener);</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> (JobCallbackManager.isInitialized()) &#123;</span><br><span class="line">     jobRunner.addListener(JobCallbackManager.getInstance());</span><br><span class="line">   &#125;</span><br><span class="line">   configureJobLevelMetrics(jobRunner);</span><br><span class="line">   <span class="keyword">return</span> jobRunner;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;每个jobRunner在执行的时候，都去插件模块里边寻找对应的插件来进行job的类型加载。每种job类型都有对应的run方法。所有就是<strong>通过反射去调用各个插件类的run方法去执行各个job</strong>。Azkaban的插件类型包括默认类型（script、python、java、cmd 等）以及azkaban-plugin项目下的一些自定义类型（hive、mr、spark等）。下一个章节会详细介绍插件的实现原理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">       job = jobtypeManager.buildJobExecutor(<span class="keyword">this</span>.jobId, props, logger);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (JobTypeManagerException e) &#123;</span><br><span class="line">       logger.error(<span class="string">"Failed to build job type"</span>, e);</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Azkaban-Plugin"><a href="#Azkaban-Plugin" class="headerlink" title="Azkaban Plugin"></a>Azkaban Plugin</h2><h3 id="插件机制的实现原理"><a href="#插件机制的实现原理" class="headerlink" title="插件机制的实现原理"></a>插件机制的实现原理</h3><p>&emsp;Azkaban的插件机制使得可以执行各种复杂类型的作业，并且实现了调度功能和作业类型的松耦合。例如 ，对于MR类型和Spark类型的插件，类继承关系图如下。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" alt="azkaban作业类继承关系"></p>
+<p>&emsp;每种插件作业都会单独起一个进程去执行。其中ProcessJob主要职能就是新建进程,并执行指定的命令command；JavaProcessJob继承自它，且将command命令特化为 java，也就是新建一个java进程；其他的hadoop插件又各自继承自JavaProcessJob。<br>&emsp;如果要自己实现插件类，只要继承JavaProcessJob类，并在插件类的run方法里，指定新建的java进程的主类等信息，即可。</p>
+<h3 id="基于HiveServer2的Azkaban插件的实现思路"><a href="#基于HiveServer2的Azkaban插件的实现思路" class="headerlink" title="基于HiveServer2的Azkaban插件的实现思路"></a>基于HiveServer2的Azkaban插件的实现思路</h3><p>&emsp;了解了插件机制的实现原理后，我们尝试实现一个基于HiveServer2的Azkaban插件。</p>
+<h4 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h4><p>&emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer.<br>&emsp;HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。<br>&emsp;仔细研究Azkaban的Hive插件的代码，我们可以知道，Azkaban是通过Hive Client来提交Hive作业的，也就是下图中的CLI方式。这种方式的问题还是挺多的，由于直接绕过了HiveServer2，所以不支持高并发和细粒度的权限控制等，存在很多隐患。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png" alt="hiveSQL执行方式"></p>
+<h4 id="HiveServer2提供的API"><a href="#HiveServer2提供的API" class="headerlink" title="HiveServer2提供的API"></a>HiveServer2提供的API</h4><p>&emsp;HiveServer2提交作业其实是通过JDBC方式来提交的，那我们来看下HiveServer2都提供了哪些api：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">同步提交HQL</span><br><span class="line">ThriftCLIServiceClient.executeStatement(SessionHandle sessionHandle, String statement, Map confOverlay) <span class="keyword">throws</span> HiveSQLException</span><br><span class="line"></span><br><span class="line">异步提交HQL</span><br><span class="line">ThriftCLIServiceClient.executeStatementAsync(SessionHandle sessionHandle, String statement, Map confOverlay) <span class="keyword">throws</span> HiveSQLException</span><br><span class="line"></span><br><span class="line">请求日志或者结果</span><br><span class="line">ThriftCLIServiceClient.fetchResults(OperationHandle opHandle, FetchOrientation orientation, <span class="keyword">long</span> maxRows, FetchType fetchType) <span class="keyword">throws</span> HiveSQLException</span><br><span class="line">(FetchType分为FetchType.LOG 和 FetchType.QUERY_OUTPUT，分别对应日志和结果)</span><br><span class="line"></span><br><span class="line">请求执行状态</span><br><span class="line">ThriftCLIServiceClient.getOperationStatus(OperationHandle opHandle) <span class="keyword">throws</span> HiveSQLException \</span><br><span class="line">(状态包括：INITIALIZED RUNNING FINISHED CANCELED CLOSED ERROR UNKNOWN PENDING)</span><br><span class="line"></span><br><span class="line">取消执行</span><br><span class="line">ThriftCLIServiceClient.cancelOperation(OperationHandle opHandle) <span class="keyword">throws</span> HiveSQLException</span><br><span class="line"></span><br><span class="line">关闭句柄</span><br><span class="line">ThriftCLIServiceClient.closeOperation(OperationHandle opHandle) <span class="keyword">throws</span> HiveSQLException \</span><br><span class="line">每执行完一条sql都要关闭句柄</span><br></pre></td></tr></table></figure>
+
+<p>在上述接口的基础上，还封装了类JDBC的接口，从而可以用常规的访问RDS数据库去访问HiveServer2。例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Class.forName(<span class="string">"org.apache.hive.jdbc.HiveDriver"</span>);</span><br><span class="line">connection = DriverManager.getConnection(hiveServerUrl);</span><br><span class="line">hiveStatement = (HiveStatement) connection.createStatement();</span><br><span class="line">hiveStatement.execute(sql);</span><br></pre></td></tr></table></figure>
+<p>另外还提供了异步获取日志的办法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">while (hiveStat !&#x3D; null &amp;&amp; !hiveStat.isClosed())&#123;</span><br><span class="line">     if(hiveStat.hasMoreLogs())&#123;</span><br><span class="line">        for(String log : hiveStat.getQueryLog())&#123;</span><br><span class="line">           logger.info(log);</span><br><span class="line">        &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     Thread.sleep(QUERY_LOG_TIMEOUT);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h4><p>&emsp;有了上述的基础，基于HiveServer2的Azkaban插件的实现就清晰了。</p>
+<ul>
+<li>实现继承JavaProcessJob的HadoopHiveJob类，实现run方法，并指定新建的Java进程的主类,如下。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String HADOOP_SECURE_HIVE_WRAPPER = <span class="string">"azkaban.jobtype.HadoopSecureHiveWrapper"</span>;</span><br><span class="line"><span class="comment">//此处省略N行</span></span><br><span class="line"></span><br><span class="line"> <span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">protected</span> String <span class="title">getJavaClass</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (jobProps.containsKey(JAVA_CLASS)) <span class="keyword">return</span> jobProps.get(JAVA_CLASS);</span><br><span class="line">	<span class="keyword">if</span> (hasKeytab &amp;&amp; !shouldProxy) &#123; </span><br><span class="line">	  <span class="keyword">return</span> HadoopSecureHiveWrapper2<span class="class">.<span class="keyword">class</span>.<span class="title">getName</span>()</span>;</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="keyword">return</span> HADOOP_SECURE_HIVE_WRAPPER;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>实现HadoopSecureHiveWrapper 类，类的功能就是新建一个JDBC链接，执行sql，并且异步轮询询问日志。代码比较简单冗长，这里就不贴了。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1]<a href="https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Overview" target="_blank" rel="noopener">https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Overview</a><br>[2]<a href="https://hive.apache.org/" target="_blank" rel="noopener">https://hive.apache.org/</a><br>[3]<a href="https://github.com/azkaban/azkaban-plugins" target="_blank" rel="noopener">https://github.com/azkaban/azkaban-plugins</a><br>[4]AZ开发文档：<a href="http://azkaban.github.io/azkaban/docs/latest/#overview" target="_blank" rel="noopener">http://azkaban.github.io/azkaban/docs/latest/#overview</a><br>[5]强子哥的源码分析：<a href="https://my.oschina.net/qiangzigege/blog/653198" target="_blank" rel="noopener">https://my.oschina.net/qiangzigege/blog/653198</a><br>[6]azkaban源码： git clone <a href="https://github.com/azkaban/azkaban.git" target="_blank" rel="noopener">https://github.com/azkaban/azkaban.git</a></p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="duval1024.github.io/2017/01/11/Azkaban学习/" rel="bookmark">Azkaban Learning</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="duval1024.github.io/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="duval1024.github.io/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="duval1024.github.io/2018/06/15/携程Apollo精彩摘要/" rel="bookmark">携程Apollo精彩摘要</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="duval1024.github.io/2018/07/12/Spring源码分析2-上下文刷新过程/" rel="bookmark">Spring源码分析2-上下文刷新过程分析</a></div>
+    </li>
+  </ul>
+
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Duval
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://duval1024.github.io/2017/09/21/Azkaban-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E5%92%8C%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0/" title="Azkaban 源码分析和插件实现">https://duval1024.github.io/2017/09/21/Azkaban-源码分析和插件实现/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="duval1024.github.io/tags/Azkaban/" rel="tag"># Azkaban</a>
+              <a href="duval1024.github.io/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag"># 源码分析</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="duval1024.github.io/2017/09/18/gradle%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%93%E5%8C%85%E9%A1%B9%E7%9B%AEtar%E5%8C%85/" rel="prev" title="gradle自定义打包项目tar包">
+      <i class="fa fa-chevron-left"></i> gradle自定义打包项目tar包
+    </a></div>
+      <div class="post-nav-item">
+    <a href="duval1024.github.io/2017/10/23/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3Drools/" rel="next" title="深入了解Drools">
+      深入了解Drools <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban简介"><span class="nav-number">1.</span> <span class="nav-text">Azkaban简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#azkaban架构分析"><span class="nav-number">2.</span> <span class="nav-text">azkaban架构分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban-WebServer"><span class="nav-number">3.</span> <span class="nav-text">Azkaban WebServer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#提供API调用"><span class="nav-number">3.1.</span> <span class="nav-text">提供API调用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分发作业"><span class="nav-number">3.2.</span> <span class="nav-text">分发作业</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调度作业"><span class="nav-number">3.3.</span> <span class="nav-text">调度作业</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WebServer总结"><span class="nav-number">3.4.</span> <span class="nav-text">WebServer总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban-Executor"><span class="nav-number">4.</span> <span class="nav-text">Azkaban Executor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#提供-API-调用"><span class="nav-number">4.1.</span> <span class="nav-text">提供 API 调用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行作业"><span class="nav-number">4.2.</span> <span class="nav-text">执行作业</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban-Plugin"><span class="nav-number">5.</span> <span class="nav-text">Azkaban Plugin</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#插件机制的实现原理"><span class="nav-number">5.1.</span> <span class="nav-text">插件机制的实现原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于HiveServer2的Azkaban插件的实现思路"><span class="nav-number">5.2.</span> <span class="nav-text">基于HiveServer2的Azkaban插件的实现思路</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#HiveServer-amp-HiveSever2"><span class="nav-number">5.2.1.</span> <span class="nav-text">HiveServer &amp; HiveSever2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HiveServer2提供的API"><span class="nav-number">5.2.2.</span> <span class="nav-text">HiveServer2提供的API</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#具体实现"><span class="nav-number">5.2.3.</span> <span class="nav-text">具体实现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">6.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Duval"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">Duval</p>
+  <div class="site-description" itemprop="description">记录技术，分享生活</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="duval1024.github.io/archives/">
+        
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Duval</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">206k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:07</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="duval1024.github.io/lib/anime.min.js"></script>
+  <script src="duval1024.github.io/lib/velocity/velocity.min.js"></script>
+  <script src="duval1024.github.io/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="duval1024.github.io/js/utils.js"></script>
+
+<script src="duval1024.github.io/js/motion.js"></script>
+
+
+<script src="duval1024.github.io/js/schemes/muse.js"></script>
+
+
+<script src="duval1024.github.io/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="duval1024.github.io/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
