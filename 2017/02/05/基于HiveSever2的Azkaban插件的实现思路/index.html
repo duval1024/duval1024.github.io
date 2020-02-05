@@ -55,16 +55,16 @@
 <meta property="og:site_name" content="Duval">
 <meta property="og:description" content="关键字：HiveSever2、Azkaban插件 &amp;emsp;&amp;emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2&amp;emsp;&amp;emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://duval1024.github.io/images/plugin.png">
-<meta property="og:image" content="https://duval1024.github.io/images/hiveServer.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png">
 <meta property="article:published_time" content="2017-02-05T05:45:03.000Z">
-<meta property="article:modified_time" content="2020-02-05T05:40:23.152Z">
+<meta property="article:modified_time" content="2020-02-05T07:20:26.705Z">
 <meta property="article:author" content="Duval">
 <meta property="article:tag" content="Azkaban插件">
 <meta property="article:tag" content="Hive">
 <meta property="article:tag" content="HiveServer2">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://duval1024.github.io/images/plugin.png">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png">
 
 <link rel="canonical" href="https://duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/">
 
@@ -301,10 +301,10 @@
 <a id="more"></a>
 
 <h2 id="Azkaban插件实现原理"><a href="#Azkaban插件实现原理" class="headerlink" title="Azkaban插件实现原理"></a>Azkaban插件实现原理</h2><p>&emsp;Azkaban的hadoop相关作业插件类都是继承自JavaProcessJob类，JavaProcessJob类本质上是一个独立的Java进程，进程内调用Client客户端执行hadoop相关作业。示意图如下： \</p>
-<p><img src="/images/plugin.png" alt="plugin"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" alt="plugin"></p>
 <p>所有的插件类型都要实现run方法和cancel方法。</p>
 <h2 id="基于HiveServer2-的插件实现"><a href="#基于HiveServer2-的插件实现" class="headerlink" title="基于HiveServer2 的插件实现"></a>基于HiveServer2 的插件实现</h2><p>这里看下关于hiveServer的一张老图：</p>
-<p><img src="/images/hiveServer.png" alt="HiveServer架构图"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png" alt="HiveServer架构图"></p>
 <p>&emsp;&emsp;仔细研究Azkaban的Hive插件的代码，可以知道，Azkaban是通过Hive Client来提交Hive作业的，也就是图中的CLI方式。这种方式的问题还是挺多的，由于直接绕过了HiveServer2，所以不支持高并发和安全认证，存在很多隐患。<br>&emsp;&emsp;所以有必要开发基于HiveServer2的Azkaban插件。<br>&emsp;&emsp;Azakaban的实现已经在文章<a href="https://duvalcc.github.io/Azkaban-Learning/2017/01/11/" target="_blank" rel="noopener">《Azkaban Learning》</a>中有简单介绍，其实可以简单模仿HadoopJava类型作业的插件实现，这里不作过多的介绍。</p>
 <p>&emsp;&emsp;HiveServer2提交作业其实是通过JDBC方式来提交的，那我们来看下HiveServer2都提供了哪些api：</p>
 <ol>

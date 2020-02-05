@@ -175,11 +175,11 @@
 <p>从上边可以看到，其实最关键的地方有两点：<br>1.稳定可靠的B<br>2.让A转发信息给B</p>
 <p>只要解决这两点就可以实现一个稳定而可靠的梯子了。原理讲到这，好的，下边摆上教程：</p>
 <h2 id="搭建梯子"><a href="#搭建梯子" class="headerlink" title="搭建梯子"></a>搭建梯子</h2><h3 id="购买服务器"><a href="#购买服务器" class="headerlink" title="购买服务器"></a>购买服务器</h3><p>这个服务器其实就是充当中介的角色，要使得本地电脑或终端能够访问到这台服务器，这台服务器又能稳定访问到墙外的资源。笔者曾经买过<a href="https://www.vultr.com/" target="_blank" rel="noopener">vultr</a>和<a href="https://cn.aliyun.com/" target="_blank" rel="noopener">阿里云</a>,前者买的是美国洛杉矶节点，但发现vultr非常不稳定，梯子效果非常差，后者买过香港节点，然而阿里云运维检测出使用了梯子，又给我发邮件让我把梯子下掉。后来，我发现了<a href="https://hostus.us/" target="_blank" rel="noopener">hostus</a>，非常稳定，5.95$/quarter,每个月十几块钱，便宜！买买买。</p>
-<p>在hostus上，可以看到分为三种服务器类型OPENVZ、KVM、FULLY三种，OPENVZ最便宜，但是不能装锐速加速器。笔者亲测，根本不用加速器，所以直接买OPENVZ就行了。<br><img src="/images/buy.jpg" alt="服务器三种类型"></p>
-<p>服务器配置，你可以直接选最低的应该也没问题，笔者选择稍微充裕的7.95刀配置，每月500G，不经常煲国外视频的话，几个人一起用绰绰有余。<br><img src="/images/config.jpg" alt="配置"></p>
-<p>一般来说，选择日本、新加坡、香港这些带宽比较好，离国内有比较近的地方的服务器会比较好。笔者有自己的想法，所以选的是伦敦节点，亲测速度也是可以接受的。这里还要记得填自己的服务器名（随意填)，以及密码，一定要保存好密码，登录服务器使用。。<br><img src="/images/review.jpg" alt="配置密码用户名"></p>
+<p>在hostus上，可以看到分为三种服务器类型OPENVZ、KVM、FULLY三种，OPENVZ最便宜，但是不能装锐速加速器。笔者亲测，根本不用加速器，所以直接买OPENVZ就行了。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%20%E6%9C%8D%E5%8A%A1%E7%B1%BB%E5%9E%8B.jpg" alt="服务器三种类型"></p>
+<p>服务器配置，你可以直接选最低的应该也没问题，笔者选择稍微充裕的7.95刀配置，每月500G，不经常煲国外视频的话，几个人一起用绰绰有余。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%E6%9C%8D%E5%8A%A1%E9%85%8D%E7%BD%AE.jpg" alt="配置"></p>
+<p>一般来说，选择日本、新加坡、香港这些带宽比较好，离国内有比较近的地方的服务器会比较好。笔者有自己的想法，所以选的是伦敦节点，亲测速度也是可以接受的。这里还要记得填自己的服务器名（随意填)，以及密码，一定要保存好密码，登录服务器使用。。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%E9%85%8D%E7%BD%AE%E7%94%A8%E6%88%B7%E5%AF%86%E7%A0%81.jpg" alt="配置密码用户名"></p>
 <p>然后就是下单支付什么的，支持支付宝，非常简单不说了。</p>
-<p>下单完了，在你的个人页面里边，可以看到你的服务器信息，最关键的是拿到IP地址，然后看到你的服务器已经是Active状态。<br><img src="/images/ip.jpg" alt="IP"></p>
+<p>下单完了，在你的个人页面里边，可以看到你的服务器信息，最关键的是拿到IP地址，然后看到你的服务器已经是Active状态。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%E6%9C%8D%E5%8A%A1%E5%99%A8IP.jpg" alt="IP"></p>
 <p>好了，把你的IP地址记录下来，下一步用。</p>
 <h3 id="登录服务器"><a href="#登录服务器" class="headerlink" title="登录服务器"></a>登录服务器</h3><p>现在要登录你的服务器，Windows下使用<a href="https://www.netsarang.com/products/xsh_overview.html" target="_blank" rel="noopener">xshell</a>来登录。官网下载不了xshell的话，随便找个腾讯管家应用应该都能下载到。打开xshell，新建会话，填进服务器IP地址，端口号默认22，保存，另外登录用户名默认是root用户，密码是上边保存的服务器密码，然后回车一下，就登陆到服务器了。（密码不会显示出来的）</p>
 <p>具体移步别人的教程吧，不详细说了。<a href="https://blog.csdn.net/py_tamir/article/details/78802378" target="_blank" rel="noopener">https://blog.csdn.net/py_tamir/article/details/78802378</a></p>
@@ -188,12 +188,12 @@
 <p>ps:20180803有朋友反映这条脚本已经失效，请自行安装shadowsocks</p>
 <p>注：如果提示没有安装wget，请执行:</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yum install wget</span><br></pre></td></tr></table></figure>
-<p>如果还有其他报错请联系<a href="duval_cc@163.com">我</a>更新。</p>
+<p>如果还有其他报错请联系<a href="duval1024@gmail.com">我</a>更新。</p>
 <p>然后根据提示，自己填自己喜欢的SSR密码或者端口就行，协议什么的都按照默认的，直接回车下一步。</p>
-<p>最后出现这图就代表完成了。保存好图里的配置。<br><img src="/images/end.png" alt="结束"></p>
+<p>最后出现这图就代表完成了。保存好图里的配置。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%E7%BB%93%E6%9D%9F.png" alt="结束"></p>
 <h2 id="本地连接梯子"><a href="#本地连接梯子" class="headerlink" title="本地连接梯子"></a>本地连接梯子</h2><p>本地连接梯子需要使用shadowsocks客户端，例如安卓系统，请移步<a href="https://github.com/shadowsocks/shadowsocks-android/releases" target="_blank" rel="noopener">https://github.com/shadowsocks/shadowsocks-android/releases</a> 挑最新版本的apk下载就行了。</p>
 <p>安装好shadowsocks客户端，在客户端上新建一个连接，填自己的配置，填完点击纸飞机（启动标志）</p>
-<p><img src="/images/ssr.jpg" alt="连接服务器"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%E8%BF%9E%E6%8E%A5%E6%9C%8D%E5%8A%A1%E5%99%A8.jpg" alt="连接服务器"></p>
 <p>然后就可以愉快地翻墙了。</p>
 <p>Windows端的shadowsocks下载应该在[这里](<a href="https://github.com/shadowsocks/shadowsocks-go/releases）" target="_blank" rel="noopener">https://github.com/shadowsocks/shadowsocks-go/releases）</a></p>
 <h2 id="More"><a href="#More" class="headerlink" title="More"></a>More</h2><h3 id="锐速加速器"><a href="#锐速加速器" class="headerlink" title="锐速加速器"></a>锐速加速器</h3><p>笔者选择伦敦节点，速度是可以接受的。如果按照上述步骤可能你还是觉得不够快，那么你可以考虑安装加速器，注意OPENCV类型的服务器无法安装加速器，请购买KVM或者FULL类型服务器。具体步骤请网上搜索。</p>
@@ -863,7 +863,7 @@
     <content><![CDATA[<h2 id="Java和智能合约的交互"><a href="#Java和智能合约的交互" class="headerlink" title="Java和智能合约的交互"></a>Java和智能合约的交互</h2><h3 id="web3j"><a href="#web3j" class="headerlink" title="web3j"></a>web3j</h3><blockquote>
 <p>web3j is a lightweight, highly modular, reactive, type safe Java and Android library for working with Smart Contracts and integrating with clients (nodes) on the Ethereum network.<br>web3j 是一个轻量级、模块化、响应式的Java 和 android 库，可以用来和智能合约以及以太坊节点进行交互。</p>
 </blockquote>
-<p><img src="/img/web3j_network.png" alt="web3j架构图"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/web3j_network.png" alt="web3j架构图"></p>
 <a id="more"></a>
 <p>&emsp;<br>下边根据官方教程讲解搭建一个java工程 (代码详见<a href="https://github.com/web3j/sample-project-gradle" target="_blank" rel="noopener">官方样例</a>)，并与智能合约进行交互：</p>
 <h3 id="Getting-started"><a href="#Getting-started" class="headerlink" title="Getting started"></a>Getting started</h3><p>&emsp;导入web3j 包</p>
@@ -1402,10 +1402,10 @@
 <a id="more"></a>
 
 <h2 id="Azkaban插件实现原理"><a href="#Azkaban插件实现原理" class="headerlink" title="Azkaban插件实现原理"></a>Azkaban插件实现原理</h2><p>&emsp;Azkaban的hadoop相关作业插件类都是继承自JavaProcessJob类，JavaProcessJob类本质上是一个独立的Java进程，进程内调用Client客户端执行hadoop相关作业。示意图如下： \</p>
-<p><img src="/images/plugin.png" alt="plugin"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" alt="plugin"></p>
 <p>所有的插件类型都要实现run方法和cancel方法。</p>
 <h2 id="基于HiveServer2-的插件实现"><a href="#基于HiveServer2-的插件实现" class="headerlink" title="基于HiveServer2 的插件实现"></a>基于HiveServer2 的插件实现</h2><p>这里看下关于hiveServer的一张老图：</p>
-<p><img src="/images/hiveServer.png" alt="HiveServer架构图"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png" alt="HiveServer架构图"></p>
 <p>&emsp;&emsp;仔细研究Azkaban的Hive插件的代码，可以知道，Azkaban是通过Hive Client来提交Hive作业的，也就是图中的CLI方式。这种方式的问题还是挺多的，由于直接绕过了HiveServer2，所以不支持高并发和安全认证，存在很多隐患。<br>&emsp;&emsp;所以有必要开发基于HiveServer2的Azkaban插件。<br>&emsp;&emsp;Azakaban的实现已经在文章<a href="https://duvalcc.github.io/Azkaban-Learning/2017/01/11/" target="_blank" rel="noopener">《Azkaban Learning》</a>中有简单介绍，其实可以简单模仿HadoopJava类型作业的插件实现，这里不作过多的介绍。</p>
 <p>&emsp;&emsp;HiveServer2提交作业其实是通过JDBC方式来提交的，那我们来看下HiveServer2都提供了哪些api：</p>
 <ol>
