@@ -274,7 +274,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.9k</span>
+              <span>3.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -298,65 +298,83 @@
 </blockquote>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/web3j_network.png" alt="web3j架构图"></p>
 <a id="more"></a>
-<p>&emsp;<br>下边根据官方教程讲解搭建一个java工程 (代码详见<a href="https://github.com/web3j/sample-project-gradle" target="_blank" rel="noopener">官方样例</a>)，并与智能合约进行交互：</p>
-<h3 id="Getting-started"><a href="#Getting-started" class="headerlink" title="Getting started"></a>Getting started</h3><p>&emsp;导入web3j 包</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.web3j<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p> <br>下边根据官方教程讲解搭建一个java工程 (代码详见<a href="https://github.com/web3j/sample-project-gradle" target="_blank" rel="noopener">官方样例</a>)，并与智能合约进行交互：</p>
+<h3 id="Getting-started"><a href="#Getting-started" class="headerlink" title="Getting started"></a>Getting started</h3><p> 导入web3j 包</p>
+<figure class="highlight xml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.web3j<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
 
-<h3 id="启动以太坊节点"><a href="#启动以太坊节点" class="headerlink" title="启动以太坊节点"></a>启动以太坊节点</h3><p>&emsp;启动私链节点可以 参考前文<a href="https://duvalcc.github.io/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E7%A7%81%E9%93%BE%E6%90%AD%E5%BB%BA%E6%95%99%E7%A8%8B/2018/02/11/" target="_blank" rel="noopener">《以太坊私链搭建教程》</a> 。如果使用infura服务可跳过此步骤。</p>
+<h3 id="启动以太坊节点"><a href="#启动以太坊节点" class="headerlink" title="启动以太坊节点"></a>启动以太坊节点</h3><p> 启动私链节点可以 参考前文<a href="https://duvalcc.github.io/%E4%BB%A5%E5%A4%AA%E5%9D%8A%E7%A7%81%E9%93%BE%E6%90%AD%E5%BB%BA%E6%95%99%E7%A8%8B/2018/02/11/" target="_blank" rel="noopener">《以太坊私链搭建教程》</a> 。如果使用infura服务可跳过此步骤。</p>
 <h3 id="与以太坊节点交互"><a href="#与以太坊节点交互" class="headerlink" title="与以太坊节点交互"></a>与以太坊节点交互</h3><ul>
 <li>构建web3j实例</li>
 </ul>
-<p>&emsp;使用私链节点</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Web3j web3j = Web3j.build(<span class="keyword">new</span> HttpService(<span class="string">"http://192.168.xxx.xxx:8545"</span>));</span><br></pre></td></tr></table></figure>
+<p> 使用私链节点</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Web3j web3j = Web3j.build(<span class="keyword">new</span> HttpService(<span class="string">"http://192.168.xxx.xxx:8545"</span>));</span><br></pre></td></tr></tbody></table></figure>
 
-<p>&emsp;当然也可以使用Infura提供的云节点服务，那样子就不用启动以太坊私链节点了。只需要在代码里这样使用：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Web3j web3 = Web3j.build(<span class="keyword">new</span> InfuraHttpService(<span class="string">"https://ropsten.infura.io/your-token"</span>));</span><br></pre></td></tr></table></figure>
-<p>&emsp;Infura需要申请访问token，移步官网申请：<a href="https://infura.io/" target="_blank" rel="noopener">https://infura.io/</a></p>
+<p> 当然也可以使用Infura提供的云节点服务，那样子就不用启动以太坊私链节点了。只需要在代码里这样使用：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Web3j web3 = Web3j.build(<span class="keyword">new</span> InfuraHttpService(<span class="string">"https://ropsten.infura.io/your-token"</span>));</span><br></pre></td></tr></tbody></table></figure>
+<p> Infura需要申请访问token，移步官网申请：<a href="https://infura.io/" target="_blank" rel="noopener">https://infura.io/</a></p>
 <ul>
 <li>构建凭据</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// <span class="doctag">FIXME:</span> Generate a new wallet file using the web3j command line tools https://docs.web3j.io/command_line.html</span></span><br><span class="line"></span><br><span class="line">Credentials credentials = WalletUtils.loadCredentials(<span class="string">"&lt;password&gt;"</span>,<span class="string">"/path/to/&lt;walletfile&gt;"</span>);</span><br></pre></td></tr></table></figure>
-<p>&emsp; password是你的以太坊帐号密码，如果是私链节点，walletfile可以在数据目录（data/keystore/）下找到。</p>
-<p>&emsp; 另外也可以直接用私钥构建凭据:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Credentials credentials &#x3D; Credentials.create(&quot;92a9470c8597ce44c5fd901363541c0c41e341d2c1fe719e6bf20f2557axxxxx&quot;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// <span class="doctag">FIXME:</span> Generate a new wallet file using the web3j command line tools https://docs.web3j.io/command_line.html</span></span><br><span class="line"></span><br><span class="line">Credentials credentials = WalletUtils.loadCredentials(<span class="string">"&lt;password&gt;"</span>,<span class="string">"/path/to/&lt;walletfile&gt;"</span>);</span><br></pre></td></tr></tbody></table></figure>
+<p>  password是你的以太坊帐号密码，如果是私链节点，walletfile可以在数据目录（data/keystore/）下找到。</p>
+<p>  另外也可以直接用私钥构建凭据:</p>
+<figure class="highlight plain"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Credentials credentials = Credentials.create("92a9470c8597ce44c5fd901363541c0c41e341d2c1fe719e6bf20f2557axxxxx");</span><br></pre></td></tr></tbody></table></figure>
 
 <ul>
 <li>发起交易</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TransactionReceipt transferReceipt = Transfer.sendFunds(web3j, credentials,<span class="string">"0xe80fbabee07b259fe36a950ef384abf401806eef"</span>,BigDecimal.ONE, Convert.Unit.WEI).send();</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TransactionReceipt transferReceipt = Transfer.sendFunds(web3j, credentials,<span class="string">"0xe80fbabee07b259fe36a950ef384abf401806eef"</span>,BigDecimal.ONE, Convert.Unit.WEI).send();</span><br></pre></td></tr></tbody></table></figure>
 
 <ul>
 <li>合约部署</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Greeter contract = Greeter.deploy(</span><br><span class="line">                web3j, credentials,</span><br><span class="line">                ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,</span><br><span class="line">                <span class="string">"Hello blockchain world!"</span>).send();</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Greeter contract = Greeter.deploy(</span><br><span class="line">                web3j, credentials,</span><br><span class="line">                ManagedTransaction.GAS_PRICE, Contract.GAS_LIMIT,</span><br><span class="line">                <span class="string">"Hello blockchain world!"</span>).send();</span><br></pre></td></tr></tbody></table></figure>
 
 <ul>
 <li>调用合约</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TransactionReceipt transactionReceipt = contract.newGreeting(<span class="string">"Well hello again"</span>).send();</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TransactionReceipt transactionReceipt = contract.newGreeting(<span class="string">"Well hello again"</span>).send();</span><br></pre></td></tr></tbody></table></figure>
 
 <ul>
 <li>监听Event</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (Greeter.ModifiedEventResponse event : contract.getModifiedEvents(transactionReceipt)) &#123;</span><br><span class="line">            log.info(<span class="string">"Modify event fired, previous value: "</span> + event.oldGreeting</span><br><span class="line">                    + <span class="string">", new value: "</span> + event.newGreeting);</span><br><span class="line">            log.info(<span class="string">"Indexed event previous value: "</span> + Numeric.toHexString(event.oldGreetingIdx)</span><br><span class="line">                    + <span class="string">", new value: "</span> + Numeric.toHexString(event.newGreetingIdx));</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (Greeter.ModifiedEventResponse event : contract.getModifiedEvents(transactionReceipt)) {</span><br><span class="line">            log.info(<span class="string">"Modify event fired, previous value: "</span> + event.oldGreeting</span><br><span class="line">                    + <span class="string">", new value: "</span> + event.newGreeting);</span><br><span class="line">            log.info(<span class="string">"Indexed event previous value: "</span> + Numeric.toHexString(event.oldGreetingIdx)</span><br><span class="line">                    + <span class="string">", new value: "</span> + Numeric.toHexString(event.newGreetingIdx));</span><br><span class="line">        }</span><br></pre></td></tr></tbody></table></figure>
 
-<h3 id="编译合约包装代码"><a href="#编译合约包装代码" class="headerlink" title="编译合约包装代码"></a>编译合约包装代码</h3><p>&emsp;从官方样例我们可以看到，java代码和智能合约的交互是通过rpc调用来实现的。那在实际开发中，智能合约采用solidity语言开发，如何从智能合约代码生成相对应的rpc包装代码呢？<br>&emsp;这里用到两个工具<a href="https://github.com/web3j/web3j/releases" target="_blank" rel="noopener">web3j</a>和<a href="https://github.com/ethereum/solidity/releases" target="_blank" rel="noopener">solc</a> 。官方仓库都提供编译好的工具，直接下载即可使用，自行源码编译容易踩坑，不建议。<br>&emsp;编译包装代码分为两步：</p>
+<h3 id="编译合约包装代码"><a href="#编译合约包装代码" class="headerlink" title="编译合约包装代码"></a>编译合约包装代码</h3><p> 从官方样例我们可以看到，java代码和智能合约的交互是通过rpc调用来实现的。那在实际开发中，智能合约采用solidity语言开发，如何从智能合约代码生成相对应的rpc包装代码呢？<br> 这里用到两个工具<a href="https://github.com/web3j/web3j/releases" target="_blank" rel="noopener">web3j</a>和<a href="https://github.com/ethereum/solidity/releases" target="_blank" rel="noopener">solc</a> 。官方仓库都提供编译好的工具，直接下载即可使用，自行源码编译容易踩坑，不建议。<br> 编译包装代码分为两步：</p>
 <ul>
 <li>用solc编译合约代码获得 bin 和 abi</li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ solc &lt;contract&gt;.sol --bin --abi --optimize -o &lt;output-dir&gt;/</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ solc &lt;contract&gt;.sol --bin --abi --optimize -o &lt;output-dir&gt;/</span><br></pre></td></tr></tbody></table></figure>
 
 <ul>
 <li>用web3j编译bin和abi 获得包装代码</li>
 </ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">web3j solidity generate /path/to/&lt;smart-contract&gt;.bin /path/to/&lt;smart-contract&gt;.abi -o /path/to/src/main/java -p com.your.organisation.name</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">web3j solidity generate /path/to/&lt;smart-contract&gt;.bin /path/to/&lt;smart-contract&gt;.abi -o /path/to/src/main/java -p com.your.organisation.name</span><br></pre></td></tr></tbody></table></figure>
 
-<p>&emsp;另外如果你使用的truffle框架，那么可以利用项目build目录下的json文件，简化生成包装代码的步骤，如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /path/to/your/web3j/java/project</span><br><span class="line">$ web3j truffle generate /path/to/&lt;truffle-smart-contract-output&gt;.json -o /path/to/src/main/java -p com.your.organisation.name</span><br></pre></td></tr></table></figure>
-<p>&emsp;</p>
-<p><strong>参考资料：</strong><br>&emsp;[1]web3j 仓库 <a href="https://github.com/web3j/web3j" target="_blank" rel="noopener">https://github.com/web3j/web3j</a><br>&emsp;[2]infura使用教程：<a href="https://docs.web3j.io/infura.html" target="_blank" rel="noopener">https://docs.web3j.io/infura.html</a><br>&emsp;[3]官方样例 <a href="https://github.com/web3j/sample-project-gradle" target="_blank" rel="noopener">https://github.com/web3j/sample-project-gradle</a></p>
+<p> 另外如果你使用的truffle框架，那么可以利用项目build目录下的json文件，简化生成包装代码的步骤，如下：</p>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /path/to/your/web3j/java/project</span><br><span class="line">$ web3j truffle generate /path/to/&lt;truffle-smart-contract-output&gt;.json -o /path/to/src/main/java -p com.your.organisation.name</span><br></pre></td></tr></tbody></table></figure>
+<p> </p>
+<p><strong>参考资料：</strong><br> [1]web3j 仓库 <a href="https://github.com/web3j/web3j" target="_blank" rel="noopener">https://github.com/web3j/web3j</a><br> [2]infura使用教程：<a href="https://docs.web3j.io/infura.html" target="_blank" rel="noopener">https://docs.web3j.io/infura.html</a><br> [3]官方样例 <a href="https://github.com/web3j/sample-project-gradle" target="_blank" rel="noopener">https://github.com/web3j/sample-project-gradle</a></p>
 <p><strong>打赏地址：</strong><br>ETH:0x93e9702adEB8Ad040d3da639201edFF5A6AB05Db<br>LTC:LMwzPbysYmvJzkZimcJhX6Yd74WrPxqykT</p>
-
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
     </div>
 
     
@@ -584,7 +602,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">206k</span>
+    <span title="站点总字数">205k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>

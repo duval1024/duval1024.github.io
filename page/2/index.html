@@ -254,7 +254,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
+              <span>3k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -357,7 +357,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.4k</span>
+              <span>3.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -461,7 +461,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>4.3k</span>
+              <span>4.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -564,7 +564,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>9.5k</span>
+              <span>9.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -672,7 +672,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>4.2k</span>
+              <span>4.3k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -775,7 +775,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>6.5k</span>
+              <span>6.6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -878,7 +878,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.9k</span>
+              <span>4.3k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -981,7 +981,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.3k</span>
+              <span>3.6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -1085,14 +1085,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.7k</span>
+              <span>3k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
+              <span>3 分钟</span>
             </span>
 
         </div>
@@ -1105,8 +1105,8 @@
 
       
           <p>关键字：HiveSever2、Azkaban插件</p>
-<p>&emsp;&emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。</p>
-<h2 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h2><p>&emsp;&emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer. <br>&emsp;&emsp;HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。下边是Hive官网原文描述：</p>
+<p>  最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。</p>
+<h2 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h2><p>  先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer. <br>  HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。下边是Hive官网原文描述：</p>
 <blockquote>
 <p>HiveServer is an optional service that allows a remote client to submit requests to Hive, using a variety of programming languages, and retrieve results. HiveServer is built on Apache ThriftTM (<a href="http://thrift.apache.org/" target="_blank" rel="noopener">http://thrift.apache.org/</a>), therefore it is sometimes called the Thrift server although this can lead to confusion because a newer service named HiveServer2 is also built on Thrift. Since the introduction of HiveServer2, HiveServer has also been called HiveServer1. \</p>
 </blockquote>
@@ -1199,14 +1199,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>18k</span>
+              <span>17k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>16 分钟</span>
+              <span>15 分钟</span>
             </span>
 
         </div>
@@ -1395,7 +1395,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">206k</span>
+    <span title="站点总字数">205k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
