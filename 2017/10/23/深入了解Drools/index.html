@@ -14,6 +14,7 @@
 
 <link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
 <link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
   <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
   <script src="/lib/pace/pace.min.js"></script>
 
@@ -30,7 +31,7 @@
     copycode: {"enable":true,"show_result":true,"style":null},
     back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
     bookmark: {"enable":false,"color":"#222","save":"auto"},
-    fancybox: false,
+    fancybox: true,
     mediumzoom: false,
     lazyload: false,
     pangu: false,
@@ -357,7 +358,7 @@
 <ul>
 <li>lock-on-active <strong>一个组里的多条规则都可以设置这个标志，当某条规则修改了fact，不会引起其他规则重新触发。需要跟group配合使用。</strong>（网上很多人都对这个属性理解有误）详情仔细研读官方说明：</li>
 </ul>
-<figure class="highlight plain"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Whenever a ruleflow-group becomes active or an agenda-group receives the focus, any rule within that group that has lock-on-active set to true will not be activated any more; irrespective of the origin of the update, the activation of a matching rule is discarded. This is a stronger version of no-loop, because the change could now be caused not only by the rule itself. It’s ideal for calculation rules where you have a number of rules that modify a fact and you don’t want any rule re-matching and firing again. Only when the ruleflow-group is no longer active or the agenda-group loses the focus those rules with lock-on-active set to true become eligible again for their activations to be placed onto the agenda.</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight pgsql"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Whenever a ruleflow-<span class="keyword">group</span> becomes active <span class="keyword">or</span> an agenda-<span class="keyword">group</span> receives the focus, <span class="keyword">any</span> <span class="keyword">rule</span> <span class="keyword">within</span> that <span class="keyword">group</span> that has <span class="keyword">lock</span>-<span class="keyword">on</span>-active <span class="keyword">set</span> <span class="keyword">to</span> <span class="keyword">true</span> will <span class="keyword">not</span> be activated <span class="keyword">any</span> more; irrespective <span class="keyword">of</span> the origin <span class="keyword">of</span> the <span class="keyword">update</span>, the activation <span class="keyword">of</span> a matching <span class="keyword">rule</span> <span class="keyword">is</span> discarded. This <span class="keyword">is</span> a stronger <span class="keyword">version</span> <span class="keyword">of</span> <span class="keyword">no</span>-<span class="keyword">loop</span>, because the change could now be caused <span class="keyword">not</span> <span class="keyword">only</span> <span class="keyword">by</span> the <span class="keyword">rule</span> itself. It’s ideal <span class="keyword">for</span> calculation rules <span class="keyword">where</span> you have a number <span class="keyword">of</span> rules that modify a fact <span class="keyword">and</span> you don’t want <span class="keyword">any</span> <span class="keyword">rule</span> re-matching <span class="keyword">and</span> firing again. <span class="keyword">Only</span> <span class="keyword">when</span> the ruleflow-<span class="keyword">group</span> <span class="keyword">is</span> <span class="keyword">no</span> longer active <span class="keyword">or</span> the agenda-<span class="keyword">group</span> loses the focus those rules <span class="keyword">with</span> <span class="keyword">lock</span>-<span class="keyword">on</span>-active <span class="keyword">set</span> <span class="keyword">to</span> <span class="keyword">true</span> become eligible again <span class="keyword">for</span> their activations <span class="keyword">to</span> be placed onto the agenda.</span><br></pre></td></tr></tbody></table></figure>
 
 <ul>
 <li><p>宏函数 insert、update、retract 都可以对fact进行操作，这些动作有可能导致rule的重新匹配</p>
@@ -654,6 +655,8 @@
 
   
   <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
   <script src="/lib/velocity/velocity.min.js"></script>
   <script src="/lib/velocity/velocity.ui.min.js"></script>
 
