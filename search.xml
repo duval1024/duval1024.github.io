@@ -4,6 +4,8 @@
     <title>G1垃圾收集器入门</title>
     <url>/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/</url>
     <content><![CDATA[<p>本文翻译自<a href="https://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html" target="_blank" rel="noopener">《Getting Started with the G1 Garbage Collector》</a></p>
+<a id="more"></a>
+
 <h2 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h2><h3 id="本文目的"><a href="#本文目的" class="headerlink" title="本文目的"></a>本文目的</h3><p>本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。</p>
 <h3 id="预估阅读时间"><a href="#预估阅读时间" class="headerlink" title="预估阅读时间"></a>预估阅读时间</h3><p>大概1小时</p>
 <h3 id="本文简介"><a href="#本文简介" class="headerlink" title="本文简介"></a>本文简介</h3><p>本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部分：</p>
