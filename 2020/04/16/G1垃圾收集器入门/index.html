@@ -49,12 +49,12 @@
   };
 </script>
 
-  <meta name="description" content="本文翻译自《Getting Started with the G1 Garbage Collector》 概览本文目的本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。">
+  <meta name="description" content="本文翻译自《Getting Started with the G1 Garbage Collector》 概览本文目的本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。 预估阅读时间大概1小时 本文简介本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部">
 <meta property="og:type" content="article">
 <meta property="og:title" content="G1垃圾收集器入门">
 <meta property="og:url" content="https://duval1024.github.io/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="本文翻译自《Getting Started with the G1 Garbage Collector》 概览本文目的本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。">
+<meta property="og:description" content="本文翻译自《Getting Started with the G1 Garbage Collector》 概览本文目的本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。 预估阅读时间大概1小时 本文简介本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/HotspotJVM%E6%9E%B6%E6%9E%84.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/JVM%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6.png">
@@ -73,11 +73,12 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FA%20Young%20GC%20in%20G1.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FEnd%20of%20Young%20GC%20with%20G1.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FInitial%20Marking%20Phase.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FConcurrent%20Marking%20Phase.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FRemark%20Phase.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FCopying%3ACleanup%20Phase.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FAfter%20Copying%3ACleanup%20Phase.png">
 <meta property="article:published_time" content="2020-04-16T07:18:41.000Z">
-<meta property="article:modified_time" content="2020-04-19T14:50:45.616Z">
+<meta property="article:modified_time" content="2020-04-19T15:27:55.706Z">
 <meta property="article:author" content="Duval">
 <meta property="article:tag" content="垃圾回收器">
 <meta name="twitter:card" content="summary">
@@ -297,7 +298,7 @@
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
+              <span>13 分钟</span>
             </span>
 
         </div>
@@ -311,7 +312,6 @@
       
         <p>本文翻译自<a href="https://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html" target="_blank" rel="noopener">《Getting Started with the G1 Garbage Collector》</a></p>
 <h2 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h2><h3 id="本文目的"><a href="#本文目的" class="headerlink" title="本文目的"></a>本文目的</h3><p>本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。</p>
-<a id="more"></a>
 <h3 id="预估阅读时间"><a href="#预估阅读时间" class="headerlink" title="预估阅读时间"></a>预估阅读时间</h3><p>大概1小时</p>
 <h3 id="本文简介"><a href="#本文简介" class="headerlink" title="本文简介"></a>本文简介</h3><p>本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部分：</p>
 <ul>
@@ -366,7 +366,7 @@
 <li>数据库在一个小时内完成的查询数量。</li>
 </ul>
 <p>长暂停对这些关注吞吐量的应用来说是可以接受的。因为高吞吐量应用关注的一段时间内的基准测试，而快速响应并不是一个考量点。</p>
-<h2 id="G1垃圾收集器"><a href="#G1垃圾收集器" class="headerlink" title="G1垃圾收集器"></a>G1垃圾收集器</h2><p>G1垃圾收集器（Garbage-First collector）是一个面向多核心大内存机器的服务端收集器。<br>它能以大概率满足垃圾收集暂停时间目标，同时实现高吞吐量。Oracle JDK7u4以及更新版本完全支持G1垃圾收集器。G1收集器专为以下应用设计：</p>
+<h2 id="G1垃圾收集器"><a href="#G1垃圾收集器" class="headerlink" title="G1垃圾收集器"></a>G1垃圾收集器</h2><p>G1垃圾收集器（Garbage-First collector）是一个面向多核心大内存机器的服务端收集器。<br>它能以大概率满足垃圾收集暂停时间目标，同时实现高吞吐量。Oracle JDK 7u4以及更新版本完全支持G1垃圾收集器。G1收集器专门为以下应用而设计：</p>
 <ul>
 <li>能够像CMS垃圾收集器一样和应用线程并发执行；</li>
 <li>无需较长的GC停顿时间来实现内存压缩；</li>
@@ -374,20 +374,20 @@
 <li>不希望牺牲大量的吞吐量性能；</li>
 <li>不需要更大的Java堆空间。</li>
 </ul>
-<p>G1计划作为CMS的长期替代。G1和CMS相比，两者的许多不同点使得G1成为更好的解决方案。其中一个不同就是G1是一个能内存压缩的收集器。G1的内存压缩使得能够完全避免使用细粒度的空闲列表来分配内存，而是依靠regions。这大大简化了垃圾收集器，并大大消除了潜在的碎片化问题。另外，G1比CMS提供了更可预测的垃圾手机暂停，允许用户指定希望的延迟时间。</p>
+<p>G1计划作为CMS的长期替代。G1和CMS相比，两者的许多不同点使得G1成为更好的解决方案。其中一个不同就是G1是一个能内存压缩的收集器。G1的内存压缩使得能够完全避免使用细粒度的空闲列表来分配内存，而是依靠regions。这大大简化了垃圾收集器，并大大消除了潜在的碎片化问题。另外，G1比CMS提供了更可预测的垃圾收集暂停时间，允许用户指定期望的暂停时间。</p>
 <h3 id="G1-回收过程概览"><a href="#G1-回收过程概览" class="headerlink" title="G1 回收过程概览"></a>G1 回收过程概览</h3><p>以前的垃圾收集器（serial, parallel, CMS）都将堆划分为特定内存大小的3部分：年轻代、老年代和永久代。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Hotspot%20Heap%20Structure.png" alt="Hotspot Heap Structure"></p>
 <p>所有的内存对象最终都会位于这三部分之一。<br>但G1垃圾收集器采用了不同的方法。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/G1%20Heap%20Allocation.png" alt="G1 Heap Allocation"></p>
-<p>堆内存被划分成一系列相同大小的连续虚拟内存的区块（region）。这些区块都被分配了和以前收集器相同的角色（比如 eden, survivor, old），但相同角色的区块的数量不是确定的。这使得堆内存使用上有非常大的灵活性。</p>
+<p>堆内存被划分成一系列相同大小的连续虚拟内存的区块（region）。这些区块都被分配了和以前收集器相同的角色（比如 eden, survivor, old），但相同角色的区块数量不是确定的。这使得堆内存使用上有非常大的灵活性。</p>
 <p>当执行垃圾收集的时候，G1的工作方式和CMS类似。G1执行并发全局标记阶段来决定堆内的存活对象。当标记阶段完成后，G1知道哪些区块（regions）是最空闲的。它会优先收集这些区块，因为回收它们通常可以获得大量空闲内存。这也是为什么这种垃圾回收方式被称为Garbage-First。顾名思义，G1在它的收集和压缩阶段关注堆里最有可能包含大量可回收对象（也就是垃圾）的区域。G1使用一个暂停预测模型来满足用户指定的暂停时间目标，并根据指定的暂停时间目标来选择回收的区块数量。</p>
-<p>被G1标记为可回收的区块会通过疏散方法来进行垃圾回收。G1从一个或者多个区块中复制对象到堆内的一个区块，在这个过程中会同时压缩和释放内存空间。为了减少停顿时间和提高吞吐量，这个疏散过程在多核心机器上是并发执行的。因此，在每一个垃圾收集过程中，G1在用户指定的停顿时间目标内不断地减少内存碎片。这超过了以往的两种方法的功能。CMS（Concurrent Mark Sweep）垃圾收集器没有进行内存压缩。ParallelOld垃圾回收器只进行全堆的压缩，会导致非常长的暂停时间。</p>
+<p>被G1标记为可回收的区块会通过疏散方法(evacuation)来进行垃圾回收。G1从一个或者多个区块中复制对象到堆内的一个区块，在这个过程中会同时压缩和释放内存空间。为了减少停顿时间和提高吞吐量，这个疏散过程在多核心机器上是并发执行的。因此，在每一个垃圾收集过程中，G1在用户指定的停顿时间目标内不断地减少内存碎片。这超过了以往的两种回收方法的功能。CMS（Concurrent Mark Sweep）垃圾收集器没有进行内存压缩。ParallelOld垃圾回收器只进行全堆的压缩，会导致非常长的暂停时间。</p>
 <p>但值得注意的是G1不是一个实时收集器。它会以较高概率但并不绝对保证满足用户设定的停顿时间。G1根据之前回收的数据来评估在用户指定的停顿时间内能够回收多少个区块（region）。</p>
 <p><strong>注意：</strong> G1既有并行阶段（与应用线程并行运行，例如：refinement, marking, cleanup等过程），也有并发阶段（多线程并发运行，例如stop the world）。Full GC依然是单线程的，但是如果调优到位的话，你的应用应该避免Full GC发生。</p>
-<h3 id="G1占用空间"><a href="#G1占用空间" class="headerlink" title="G1占用空间"></a>G1占用空间</h3><p>如果你从ParallelOldGC或者CMS迁移到G1，你会发现JVM占用的进程空间更大。这主要是因为一些记录数据，例如 RSets和CSets（Remembered Sets and Collection Sets）。</p>
-<p>RSets跟踪了那些指向这个区块的对象。在堆中，每一个Region都对应着一个RSet。RSet使得区块能够并行且独立地进行回收。全部RSet占用的空间不超过5%。</p>
-<p>CSets记录了在一次GC中将会被回收的区块集合。CSet里的所有存活的数据在GC中都会被压缩（复制整理）。这些区块角色可以是Eden, survivor, 或者 old generation。CSets占用的空间不会超过1%。</p>
-<h3 id="G1使用案例建议"><a href="#G1使用案例建议" class="headerlink" title="G1使用案例建议"></a>G1使用案例建议</h3><p>G1首要关注的是在一个大堆中以有限的GC延迟运行用户应用。这意味着堆的大小应该在6GB或者更大，而且稳定且预期的暂停时间应该在0.5s以内。</p>
+<h3 id="G1占用空间"><a href="#G1占用空间" class="headerlink" title="G1占用空间"></a>G1占用空间</h3><p>如果你从ParallelOldGC或者CMS迁移到G1，你会发现JVM占用的进程空间更大。这主要是因为一些记录数据（”accounting” data structures），例如 RSets和CSets（Remembered Sets and Collection Sets）。</p>
+<p>RSets跟踪了那些指向这个区块的对象。在堆中，每一个Region都对应着一个RSet。RSets使得区块能够并行且独立地进行回收。全部RSets占用的空间不超过5%。</p>
+<p>CSets记录了在一次GC中将会被回收的区块集合。CSets里的所有存活的数据在GC中都会被压缩（复制整理）。这些区块角色可以是Eden, survivor, 或者 old generation。全部CSets占用的空间不会超过1%。</p>
+<h3 id="G1使用案例建议"><a href="#G1使用案例建议" class="headerlink" title="G1使用案例建议"></a>G1使用案例建议</h3><p>G1首要关注的是在一个大堆中以有限的GC延迟运行用户应用。这意味着堆的大小应该在6GB或者更大，而且稳定运行的期望暂停时间应该在0.5s以内。</p>
 <p>现在已经运行在CMS 或者 ParallelOldGC 垃圾收集器上的应用，如果考虑切换到G1，应当考虑是否满足以下一个或者多个条件：</p>
 <ul>
 <li>Full GC持续时间太长太频繁；</li>
@@ -401,7 +401,7 @@
 <h3 id="如何进行Young-GC"><a href="#如何进行Young-GC" class="headerlink" title="如何进行Young GC"></a>如何进行Young GC</h3><p>下图中，新生代以绿色表示，而老年代用蓝色表示。当你的应用运行了一段时间后，CMS的运行情况大概如图所示。对象分散在老年代的各个角落。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/How%20young%20GC%20Works.png" alt="How young GC works"></p>
 <p>在CMS回收过程中，老年代对象会原地回收。它们不会被移动到其他地方。堆空间在Full GC发生前不会被压缩。</p>
-<h3 id="年轻代收集过程"><a href="#年轻代收集过程" class="headerlink" title="年轻代收集过程"></a>年轻代收集过程</h3><p>存活对象会从Eden区和其中一个Suvivor区复制到另外一个Suvivor区域。所有的超过年代数阈值的较老对象都会被晋升到老年代中。</p>
+<h3 id="年轻代收集过程"><a href="#年轻代收集过程" class="headerlink" title="年轻代收集过程"></a>年轻代收集过程</h3><p>存活对象会从Eden区和其中一个Suvivor区复制到另外一个Suvivor区域。所有的超过老化阈值（aging threshold）的较老对象都会被晋升到老年代中。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Young%20Generration%20Collection.png" alt="Young Generration Collection"></p>
 <h3 id="年轻代收集之后"><a href="#年轻代收集之后" class="headerlink" title="年轻代收集之后"></a>年轻代收集之后</h3><p>年轻代收集结束后，Eden区和其中一个Survivor区会被清空。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/After%20Young%20GC.png" alt="After Young GC"></p>
 <p>刚被晋升的对象在图里以深蓝色标注。绿色标注的对象是那些在新生代收集中存活且没有被晋升到老年代的对象。</p>
@@ -412,22 +412,22 @@
 <li>并发标记会在应用运行过程中寻找存活对象；</li>
 <li>最后那些在并发标记中被漏掉的对象会在重新标记阶段被标记。</li>
 </ul>
-<h3 id="老年代收集过程-—-并发清除"><a href="#老年代收集过程-—-并发清除" class="headerlink" title="老年代收集过程 — 并发清除"></a>老年代收集过程 — 并发清除</h3><p>那些在之前的阶段中没有被标记的对象会被清楚掉。但在这个过程中并没有内存压缩。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Old%20Gen%20Collection%20---%20concurrent%20sweep.png" alt="Old Gen Collection - concurrent sweep"></p>
+<h3 id="老年代收集过程-—-并发清除"><a href="#老年代收集过程-—-并发清除" class="headerlink" title="老年代收集过程 — 并发清除"></a>老年代收集过程 — 并发清除</h3><p>那些在之前的阶段中没有被标记的对象会被清除掉。但在这个过程中并没有内存压缩。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Old%20Gen%20Collection%20---%20concurrent%20sweep.png" alt="Old Gen Collection - concurrent sweep"></p>
 <p><strong>注意：</strong> 未标记对象 == 死亡对象</p>
-<h3 id="老年代收集过程-—-并发清除之后"><a href="#老年代收集过程-—-并发清除之后" class="headerlink" title="老年代收集过程 — 并发清除之后"></a>老年代收集过程 — 并发清除之后</h3><p>在并发清除结束之后，大量的内存空念会被释放出来。此外，你还会注意到并没有发生内存压缩。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FOld%20Gen%20Collection%20-%20After%20Sweep.png" alt="Old Gen Collection - After Sweep.png"></p>
-<p>最后CMS垃圾收集器会进入重置阶段，然后等待下一次达到GC阈值。</p>
+<h3 id="老年代收集过程-—-并发清除之后"><a href="#老年代收集过程-—-并发清除之后" class="headerlink" title="老年代收集过程 — 并发清除之后"></a>老年代收集过程 — 并发清除之后</h3><p>在并发清除结束之后，大量的内存空间会被释放出来。此外，你还会注意到并没有发生内存压缩。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FOld%20Gen%20Collection%20-%20After%20Sweep.png" alt="Old Gen Collection - After Sweep.png"></p>
+<p>最后CMS垃圾收集器会进入重置阶段，然后等待下一次达到GC触发阈值。</p>
 <h2 id="G1垃圾收集器步骤分析"><a href="#G1垃圾收集器步骤分析" class="headerlink" title="G1垃圾收集器步骤分析"></a>G1垃圾收集器步骤分析</h2><h3 id="G1垃圾收集器步骤分析-1"><a href="#G1垃圾收集器步骤分析-1" class="headerlink" title="G1垃圾收集器步骤分析"></a>G1垃圾收集器步骤分析</h3><p>G1垃圾收集器使用了一种不同的方式去分配堆空间。下面各图会逐步介绍G1的各个步骤。</p>
 <h4 id="1-G1堆空间（G1-Heap-Structure）"><a href="#1-G1堆空间（G1-Heap-Structure）" class="headerlink" title="1.G1堆空间（G1 Heap Structure）"></a>1.G1堆空间（G1 Heap Structure）</h4><p>堆空间会被分割成许多相同大小的区块（regions）。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FG1%20Heap%20Structure.png" alt="G1 Heap Structure.png"></p>
 <p>区块大小在JVM启动之初就会决定。JVM通常会分配大小为1Mb到32Mb大小范围内的大约2000个区块。</p>
-<h4 id="2-G1堆空间分配（G1-Heap-Allocation）"><a href="#2-G1堆空间分配（G1-Heap-Allocation）" class="headerlink" title="2.G1堆空间分配（G1 Heap Allocation）"></a>2.G1堆空间分配（G1 Heap Allocation）</h4><p>实际上，这些区块会被划分为Eden、Survivor和Old Generation等逻辑区域。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FG1%20Heap%20Allocation.png" alt="G1 Heap Allocation.png"></p>
+<h4 id="2-G1堆空间分配（G1-Heap-Allocation）"><a href="#2-G1堆空间分配（G1-Heap-Allocation）" class="headerlink" title="2.G1堆空间分配（G1 Heap Allocation）"></a>2.G1堆空间分配（G1 Heap Allocation）</h4><p>实际上，这些区块会被分配为Eden、Survivor和Old Generation等逻辑区域。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FG1%20Heap%20Allocation.png" alt="G1 Heap Allocation.png"></p>
 <p>上图中不同颜色的区块表示的是不同的角色。存活的对象会从一个区块撤离到另一个区块。区块被设计为并发地进行收集，而不停止其他的应用线程。</p>
 <p>就像上图展示的，所有的区块都被分配为Eden、Suvivor和Old等角色。此外，还有第四种类型 – 大区块（Humongous regions）。这些大区块被设计为存放那些占用一半或者更大的区块大小的对象。他们被存放在若干个连续的区块中。最后一种类型的区块就是堆中还没使用的部分。</p>
 <p><strong>注意：</strong> 在写这篇文章的时候，大对象的回收还没被优化。因此，你应该尽量避免创建大对象。</p>
 <h4 id="3-G1的年轻代（Young-Generation-in-G1）"><a href="#3-G1的年轻代（Young-Generation-in-G1）" class="headerlink" title="3.G1的年轻代（Young Generation in G1）"></a>3.G1的年轻代（Young Generation in G1）</h4><p>堆空间被划分为大概2000个区块。区块的大小在1Mb~32Mb之间。蓝色的区块存放的是老年代对象，而绿色的区块存放着年轻代对象。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FYoung%20Generation%20in%20G1.png" alt="Young Generation in G1.png"></p>
 <p>值得注意的是，不像以前的垃圾收集器那样，G1里这些区块并不要求是连续的内存空间。</p>
-<h4 id="4-G1的一次-Young-GC（A-Young-GC-in-G1）"><a href="#4-G1的一次-Young-GC（A-Young-GC-in-G1）" class="headerlink" title="4.G1的一次 Young GC（A Young GC in G1）"></a>4.G1的一次 Young GC（A Young GC in G1）</h4><p>存活对象会被疏散（复制或者移动）到一个或者多个suvivor区块。如果对象超过了代数阈值，则会被晋升到老年代区块中。</p>
+<h4 id="4-G1的一次-Young-GC（A-Young-GC-in-G1）"><a href="#4-G1的一次-Young-GC（A-Young-GC-in-G1）" class="headerlink" title="4.G1的一次 Young GC（A Young GC in G1）"></a>4.G1的一次 Young GC（A Young GC in G1）</h4><p>存活对象会被疏散（复制或者移动）到一个或者多个suvivor区块。如果对象超过了老化阈值，则会被晋升到老年代区块中。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FA%20Young%20GC%20in%20G1.png" alt="A Young GC in G1.png"></p>
-<p>这个是一个stop the world (STW)的过程。这时候会为下一次Young GC计算Eden区和Suvivor区的大小。记录数据对计算</p>
+<p>这个是一个stop the world (STW)的过程。这时候会为下一次Young GC计算Eden区和Suvivor区的大小。</p>
 <p>这种方式可以非常容易地按照需要调整区块大小。</p>
 <h4 id="5-G1的Young-GC结束之后（End-of-a-Young-GC-with-G1）"><a href="#5-G1的Young-GC结束之后（End-of-a-Young-GC-with-G1）" class="headerlink" title="5.G1的Young GC结束之后（End of a Young GC with G1）"></a>5.G1的Young GC结束之后（End of a Young GC with G1）</h4><p>存活对象都被疏散到Suvivor区块或者Old区块。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FEnd%20of%20Young%20GC%20with%20G1.png" alt="End of Young GC with G1.png"></p>
@@ -470,7 +470,7 @@
 </tr>
 <tr>
 <td>(5)并发清理(stop the world and cocurrent)</td>
-<td>1)核算存活对象和完全空闲区块的记录数据（stop the world); 2)擦除RSets(stop the world); 3)重置空区块，并且添加进空闲区块列表（并发）。</td>
+<td>1)核算存活对象和完全空闲区块的记录数据（stop the world);   2)擦除RSets(stop the world);  3)重置空区块，并且添加进空闲区块列表（并发）。</td>
 </tr>
 <tr>
 <td>(6)复制(stop the world)</td>
@@ -481,8 +481,9 @@
 <h4 id="6-初始标记阶段（Initial-Marking-Phase）"><a href="#6-初始标记阶段（Initial-Marking-Phase）" class="headerlink" title="6.初始标记阶段（Initial Marking Phase）"></a>6.初始标记阶段（Initial Marking Phase）</h4><p>针对存活对象的初始标记在年轻代垃圾收集阶段已经完成。在GC日志中显示为GC pause (young)(inital-mark)。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FInitial%20Marking%20Phase.png" alt="Initial Marking Phase.png"></p>
 <h4 id="7-并发标记阶段（Concurrent-Marking-Phase）"><a href="#7-并发标记阶段（Concurrent-Marking-Phase）" class="headerlink" title="7.并发标记阶段（Concurrent Marking Phase）"></a>7.并发标记阶段（Concurrent Marking Phase）</h4><p>如果发现空区块(下图用”X”标记),他们会在重新标记阶段直接移除。此外，决定存活情况的记录信息也会被计算。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FConcurrent%20Marking%20Phase.png" alt="Concurrent Marking Phase.png"></p>
 <h4 id="8-重新标记阶段（Remark-Phase）"><a href="#8-重新标记阶段（Remark-Phase）" class="headerlink" title="8.重新标记阶段（Remark Phase）"></a>8.重新标记阶段（Remark Phase）</h4><p>空区块会被删除并且回收。所有区块现在都会计算存活情况。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FRemark%20Phase.png" alt="Remark Phase.png"></p>
-<h4 id="9-复制清理阶段（Copying-Cleanup-Phase）"><a href="#9-复制清理阶段（Copying-Cleanup-Phase）" class="headerlink" title="9.复制清理阶段（Copying/Cleanup Phase）"></a>9.复制清理阶段（Copying/Cleanup Phase）</h4><p>G1会选择存活对象最少的区块来进行回收，因为这些区块回收速度回最快。这些区块会在一次young GC中被同时回收。GC日志中这个过程显示为[GC pause (mixed)]。因此，年轻代和老年代会在同一时间进行回收。</p>
+<h4 id="9-复制清理阶段（Copying-Cleanup-Phase）"><a href="#9-复制清理阶段（Copying-Cleanup-Phase）" class="headerlink" title="9.复制清理阶段（Copying/Cleanup Phase）"></a>9.复制清理阶段（Copying/Cleanup Phase）</h4><p>G1会选择存活对象最少的区块来进行回收，因为这些区块回收速度会最快。这些区块会在一次young GC中被同时回收。GC日志中这个过程显示为[GC pause (mixed)]。因此，年轻代和老年代会在同一时间进行回收。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FCopying%3ACleanup%20Phase.png" alt="Copying:Cleanup Phase.png"></p>
 <h4 id="10-复制清理阶段之后（After-Copying-Cleanup-Phase）"><a href="#10-复制清理阶段之后（After-Copying-Cleanup-Phase）" class="headerlink" title="10.复制清理阶段之后（After Copying/Cleanup Phase）"></a>10.复制清理阶段之后（After Copying/Cleanup Phase）</h4><p>那些被选中的区块已经被收集并且压缩到了下图的深蓝色和深绿色的区块中。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FAfter%20Copying%3ACleanup%20Phase.png" alt="After Copying:Cleanup Phase.png"></p>
@@ -518,7 +519,7 @@
 <li>G1不会再遵循回收停顿目标。因此实际上，设置年轻代大小会禁用停顿目标；</li>
 <li>G1再也不能够按需要扩增或者收缩年轻代大小。因为大小已经被固定下来而不能做任何更改。</li>
 </ul>
-<h4 id="响应时间指标"><a href="#响应时间指标" class="headerlink" title="响应时间指标"></a><strong>响应时间指标</strong></h4><p>与其使用平均响应时间（ART)作为一个指标去设置XX:MaxGCPauseMillis=<N>，不如考虑设置一个值，使得90%或更多时间满足这个停顿目标。这意味着90%的用户发起请求后得到应答的时间不会超过这个目标。请记住，这个停顿时间只是一个目标，而不能保证总是能满足它。</p>
+<h4 id="响应时间指标"><a href="#响应时间指标" class="headerlink" title="响应时间指标"></a><strong>响应时间指标</strong></h4><p>与其使用平均响应时间（ART)作为一个指标去设置XX:MaxGCPauseMillis=N，不如考虑设置一个值，使得90%或更多时间满足这个停顿目标。这意味着90%的用户发起请求后得到应答的时间不会超过这个目标。请记住，这个停顿时间只是一个目标，而不能保证总是能满足它。</p>
 <h4 id="什么是疏散失败-Evacuation-Failure"><a href="#什么是疏散失败-Evacuation-Failure" class="headerlink" title="什么是疏散失败?(Evacuation Failure)"></a><strong>什么是疏散失败?(Evacuation Failure)</strong></h4><p>当JVM对幸存对象回收或者晋升对象的时候发生堆内存耗尽，会触发一次晋升失败。堆空间不能再扩增，因为它已经处于最大值。这个是通过参数XX:+PrintGCDetails控制在GC日志里输出，日志内容形如：<strong>to-space overflow</strong>。这个过程的代价非常昂贵！</p>
 <ul>
 <li><p>GC必须继续下去，所以必须得释放出空间；</p>
@@ -528,7 +529,7 @@
 <li><p>对CSet中的RSets的区块的任何更新都需要重建；（这句太难翻译了，原文是：Any updates to RSets of regions in the CSet have to be regenerated.）</p>
 </li>
 <li><p>所有这些步骤都是代价昂贵。</p>
-<h4 id="如何避免疏散失败"><a href="#如何避免疏散失败" class="headerlink" title="如何避免疏散失败"></a><strong>如何避免疏散失败</strong></h4><p>为了避免疏散失败，考虑一下选项。</p>
+<h4 id="如何避免疏散失败"><a href="#如何避免疏散失败" class="headerlink" title="如何避免疏散失败"></a><strong>如何避免疏散失败</strong></h4><p>为了避免疏散失败，考虑以下选项。</p>
 </li>
 <li><p>扩大堆空间</p>
 <ul>
@@ -941,7 +942,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">222k</span>
+    <span title="站点总字数">223k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
