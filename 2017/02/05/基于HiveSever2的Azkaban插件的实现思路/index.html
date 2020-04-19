@@ -49,12 +49,12 @@
   };
 </script>
 
-  <meta name="description" content="关键字：HiveSever2、Azkaban插件   最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2  先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive">
+  <meta name="description" content="关键字：HiveSever2、Azkaban插件 &amp;emsp;&amp;emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2&amp;emsp;&amp;emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于HiveSever2的Azkaban插件的实现思路">
 <meta property="og:url" content="https://duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="关键字：HiveSever2、Azkaban插件   最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2  先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive">
+<meta property="og:description" content="关键字：HiveSever2、Azkaban插件 &amp;emsp;&amp;emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2&amp;emsp;&amp;emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png">
@@ -274,14 +274,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3k</span>
+              <span>2.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>3 分钟</span>
+              <span>2 分钟</span>
             </span>
 
         </div>
@@ -294,8 +294,8 @@
 
       
         <p>关键字：HiveSever2、Azkaban插件</p>
-<p>  最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。</p>
-<h2 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h2><p>  先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer. <br>  HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。下边是Hive官网原文描述：</p>
+<p>&emsp;&emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。</p>
+<h2 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h2><p>&emsp;&emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer. <br>&emsp;&emsp;HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。下边是Hive官网原文描述：</p>
 <blockquote>
 <p>HiveServer is an optional service that allows a remote client to submit requests to Hive, using a variety of programming languages, and retrieve results. HiveServer is built on Apache ThriftTM (<a href="http://thrift.apache.org/" target="_blank" rel="noopener">http://thrift.apache.org/</a>), therefore it is sometimes called the Thrift server although this can lead to confusion because a newer service named HiveServer2 is also built on Thrift. Since the introduction of HiveServer2, HiveServer has also been called HiveServer1. \</p>
 </blockquote>
@@ -307,13 +307,13 @@
 </blockquote>
 <a id="more"></a>
 
-<h2 id="Azkaban插件实现原理"><a href="#Azkaban插件实现原理" class="headerlink" title="Azkaban插件实现原理"></a>Azkaban插件实现原理</h2><p> Azkaban的hadoop相关作业插件类都是继承自JavaProcessJob类，JavaProcessJob类本质上是一个独立的Java进程，进程内调用Client客户端执行hadoop相关作业。示意图如下： \</p>
+<h2 id="Azkaban插件实现原理"><a href="#Azkaban插件实现原理" class="headerlink" title="Azkaban插件实现原理"></a>Azkaban插件实现原理</h2><p>&emsp;Azkaban的hadoop相关作业插件类都是继承自JavaProcessJob类，JavaProcessJob类本质上是一个独立的Java进程，进程内调用Client客户端执行hadoop相关作业。示意图如下： \</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" alt="plugin"></p>
 <p>所有的插件类型都要实现run方法和cancel方法。</p>
 <h2 id="基于HiveServer2-的插件实现"><a href="#基于HiveServer2-的插件实现" class="headerlink" title="基于HiveServer2 的插件实现"></a>基于HiveServer2 的插件实现</h2><p>这里看下关于hiveServer的一张老图：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png" alt="HiveServer架构图"></p>
-<p>  仔细研究Azkaban的Hive插件的代码，可以知道，Azkaban是通过Hive Client来提交Hive作业的，也就是图中的CLI方式。这种方式的问题还是挺多的，由于直接绕过了HiveServer2，所以不支持高并发和安全认证，存在很多隐患。<br>  所以有必要开发基于HiveServer2的Azkaban插件。<br>  Azakaban的实现已经在文章<a href="https://duvalcc.github.io/Azkaban-Learning/2017/01/11/" target="_blank" rel="noopener">《Azkaban Learning》</a>中有简单介绍，其实可以简单模仿HadoopJava类型作业的插件实现，这里不作过多的介绍。</p>
-<p>  HiveServer2提交作业其实是通过JDBC方式来提交的，那我们来看下HiveServer2都提供了哪些api：</p>
+<p>&emsp;&emsp;仔细研究Azkaban的Hive插件的代码，可以知道，Azkaban是通过Hive Client来提交Hive作业的，也就是图中的CLI方式。这种方式的问题还是挺多的，由于直接绕过了HiveServer2，所以不支持高并发和安全认证，存在很多隐患。<br>&emsp;&emsp;所以有必要开发基于HiveServer2的Azkaban插件。<br>&emsp;&emsp;Azakaban的实现已经在文章<a href="https://duvalcc.github.io/Azkaban-Learning/2017/01/11/" target="_blank" rel="noopener">《Azkaban Learning》</a>中有简单介绍，其实可以简单模仿HadoopJava类型作业的插件实现，这里不作过多的介绍。</p>
+<p>&emsp;&emsp;HiveServer2提交作业其实是通过JDBC方式来提交的，那我们来看下HiveServer2都提供了哪些api：</p>
 <ol>
 <li><p>同步提交HQL<br>ThriftCLIServiceClient.executeStatement(SessionHandle sessionHandle, String statement, Map&lt;String, String&gt; confOverlay) throws HiveSQLException</p>
 </li>
@@ -328,32 +328,14 @@
 <li><p>关闭句柄<br>ThriftCLIServiceClient.closeOperation(OperationHandle opHandle) throws HiveSQLException <br>每执行完一条sql都要关闭句柄</p>
 </li>
 </ol>
-<p>  通过这些丰富的api其实已经完全足够实现这个插件。具体的实现代码不便于公开，欢迎私聊咨询。</p>
+<p>&emsp; 通过这些丰富的api其实已经完全足够实现这个插件。具体的实现代码不便于公开，欢迎私聊咨询。</p>
 <p>参考资料：</p>
 <ol>
 <li><a href="https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Overview" target="_blank" rel="noopener">https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Overview</a></li>
 <li><a href="https://hive.apache.org/" target="_blank" rel="noopener">https://hive.apache.org/</a></li>
 <li><a href="https://github.com/azkaban/azkaban-plugins" target="_blank" rel="noopener">https://github.com/azkaban/azkaban-plugins</a></li>
 </ol>
-<script>
-        document.querySelectorAll('.github-emoji')
-          .forEach(el => {
-            if (!el.dataset.src) { return; }
-            const img = document.createElement('img');
-            img.style = 'display:none !important;';
-            img.src = el.dataset.src;
-            img.addEventListener('error', () => {
-              img.remove();
-              el.style.color = 'inherit';
-              el.style.backgroundImage = 'none';
-              el.style.background = 'none';
-            });
-            img.addEventListener('load', () => {
-              img.remove();
-            });
-            document.body.appendChild(img);
-          });
-      </script>
+
     </div>
 
     
@@ -503,7 +485,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -512,7 +494,7 @@
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-count">30</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -579,12 +561,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">209k</span>
+    <span title="站点总字数">222k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">3:10</span>
+    <span title="站点阅读时长">3:22</span>
 
 </div>
 

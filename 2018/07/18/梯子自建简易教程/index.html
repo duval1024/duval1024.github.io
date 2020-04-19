@@ -276,7 +276,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.3k</span>
+              <span>2.9k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -312,10 +312,10 @@
 <h3 id="登录服务器"><a href="#登录服务器" class="headerlink" title="登录服务器"></a>登录服务器</h3><p>现在要登录你的服务器，Windows下使用<a href="https://www.netsarang.com/products/xsh_overview.html" target="_blank" rel="noopener">xshell</a>来登录。官网下载不了xshell的话，随便找个腾讯管家应用应该都能下载到。打开xshell，新建会话，填进服务器IP地址，端口号默认22，保存，另外登录用户名默认是root用户，密码是上边保存的服务器密码，然后回车一下，就登陆到服务器了。（密码不会显示出来的）</p>
 <p>具体移步别人的教程吧，不详细说了。<a href="https://blog.csdn.net/py_tamir/article/details/78802378" target="_blank" rel="noopener">https://blog.csdn.net/py_tamir/article/details/78802378</a></p>
 <h3 id="安装梯子"><a href="#安装梯子" class="headerlink" title="安装梯子"></a>安装梯子</h3><p>只需要执行下边这条命令</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">wget --no-check-certificate https://freed.ga/github/shadowsocksR.sh; bash shadowsocksR.sh</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">wget --no-check-certificate https://freed.ga/github/shadowsocksR.sh; bash shadowsocksR.sh</span><br></pre></td></tr></table></figure>
 <p>ps:20180803有朋友反映这条脚本已经失效，请自行安装shadowsocks</p>
 <p>注：如果提示没有安装wget，请执行:</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install wget</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install wget</span><br></pre></td></tr></table></figure>
 <p>如果还有其他报错请联系<a href="duval1024@gmail.com">我</a>更新。</p>
 <p>然后根据提示，自己填自己喜欢的SSR密码或者端口就行，协议什么的都按照默认的，直接回车下一步。</p>
 <p>最后出现这图就代表完成了。保存好图里的配置。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E6%95%99%E7%A8%8B/%E7%BB%93%E6%9D%9F.png" alt="结束"></p>
@@ -327,42 +327,24 @@
 <h2 id="More"><a href="#More" class="headerlink" title="More"></a>More</h2><h3 id="锐速加速器"><a href="#锐速加速器" class="headerlink" title="锐速加速器"></a>锐速加速器</h3><p>笔者选择伦敦节点，速度是可以接受的。如果按照上述步骤可能你还是觉得不够快，那么你可以考虑安装加速器，注意OPENCV类型的服务器无法安装加速器，请购买KVM或者FULL类型服务器。具体步骤请网上搜索。</p>
 <h3 id="多账户配置"><a href="#多账户配置" class="headerlink" title="多账户配置"></a>多账户配置</h3><p>如果这个VPN你想和多人共享，那就需要配置多套账号，然后分配一些给别人使用。倘若你买个高配的服务器，几个人使用，费用分摊开也会是非常划算的事情。下面教下怎么进行多账号配置。</p>
 <p>修改配置：</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/shadowsocks.json</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/shadowsocks.json</span><br></pre></td></tr></table></figure>
 
 <p>配置参考：</p>
-<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">{</span><br><span class="line">    <span class="attr">"server"</span>: <span class="string">"0.0.0.0"</span>,</span><br><span class="line">    <span class="attr">"server_ipv6"</span>: <span class="string">"::"</span>,</span><br><span class="line">    <span class="attr">"local_address"</span>: <span class="string">"127.0.0.1"</span>,</span><br><span class="line">    <span class="attr">"local_port"</span>: <span class="number">1081</span>,</span><br><span class="line">    <span class="attr">"timeout"</span>: <span class="number">120</span>,</span><br><span class="line">    <span class="attr">"udp_timeout"</span>: <span class="number">60</span>,</span><br><span class="line">    <span class="attr">"method"</span>: <span class="string">"chacha20"</span>,</span><br><span class="line">    <span class="attr">"protocol"</span>: <span class="string">"auth_sha1_v4"</span>,</span><br><span class="line">    <span class="attr">"protocol_param"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"obfs"</span>: <span class="string">"tls1.2_ticket_auth"</span>,</span><br><span class="line">    <span class="attr">"obfs_param"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"dns_ipv6"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"connect_verbose_info"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"redirect"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"fast_open"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"port_password"</span>:{</span><br><span class="line">        <span class="attr">"8989"</span>: <span class="string">"test123"</span>,</span><br><span class="line">        <span class="attr">"9898"</span>: <span class="string">"test1234"</span></span><br><span class="line">     }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"server"</span>: <span class="string">"0.0.0.0"</span>,</span><br><span class="line">    <span class="attr">"server_ipv6"</span>: <span class="string">"::"</span>,</span><br><span class="line">    <span class="attr">"local_address"</span>: <span class="string">"127.0.0.1"</span>,</span><br><span class="line">    <span class="attr">"local_port"</span>: <span class="number">1081</span>,</span><br><span class="line">    <span class="attr">"timeout"</span>: <span class="number">120</span>,</span><br><span class="line">    <span class="attr">"udp_timeout"</span>: <span class="number">60</span>,</span><br><span class="line">    <span class="attr">"method"</span>: <span class="string">"chacha20"</span>,</span><br><span class="line">    <span class="attr">"protocol"</span>: <span class="string">"auth_sha1_v4"</span>,</span><br><span class="line">    <span class="attr">"protocol_param"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"obfs"</span>: <span class="string">"tls1.2_ticket_auth"</span>,</span><br><span class="line">    <span class="attr">"obfs_param"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"dns_ipv6"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"connect_verbose_info"</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">"redirect"</span>: <span class="string">""</span>,</span><br><span class="line">    <span class="attr">"fast_open"</span>: <span class="literal">false</span>,</span><br><span class="line">    <span class="attr">"port_password"</span>:&#123;</span><br><span class="line">        <span class="attr">"8989"</span>: <span class="string">"test123"</span>,</span><br><span class="line">        <span class="attr">"9898"</span>: <span class="string">"test1234"</span></span><br><span class="line">     &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>port_password 字段就是填端口和密码的，定义多少行就有多少个账号。</p>
 <p>修改完配置后，需要重启服务，先找出进程id：</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@duvalcc ~]<span class="comment"># ps -ef|grep shadowsocks</span></span><br><span class="line">root     12236 12206  0 01:00 pts/0    00:00:01 /usr/bin/python /usr/bin/ssserver -c /etc/shadowsocks.json start</span><br><span class="line">root     12363 12307  0 03:56 pts/1    00:00:00 grep --color=auto shadowsocks</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@duvalcc ~]<span class="comment"># ps -ef|grep shadowsocks</span></span><br><span class="line">root     12236 12206  0 01:00 pts/0    00:00:01 /usr/bin/python /usr/bin/ssserver -c /etc/shadowsocks.json start</span><br><span class="line">root     12363 12307  0 03:56 pts/1    00:00:00 grep --color=auto shadowsocks</span><br></pre></td></tr></table></figure>
 <p>从上图可以看到pid=12336，根据你获取到的pid，杀掉这个进程：</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">kill</span> 12236</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">kill</span> 12236</span><br></pre></td></tr></table></figure>
 
 <p>然后重启服务：</p>
-<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup ssserver -c /etc/shadowsocks.json start &amp;</span><br></pre></td></tr></tbody></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup ssserver -c /etc/shadowsocks.json start &amp;</span><br></pre></td></tr></table></figure>
 
 <p>然后多账户就配置完毕了。</p>
 <p>你只要把IP地址、端口和密码对（port_password）、加密方式 分享给别人，就可以一起共享这个VPN。</p>
 <p><strong>免责声明</strong></p>
 <p>本文本着交流学习目的而编写，请勿用于商业或非法用途。<br>另外，使用VPN不受法律保护，如造成损失，本人概不负责。</p>
-<script>
-        document.querySelectorAll('.github-emoji')
-          .forEach(el => {
-            if (!el.dataset.src) { return; }
-            const img = document.createElement('img');
-            img.style = 'display:none !important;';
-            img.src = el.dataset.src;
-            img.addEventListener('error', () => {
-              img.remove();
-              el.style.color = 'inherit';
-              el.style.backgroundImage = 'none';
-              el.style.background = 'none';
-            });
-            img.addEventListener('load', () => {
-              img.remove();
-            });
-            document.body.appendChild(img);
-          });
-      </script>
+
     </div>
 
     
@@ -510,7 +492,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -519,7 +501,7 @@
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-count">30</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -586,12 +568,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">209k</span>
+    <span title="站点总字数">222k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">3:10</span>
+    <span title="站点阅读时长">3:22</span>
 
 </div>
 

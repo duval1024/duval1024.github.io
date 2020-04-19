@@ -49,29 +49,53 @@
   };
 </script>
 
-  <meta name="description" content="学习技术，记录生活">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Duval">
-<meta property="og:url" content="https://duval1024.github.io/index.html">
+  <meta name="description" content="原文链接 概览本文目的本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。 预估阅读时间大概1小时 本文简介本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部分：  通过介绍垃圾收集器以及性能来了解JVM虚拟机； 逐步分析G1垃圾收集器的每一个过程； 回">
+<meta property="og:type" content="article">
+<meta property="og:title" content="G1垃圾收集器入门">
+<meta property="og:url" content="https://duval1024.github.io/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="学习技术，记录生活">
+<meta property="og:description" content="原文链接 概览本文目的本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。 预估阅读时间大概1小时 本文简介本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部分：  通过介绍垃圾收集器以及性能来了解JVM虚拟机； 逐步分析G1垃圾收集器的每一个过程； 回">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/HotspotJVM%E6%9E%B6%E6%9E%84.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/JVM%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Hotspot%20Heap%20Structure.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/G1%20Heap%20Allocation.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/CMS%20Heap%20Structure.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/How%20young%20GC%20Works.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Young%20Generration%20Collection.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/After%20Young%20GC.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Old%20gen%20collection%20in%20CMS.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/Old%20Gen%20Collection%20---%20concurrent%20sweep.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FOld%20Gen%20Collection%20-%20After%20Sweep.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FG1%20Heap%20Structure.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FG1%20Heap%20Allocation.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FYoung%20Generation%20in%20G1.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FA%20Young%20GC%20in%20G1.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FEnd%20of%20Young%20GC%20with%20G1.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FInitial%20Marking%20Phase.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FRemark%20Phase.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FCopying%3ACleanup%20Phase.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FAfter%20Copying%3ACleanup%20Phase.png">
+<meta property="article:published_time" content="2020-04-16T07:18:41.000Z">
+<meta property="article:modified_time" content="2020-04-19T14:25:05.522Z">
 <meta property="article:author" content="Duval">
+<meta property="article:tag" content="垃圾回收器">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/HotspotJVM%E6%9E%B6%E6%9E%84.png">
 
-<link rel="canonical" href="https://duval1024.github.io/">
+<link rel="canonical" href="https://duval1024.github.io/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome: true,
-    isPost: false
+    isHome: false,
+    isPost: true
   };
 </script>
 
-  <title>Duval</title>
+  <title>G1垃圾收集器入门 | Duval</title>
   
 
 
@@ -198,10 +222,10 @@
             
 
   <div class="posts-expand">
-        
+      
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -215,8 +239,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" class="post-title-link" itemprop="url">G1垃圾收集器入门</a>
+          G1垃圾收集器入门
         </h1>
 
         <div class="post-meta">
@@ -249,6 +272,18 @@
               <span class="leancloud-visitors-count"></span>
             </span>
   
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
   <br>
             <span class="post-meta-item" title="本文字数">
               <span class="post-meta-item-icon">
@@ -274,7 +309,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p><a href="https://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html" target="_blank" rel="noopener">原文链接</a></p>
+        <p><a href="https://www.oracle.com/webfolder/technetwork/tutorials/obe/java/G1GettingStarted/index.html" target="_blank" rel="noopener">原文链接</a></p>
 <h2 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h2><h3 id="本文目的"><a href="#本文目的" class="headerlink" title="本文目的"></a>本文目的</h3><p>本教程介绍了如何使用G1垃圾收集器以及如何在Hostspot虚拟机中使用它。你可以学习到G1垃圾收集器的内部运行机制、切换到使用G1垃圾回收器的命令行关键参数以及打印GC日志的选项参数。</p>
 <h3 id="预估阅读时间"><a href="#预估阅读时间" class="headerlink" title="预估阅读时间"></a>预估阅读时间</h3><p>大概1小时</p>
 <h3 id="本文简介"><a href="#本文简介" class="headerlink" title="本文简介"></a>本文简介</h3><p>本教程详细介绍了Java语言的G1垃圾收集器。主要内容分为五部分：</p>
@@ -685,951 +720,75 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 <li>QA: Krishnanjani Chitta</li>
 </ul>
 
-      
     </div>
 
     
     
     
+      
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Duval
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://duval1024.github.io/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" title="G1垃圾收集器入门">https://duval1024.github.io/2020/04/16/G1垃圾收集器入门/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 垃圾回收器</a>
+          </div>
 
         
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/02/11/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/11/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/" class="post-title-link" itemprop="url">生产问题--Java进程CPU占用过高</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-02-11 21:49:14" itemprop="dateCreated datePublished" datetime="2020-02-11T21:49:14+08:00">2020-02-11</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98/" itemprop="url" rel="index">
-                    <span itemprop="name">生产问题</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2020/02/11/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/" class="post-meta-item leancloud_visitors" data-flag-title="生产问题--Java进程CPU占用过高" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.7k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>从一个实际生产问题出发，教你如何排查Java进程CPU占用过高。</p>
-          <!--noindex-->
-          
-          
-            <div class="out-img-topic">
-              <img src=https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E5%85%AC%E5%85%B1%E7%94%A8%E5%9B%BE/bugfix%E9%A6%96%E9%A1%B5%E5%9B%BE.png class="img-topic" />
-            </div>
-          
-            <div class="post-button">
-              <a class="btn" href="/2020/02/11/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/11/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/" rel="prev" title="生产问题--Java进程CPU占用过高">
+      <i class="fa fa-chevron-left"></i> 生产问题--Java进程CPU占用过高
+    </a></div>
+      <div class="post-nav-item"></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/01/05/%E6%B7%B1%E5%85%A5JAVA%E8%AF%AD%E8%A8%80%E2%80%94CAS%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/01/05/%E6%B7%B1%E5%85%A5JAVA%E8%AF%AD%E8%A8%80%E2%80%94CAS%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90/" class="post-title-link" itemprop="url">深入JAVA语言—CAS原理剖析</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-01-05 18:16:26" itemprop="dateCreated datePublished" datetime="2020-01-05T18:16:26+08:00">2020-01-05</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/JAVA/" itemprop="url" rel="index">
-                    <span itemprop="name">JAVA</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2020/01/05/%E6%B7%B1%E5%85%A5JAVA%E8%AF%AD%E8%A8%80%E2%80%94CAS%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90/" class="post-meta-item leancloud_visitors" data-flag-title="深入JAVA语言—CAS原理剖析" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.9k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>JAVA的并发编程包（java.util.concurrent）中的源码大量用到CAS操作。<br>CAS操作使得JAVA可以低成本地实现并发操作。<br>本文将深入探讨CAS操作的实现原理。</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2020/01/05/%E6%B7%B1%E5%85%A5JAVA%E8%AF%AD%E8%A8%80%E2%80%94CAS%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/01/01/2020%E5%A4%A7%E4%BA%8B%E8%AE%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/01/01/2020%E5%A4%A7%E4%BA%8B%E8%AE%B0/" class="post-title-link" itemprop="url">2020年大事记</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-01-01 18:16:26" itemprop="dateCreated datePublished" datetime="2020-01-01T18:16:26+08:00">2020-01-01</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%8E%86%E5%8F%B2/" itemprop="url" rel="index">
-                    <span itemprop="name">历史</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2020/01/01/2020%E5%A4%A7%E4%BA%8B%E8%AE%B0/" class="post-meta-item leancloud_visitors" data-flag-title="2020年大事记" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1.3k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>有时候会对时间的消逝感到恐惧，比方说：<br>非典疫情已经过去17年；<br>汶川地震已经过去12年；<br>英国脱欧公投已经过去4年；<br>……</p>
-<p>很多历历在目的事情，恍惚间已经过去很久很久。希望借此文，牢记那些发生在2020年的事情。</p>
-          <!--noindex-->
-          
-          
-            <div class="out-img-topic">
-              <img src=https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/2020%E5%A4%A7%E4%BA%8B/2020-2.jpg class="img-topic" />
-            </div>
-          
-            <div class="post-button">
-              <a class="btn" href="/2020/01/01/2020%E5%A4%A7%E4%BA%8B%E8%AE%B0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" class="post-title-link" itemprop="url">Spring源码分析3-对Bean循环依赖的处理</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-10-12 15:47:01" itemprop="dateCreated datePublished" datetime="2018-10-12T15:47:01+08:00">2018-10-12</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" class="post-meta-item leancloud_visitors" data-flag-title="Spring源码分析3-对Bean循环依赖的处理" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>18k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>17 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>本文主要是分析Spring如何处理循环依赖，分别从构造器注入循环依赖、setter注入循环依赖、prototype范围的循环依赖三个方面进行详细分析。</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/" class="post-title-link" itemprop="url">梯子自建</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-07-18 13:16:01" itemprop="dateCreated datePublished" datetime="2018-07-18T13:16:01+08:00">2018-07-18</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index">
-                    <span itemprop="name">工具</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/" class="post-meta-item leancloud_visitors" data-flag-title="梯子自建" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.9k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>3 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>技术圈子的人离不开谷歌搜索，然而在国内因为GreatWall的缘故，用不了谷歌，这时候就需要梯子（V.P.N)。网上有很多免费的VPN，比如lantern等。免费的虽然不用花钱，但是不稳定，说不定哪天就停了。后来笔者也去购买一些商用的梯子，像云梯、红杏、影梭等等。收费梯子胜在稳定，而且比较快，还提供多条各国线路选择，但是容易跑路，毕竟国内形势一严峻，这些梯子哗啦啦全跑路了。</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2018/07/18/%E6%A2%AF%E5%AD%90%E8%87%AA%E5%BB%BA%E7%AE%80%E6%98%93%E6%95%99%E7%A8%8B/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" class="post-title-link" itemprop="url">Spring源码分析1-RESTfulWeb启动过程</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-07-12 11:47:01" itemprop="dateCreated datePublished" datetime="2018-07-12T11:47:01+08:00">2018-07-12</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" class="post-meta-item leancloud_visitors" data-flag-title="Spring源码分析1-RESTfulWeb启动过程" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>22k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>20 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Spring框架用的很多了，但是没有深入研究过原理。因为对原理不了解，如果遇到复杂的应用情景，需要修改Spring源码；或者是奇怪的报错，需要通过源码来进行分析的时候，就只能束手无策了。所以现在开始正式阅读Spring源码，这是系列的第一篇，希望能坚持下去。</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" class="post-title-link" itemprop="url">Spring源码分析2-上下文刷新过程分析</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-07-12 11:47:01" itemprop="dateCreated datePublished" datetime="2018-07-12T11:47:01+08:00">2018-07-12</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring/" itemprop="url" rel="index">
-                    <span itemprop="name">Spring</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" class="post-meta-item leancloud_visitors" data-flag-title="Spring源码分析2-上下文刷新过程分析" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>74k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1:08</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>上一篇《<a href="https://duvalcc.github.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">Spring源码分析1-RESTfulWeb启动过程</a>》已经对RESTfulWeb的启动过程进行了概览。其中跳过了比较复杂的上下文刷新过程，这篇文章将对上下文刷新过程进行详细分析。请看！</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/06/15/%E6%90%BA%E7%A8%8BApollo%E7%B2%BE%E5%BD%A9%E6%91%98%E8%A6%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/06/15/%E6%90%BA%E7%A8%8BApollo%E7%B2%BE%E5%BD%A9%E6%91%98%E8%A6%81/" class="post-title-link" itemprop="url">携程Apollo精彩摘要</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-06-15 18:30:53" itemprop="dateCreated datePublished" datetime="2018-06-15T18:30:53+08:00">2018-06-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/06/15/%E6%90%BA%E7%A8%8BApollo%E7%B2%BE%E5%BD%A9%E6%91%98%E8%A6%81/" class="post-meta-item leancloud_visitors" data-flag-title="携程Apollo精彩摘要" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>9.4k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>9 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>&emsp;Apollo非常适合作为初学者第一个通读源码学习的分布式中间件产品。最近在读携程阿波罗的源码，看到这份源码写得非常漂亮。代码的模块划分、对象封装、内部数据分层等等地方，都有很多精妙优雅的设计。这里作一些简单记录，以后编码的时候可以借鉴一下。</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2018/06/15/%E6%90%BA%E7%A8%8BApollo%E7%B2%BE%E5%BD%A9%E6%91%98%E8%A6%81/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2018/06/08/maven%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/06/08/maven%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0/" class="post-title-link" itemprop="url">maven深入学习</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-06-08 15:47:53" itemprop="dateCreated datePublished" datetime="2018-06-08T15:47:53+08:00">2018-06-08</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%9E%84%E5%BB%BA%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index">
-                    <span itemprop="name">构建工具</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/06/08/maven%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0/" class="post-meta-item leancloud_visitors" data-flag-title="maven深入学习" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>6.9k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>6 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="maven深入学习"><a href="#maven深入学习" class="headerlink" title="maven深入学习"></a>maven深入学习</h1><p>maven在工作中接触得比较多，但是很多细节的东西并没有认真研究，现在抽时间搞清楚下。这篇文章主要是探讨maven POM里边的细节。</p>
-          <!--noindex-->
-          
-          
-            <div class="post-button">
-              <a class="btn" href="/2018/06/08/maven%E6%B7%B1%E5%85%A5%E5%AD%A6%E4%B9%A0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
 
 
   </article>
@@ -1639,15 +798,10 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 
   </div>
 
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
-  </nav>
-
-
 
           </div>
           
+    <div class="comments" id="valine-comments"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -1694,6 +848,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概览"><span class="nav-number">1.</span> <span class="nav-text">概览</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#本文目的"><span class="nav-number">1.1.</span> <span class="nav-text">本文目的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#预估阅读时间"><span class="nav-number">1.2.</span> <span class="nav-text">预估阅读时间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#本文简介"><span class="nav-number">1.3.</span> <span class="nav-text">本文简介</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#软硬件配置要求"><span class="nav-number">2.</span> <span class="nav-text">软硬件配置要求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#前提"><span class="nav-number">3.</span> <span class="nav-text">前提</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java以及JVM技术"><span class="nav-number">4.</span> <span class="nav-text">Java以及JVM技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Java概览"><span class="nav-number">4.1.</span> <span class="nav-text">Java概览</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Java运行时版本"><span class="nav-number">4.1.1.</span> <span class="nav-text">Java运行时版本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Java编程语言"><span class="nav-number">4.1.2.</span> <span class="nav-text">Java编程语言</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Java开发工具包"><span class="nav-number">4.1.3.</span> <span class="nav-text">Java开发工具包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Java虚拟机"><span class="nav-number">4.1.4.</span> <span class="nav-text">Java虚拟机</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#探究JVM架构"><span class="nav-number">4.2.</span> <span class="nav-text">探究JVM架构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Hotspot架构"><span class="nav-number">4.2.1.</span> <span class="nav-text">Hotspot架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HotSpot核心组件"><span class="nav-number">4.2.2.</span> <span class="nav-text">HotSpot核心组件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#性能指标"><span class="nav-number">4.3.</span> <span class="nav-text">性能指标</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#响应时间"><span class="nav-number">4.3.1.</span> <span class="nav-text">响应时间</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#吞吐量"><span class="nav-number">4.3.2.</span> <span class="nav-text">吞吐量</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#G1垃圾收集器"><span class="nav-number">5.</span> <span class="nav-text">G1垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#G1-回收过程概览"><span class="nav-number">5.1.</span> <span class="nav-text">G1 回收过程概览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#G1占用空间"><span class="nav-number">5.2.</span> <span class="nav-text">G1占用空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#G1使用案例建议"><span class="nav-number">5.3.</span> <span class="nav-text">G1使用案例建议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#回顾CMS垃圾收集器"><span class="nav-number">6.</span> <span class="nav-text">回顾CMS垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#堆内存结构"><span class="nav-number">6.1.</span> <span class="nav-text">堆内存结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何进行Young-GC"><span class="nav-number">6.2.</span> <span class="nav-text">如何进行Young GC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#年轻代收集过程"><span class="nav-number">6.3.</span> <span class="nav-text">年轻代收集过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#年轻代收集之后"><span class="nav-number">6.4.</span> <span class="nav-text">年轻代收集之后</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CMS的老年代收集过程"><span class="nav-number">6.5.</span> <span class="nav-text">CMS的老年代收集过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#老年代收集过程-—-并发清除"><span class="nav-number">6.6.</span> <span class="nav-text">老年代收集过程 — 并发清除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#老年代收集过程-—-并发清除之后"><span class="nav-number">6.7.</span> <span class="nav-text">老年代收集过程 — 并发清除之后</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#G1垃圾收集器步骤分析"><span class="nav-number">7.</span> <span class="nav-text">G1垃圾收集器步骤分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#G1垃圾收集器步骤分析-1"><span class="nav-number">7.1.</span> <span class="nav-text">G1垃圾收集器步骤分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-G1堆空间（G1-Heap-Structure）"><span class="nav-number">7.1.1.</span> <span class="nav-text">1.G1堆空间（G1 Heap Structure）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-G1堆空间分配（G1-Heap-Allocation）"><span class="nav-number">7.1.2.</span> <span class="nav-text">2.G1堆空间分配（G1 Heap Allocation）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-G1的年轻代（Young-Generation-in-G1）"><span class="nav-number">7.1.3.</span> <span class="nav-text">3.G1的年轻代（Young Generation in G1）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-G1的一次-Young-GC（A-Young-GC-in-G1）"><span class="nav-number">7.1.4.</span> <span class="nav-text">4.G1的一次 Young GC（A Young GC in G1）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-G1的Young-GC结束之后（End-of-a-Young-GC-with-G1）"><span class="nav-number">7.1.5.</span> <span class="nav-text">5.G1的Young GC结束之后（End of a Young GC with G1）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#G1垃圾收集的阶段-并发标记周期阶段"><span class="nav-number">7.2.</span> <span class="nav-text">G1垃圾收集的阶段 - 并发标记周期阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#逐步分析G1的老年代收集过程"><span class="nav-number">7.3.</span> <span class="nav-text">逐步分析G1的老年代收集过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#6-初始标记阶段（Initial-Marking-Phase）"><span class="nav-number">7.3.1.</span> <span class="nav-text">6.初始标记阶段（Initial Marking Phase）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-并发标记阶段（Concurrent-Marking-Phase）"><span class="nav-number">7.3.2.</span> <span class="nav-text">7.并发标记阶段（Concurrent Marking Phase）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8-重新标记阶段（Remark-Phase）"><span class="nav-number">7.3.3.</span> <span class="nav-text">8.重新标记阶段（Remark Phase）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9-复制清理阶段（Copying-Cleanup-Phase）"><span class="nav-number">7.3.4.</span> <span class="nav-text">9.复制清理阶段（Copying&#x2F;Cleanup Phase）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10-复制清理阶段之后（After-Copying-Cleanup-Phase）"><span class="nav-number">7.3.5.</span> <span class="nav-text">10.复制清理阶段之后（After Copying&#x2F;Cleanup Phase）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#老年代回收过程总结"><span class="nav-number">7.4.</span> <span class="nav-text">老年代回收过程总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#命令行参数可选项以及最佳时间"><span class="nav-number">8.</span> <span class="nav-text">命令行参数可选项以及最佳时间</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#命令行基本参数"><span class="nav-number">8.1.</span> <span class="nav-text">命令行基本参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#命令行关键参数"><span class="nav-number">8.2.</span> <span class="nav-text">命令行关键参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最佳实践"><span class="nav-number">8.3.</span> <span class="nav-text">最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#不要设置年轻代的大小"><span class="nav-number">8.3.1.</span> <span class="nav-text">不要设置年轻代的大小</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#响应时间指标"><span class="nav-number">8.3.2.</span> <span class="nav-text">响应时间指标</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#什么是疏散失败-Evacuation-Failure"><span class="nav-number">8.3.3.</span> <span class="nav-text">什么是疏散失败?(Evacuation Failure)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#如何避免疏散失败"><span class="nav-number">8.3.4.</span> <span class="nav-text">如何避免疏散失败</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#G1完整的GC开关"><span class="nav-number">8.3.5.</span> <span class="nav-text">G1完整的GC开关</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#G1的GC日志"><span class="nav-number">9.</span> <span class="nav-text">G1的GC日志</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#设置日志详情"><span class="nav-number">9.1.</span> <span class="nav-text">设置日志详情</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#指定时间参数"><span class="nav-number">9.2.</span> <span class="nav-text">指定时间参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#认识G1日志"><span class="nav-number">9.3.</span> <span class="nav-text">认识G1日志</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#G1日志术语"><span class="nav-number">9.4.</span> <span class="nav-text">G1日志术语</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">10.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#资源"><span class="nav-number">10.1.</span> <span class="nav-text">资源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#鸣谢"><span class="nav-number">10.2.</span> <span class="nav-text">鸣谢</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
