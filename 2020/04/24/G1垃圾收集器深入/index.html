@@ -49,25 +49,23 @@
   };
 </script>
 
-  <meta name="description" content="关键字：HiveSever2、Azkaban插件 &amp;emsp;&amp;emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2&amp;emsp;&amp;emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服">
+  <meta name="description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="基于HiveSever2的Azkaban插件的实现思路">
-<meta property="og:url" content="https://duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/index.html">
+<meta property="og:title" content="G1垃圾收集器深入">
+<meta property="og:url" content="https://duval1024.github.io/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="关键字：HiveSever2、Azkaban插件 &amp;emsp;&amp;emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。 HiveServer &amp; HiveSever2&amp;emsp;&amp;emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服">
+<meta property="og:description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png">
-<meta property="article:published_time" content="2017-02-05T05:45:03.000Z">
-<meta property="article:modified_time" content="2020-02-05T07:20:26.705Z">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg">
+<meta property="article:published_time" content="2020-04-24T03:42:24.000Z">
+<meta property="article:modified_time" content="2020-04-24T08:12:00.949Z">
 <meta property="article:author" content="Duval">
-<meta property="article:tag" content="Azkaban插件">
-<meta property="article:tag" content="Hive">
-<meta property="article:tag" content="HiveServer2">
+<meta property="article:tag" content="垃圾回收器">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
 
-<link rel="canonical" href="https://duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/">
+<link rel="canonical" href="https://duval1024.github.io/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
 
 <script id="page-configurations">
@@ -79,7 +77,7 @@
   };
 </script>
 
-  <title>基于HiveSever2的Azkaban插件的实现思路 | Duval</title>
+  <title>G1垃圾收集器深入 | Duval</title>
   
 
 
@@ -210,7 +208,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/">
+    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -223,7 +221,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          基于HiveSever2的Azkaban插件的实现思路
+          G1垃圾收集器深入
         </h1>
 
         <div class="post-meta">
@@ -233,7 +231,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2017-02-05 13:45:03" itemprop="dateCreated datePublished" datetime="2017-02-05T13:45:03+08:00">2017-02-05</time>
+              <time title="创建时间：2020-04-24 11:42:24" itemprop="dateCreated datePublished" datetime="2020-04-24T11:42:24+08:00">2020-04-24</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -241,14 +239,14 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Azkaban/" itemprop="url" rel="index">
-                    <span itemprop="name">Azkaban</span>
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
                   </a>
                 </span>
             </span>
 
           
-            <span id="/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/" class="post-meta-item leancloud_visitors" data-flag-title="基于HiveSever2的Azkaban插件的实现思路" title="阅读次数">
+            <span id="/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" class="post-meta-item leancloud_visitors" data-flag-title="G1垃圾收集器深入" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -263,8 +261,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -274,14 +272,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.7k</span>
+              <span>3.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
+              <span>3 分钟</span>
             </span>
 
         </div>
@@ -293,48 +291,52 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>关键字：HiveSever2、Azkaban插件</p>
-<p>&emsp;&emsp;最近研究了下HiveServer2有关的内容，并且在Azkaban的插件模块实现了基于HiveServer2的插件类型作业。现在将自己一些经验总结如下。</p>
-<h2 id="HiveServer-amp-HiveSever2"><a href="#HiveServer-amp-HiveSever2" class="headerlink" title="HiveServer &amp; HiveSever2"></a>HiveServer &amp; HiveSever2</h2><p>&emsp;&emsp;先来介绍HiveServer，原名是Thrift server。HiveServer 是一个服务端，允许远程客户端通过请求提交hive作业或者获取作业结果。HiveSever是基于Thrift框架实现的，但后来的HiveServer2也是基于Thrift框架，所以命名上从Thrift Server更名为HiveServer. <br>&emsp;&emsp;HiveServer2要比HiveSever更加优秀，支持高并发和安全认证。HiveServer已经不被推荐使用。下边是Hive官网原文描述：</p>
-<blockquote>
-<p>HiveServer is an optional service that allows a remote client to submit requests to Hive, using a variety of programming languages, and retrieve results. HiveServer is built on Apache ThriftTM (<a href="http://thrift.apache.org/" target="_blank" rel="noopener">http://thrift.apache.org/</a>), therefore it is sometimes called the Thrift server although this can lead to confusion because a newer service named HiveServer2 is also built on Thrift. Since the introduction of HiveServer2, HiveServer has also been called HiveServer1. \</p>
-</blockquote>
-<blockquote>
-<p>HiveServer cannot handle concurrent requests from more than one client. This is actually a limitation imposed by the Thrift interface that HiveServer exports, and can’t be resolved by modifying the HiveServer code. \</p>
-</blockquote>
-<blockquote>
-<p>HiveServer2 is a rewrite of HiveServer that addresses these problems, starting with Hive 0.11.0. Use of HiveServer2 is recommended.</p>
-</blockquote>
+        <p>深入了解G1垃圾收集器背后的核心原理。</p>
 <a id="more"></a>
 
-<h2 id="Azkaban插件实现原理"><a href="#Azkaban插件实现原理" class="headerlink" title="Azkaban插件实现原理"></a>Azkaban插件实现原理</h2><p>&emsp;Azkaban的hadoop相关作业插件类都是继承自JavaProcessJob类，JavaProcessJob类本质上是一个独立的Java进程，进程内调用Client客户端执行hadoop相关作业。示意图如下： \</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E4%BD%9C%E4%B8%9A%E7%B1%BB%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB.png" alt="plugin"></p>
-<p>所有的插件类型都要实现run方法和cancel方法。</p>
-<h2 id="基于HiveServer2-的插件实现"><a href="#基于HiveServer2-的插件实现" class="headerlink" title="基于HiveServer2 的插件实现"></a>基于HiveServer2 的插件实现</h2><p>这里看下关于hiveServer的一张老图：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/hiveSQL%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F.png" alt="HiveServer架构图"></p>
-<p>&emsp;&emsp;仔细研究Azkaban的Hive插件的代码，可以知道，Azkaban是通过Hive Client来提交Hive作业的，也就是图中的CLI方式。这种方式的问题还是挺多的，由于直接绕过了HiveServer2，所以不支持高并发和安全认证，存在很多隐患。<br>&emsp;&emsp;所以有必要开发基于HiveServer2的Azkaban插件。<br>&emsp;&emsp;Azakaban的实现已经在文章<a href="https://duvalcc.github.io/Azkaban-Learning/2017/01/11/" target="_blank" rel="noopener">《Azkaban Learning》</a>中有简单介绍，其实可以简单模仿HadoopJava类型作业的插件实现，这里不作过多的介绍。</p>
-<p>&emsp;&emsp;HiveServer2提交作业其实是通过JDBC方式来提交的，那我们来看下HiveServer2都提供了哪些api：</p>
-<ol>
-<li><p>同步提交HQL<br>ThriftCLIServiceClient.executeStatement(SessionHandle sessionHandle, String statement, Map&lt;String, String&gt; confOverlay) throws HiveSQLException</p>
-</li>
-<li><p>异步提交HQL<br>ThriftCLIServiceClient.executeStatementAsync(SessionHandle sessionHandle, String statement, Map&lt;String, String&gt; confOverlay) throws HiveSQLException</p>
-</li>
-<li><p>请求日志或者结果<br>ThriftCLIServiceClient.fetchResults(OperationHandle opHandle, FetchOrientation orientation, long maxRows, FetchType fetchType) throws HiveSQLException<br>(FetchType分为FetchType.LOG 和 FetchType.QUERY_OUTPUT，分别对应日志和结果)</p>
-</li>
-<li><p>请求执行状态<br>ThriftCLIServiceClient.getOperationStatus(OperationHandle opHandle) throws HiveSQLException <br>(状态包括：INITIALIZED  RUNNING  FINISHED  CANCELED  CLOSED  ERROR  UNKNOWN  PENDING)</p>
-</li>
-<li><p>取消执行<br>ThriftCLIServiceClient.cancelOperation(OperationHandle opHandle) throws HiveSQLException</p>
-</li>
-<li><p>关闭句柄<br>ThriftCLIServiceClient.closeOperation(OperationHandle opHandle) throws HiveSQLException <br>每执行完一条sql都要关闭句柄</p>
-</li>
-</ol>
-<p>&emsp; 通过这些丰富的api其实已经完全足够实现这个插件。具体的实现代码不便于公开，欢迎私聊咨询。</p>
-<p>参考资料：</p>
-<ol>
-<li><a href="https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Overview" target="_blank" rel="noopener">https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Overview</a></li>
-<li><a href="https://hive.apache.org/" target="_blank" rel="noopener">https://hive.apache.org/</a></li>
-<li><a href="https://github.com/azkaban/azkaban-plugins" target="_blank" rel="noopener">https://github.com/azkaban/azkaban-plugins</a></li>
-</ol>
+<h2 id="三色扫描"><a href="#三色扫描" class="headerlink" title="三色扫描"></a>三色扫描</h2><p>CMS收集器使用了Incremental Update算法，而G1收集器使用的是SATB算法那。这两者背后的思想都使用了三色标记算法，标记算法如下：</p>
+<ul>
+<li>黑色(black):自己已经被标记，且字段全部标记完毕的对象；</li>
+<li>灰色(gray): 自己已经被标记，但尚有字段未被标记的对象（collector正在访问的对象）；</li>
+<li>白色(white):尚未标记对象。</li>
+</ul>
+<p><strong>注意：</strong> 标记结束后，被标记的对象是存活对象，没有被标记的对象会被回收。</p>
+<p>在并行GC阶段，应用线程和GC形成并行，所以有可能同时发生以下两种情况：</p>
+<ul>
+<li>1.mutator把一个白对象的引用存到黑对象的字段里；</li>
+<li>2.某个白对象失去所有能从灰对象到达它的引用路径（直接或间接）。</li>
+</ul>
+<p>黑对象持有了指向白对象的引用。根据定义，collector已经不会再去遍历黑对象的字段，所以发现不了这里还有一个活引用指向这个白对象。如果还有某个灰对象持有直接或间接引用能到达这个白对象，那就没关系；如果从灰对象出发的所有引用到这个白对象的路径都不幸被切断了，那这个白对象就要被漏扫描了。</p>
+<p>所以如果同时发生以上两种情况，会导致对象漏标而被回收掉。</p>
+<p>Incremental Update是CMS收集器针对上述问题而采用的算法。该算法的做法是：只要在write barrier里发现要有一个白对象的引用被赋值到一个黑对象的字段里，那就把这个白对象变成灰色的（例如说标记并压到marking stack上，或者是记录在类似mod-union table里）。这样就强力杜绝了上述第一种情况的发生。</p>
+<p>而SATB的做法是把标记开始时的逻辑快照里所有的活对象都看作时活的。具体做法是在write barrier里把所有旧的引用所指向的对象都变成非白的（已经黑灰就不用管，还是白的就变成灰的）。</p>
+<h2 id="SATB"><a href="#SATB" class="headerlink" title="SATB"></a>SATB</h2><p>SATB（snapshot at the beginning)是G1并发理论的基础，用于维护确保回收过程的正确性。从名字上理解，就是GC在开始的时候先对活着的对象保存一个快照；</p>
+<p>接下来，在GC过程中新分配的对象都是活的。</p>
+<p>很容易知道哪些对象是一次GC开始之后新分配的：每个region记录着两个top-at-mark-start（TAMS）指针，分别为prevTAMS和nextTAMS。并发标记开始时候Top指针和NextTAMS指针是重合的（如下图所示），并发阶段分配的对象对位于[Next TAMS，Top]区间。这个区间内的对象默认都是存活的，这也叫做隐式标记。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png" alt="g1gc-tams.png"></p>
+<p>但如果在Next TAMS之前有一个白色对象A被一个灰色对象B作为字段而引用，在并发标记扫描到这个字段之前，被赋值为null，那么B–&gt;A的引用关系被切断，可能会导致白色对象A被漏标。</p>
+<p>G1为了解决这个问题，在引用关系修改之前，插入一层pre-write barrier。pre-write barrier会把每次引用关系变化时旧的引用值记录下来。这些引用值会被放置到satb mark queue中，在下一次的并发标记阶段，会依次处理satb mark queue中的对象，确保这部分对象在本轮GC是存活的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> G1SATBCardTableModRefBS::enqueue(oop pre_val) &#123;</span><br><span class="line">  <span class="comment">// Nulls should have been already filtered.</span></span><br><span class="line">  assert(pre_val-&gt;is_oop(<span class="literal">true</span>), <span class="string">"Error"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!JavaThread::satb_mark_queue_set().is_active()) <span class="keyword">return</span>;</span><br><span class="line">  Thread* thr = Thread::current();</span><br><span class="line">  <span class="keyword">if</span> (thr-&gt;is_Java_thread()) &#123;</span><br><span class="line">    JavaThread* jt = (JavaThread*)thr;</span><br><span class="line">    jt-&gt;satb_mark_queue().enqueue(pre_val);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    MutexLockerEx x(Shared_SATB_Q_lock, Mutex::_no_safepoint_check_flag);</span><br><span class="line">    JavaThread::satb_mark_queue_set().shared_satb_queue()-&gt;enqueue(pre_val);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但这很可能有对象在snapshot中是活的，但随着并发GC的进行它可能本来已经死了，但SATB还是会让它活过这次GC。这就导致所谓的浮动垃圾。</p>
+<h2 id="RSet"><a href="#RSet" class="headerlink" title="RSet"></a>RSet</h2><p>**该章节摘录自<a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></p>
+<p>全称是Remembered Set，是辅助GC过程的一种结构，典型的空间换时间工具，和Card Table有些类似。还有一种数据结构也是辅助GC的：Collection Set（CSet），它记录了GC要收集的Region集合，集合里的Region可以是任意年代的。在GC的时候，对于old-&gt;young和old-&gt;old的跨代对象引用，只要扫描对应的CSet中的RSet即可。 逻辑上说每个Region都有一个RSet，RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。而Card Table则是一种points-out（我引用了谁的对象）的结构，每个Card 覆盖一定范围的Heap（一般为512Bytes）。G1的RSet是在Card Table的基础上实现的：每个Region会记录下别的Region有指向自己的指针，并标记这些指针分别在哪些Card的范围内。 这个RSet其实是一个Hash Table，Key是别的Region的起始地址，Value是一个集合，里面的元素是Card Table的Index。</p>
+<p>下图表示了RSet、Card和Region的关系（<a href="http://www.infoq.com/articles/tuning-tips-G1-GC" target="_blank" rel="noopener">出处</a>）：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg" alt="Remembered Sets.jpg"></p>
+<p>上图中有三个Region，每个Region被分成了多个Card，在不同Region中的Card会相互引用，Region1中的Card中的对象引用了Region2中的Card中的对象，蓝色实线表示的就是points-out的关系，而在Region2的RSet中，记录了Region1的Card，即红色虚线表示的关系，这就是points-into。 而维系RSet中的引用关系靠post-write barrier和Concurrent refinement threads来维护，操作伪代码如下（<a href="http://hllvm.group.iteye.com/group/topic/44381" target="_blank" rel="noopener">出处</a>）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">oop_field_store</span><span class="params">(oop* field, oop new_value)</span> </span>&#123;</span><br><span class="line">  pre_write_barrier(field);             <span class="comment">// pre-write barrier: for maintaining SATB invariant</span></span><br><span class="line">  *field = new_value;                   <span class="comment">// the actual store</span></span><br><span class="line">  post_write_barrier(field, new_value); <span class="comment">// post-write barrier: for tracking cross-region reference</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>post-write barrier记录了跨Region的引用更新，更新日志缓冲区则记录了那些包含更新引用的Cards。一旦缓冲区满了，Post-write barrier就停止服务了，会由Concurrent refinement threads处理这些缓冲区日志。 RSet究竟是怎么辅助GC的呢？在做YGC的时候，只需要选定young generation region的RSet作为根集，这些RSet记录了old-&gt;young的跨代引用，避免了扫描整个old generation。 而mixed gc的时候，old generation中记录了old-&gt;old的RSet，young-&gt;old的引用由扫描全部young generation region得到，这样也不用扫描全部old generation region。所以RSet的引入大大减少了GC的工作量。</p>
+<p><strong>学习资料</strong></p>
+<ul>
+<li><a href="https://github.com/authorNari/g1gc-impl-book" target="_blank" rel="noopener">彻底解剖G1GC</a></li>
+<li><a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></li>
+<li><a href="https://hllvm-group.iteye.com/group/topic/44381" target="_blank" rel="noopener">RednaxelaFX的论坛回复帖</a></li>
+<li><a href="http://fleurer.github.io/2018/07/11/note-on-g1gc-barriers/" target="_blank" rel="noopener">F叔的学习笔记</a></li>
+<li><a href="https://www.oracle.com/technical-resources/articles/java/g1gc.html" target="_blank" rel="noopener">Garbage First Garbage Collector Tuning</a></li>
+<li><a href="http://book.douban.com/subject/6809987/" target="_blank" rel="noopener">The Garbage Collection Handbook</a></li>
+<li><a href="https://www.jianshu.com/p/9e70097807ba" target="_blank" rel="noopener">G1垃圾收集器之SATB</a></li>
+</ul>
 
     </div>
 
@@ -342,6 +344,12 @@
     
     
       
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/04/16/G1垃圾收集器入门/" rel="bookmark">G1垃圾收集器入门</a></div>
+    </li>
+  </ul>
 
 <div>
     
@@ -377,7 +385,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.github.io/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/" title="基于HiveSever2的Azkaban插件的实现思路">https://duval1024.github.io/2017/02/05/基于HiveSever2的Azkaban插件的实现思路/</a>
+    <a href="https://duval1024.github.io/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" title="G1垃圾收集器深入">https://duval1024.github.io/2020/04/24/G1垃圾收集器深入/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -390,9 +398,7 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/Azkaban%E6%8F%92%E4%BB%B6/" rel="tag"><i class="fa fa-tag"></i> Azkaban插件</a>
-              <a href="/tags/Hive/" rel="tag"><i class="fa fa-tag"></i> Hive</a>
-              <a href="/tags/HiveServer2/" rel="tag"><i class="fa fa-tag"></i> HiveServer2</a>
+              <a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 垃圾回收器</a>
           </div>
 
         
@@ -400,13 +406,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/" rel="prev" title="Azkaban Learning">
-      <i class="fa fa-chevron-left"></i> Azkaban Learning
+    <a href="/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" rel="prev" title="G1垃圾收集器入门">
+      <i class="fa fa-chevron-left"></i> G1垃圾收集器入门
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2017/03/30/mysql%E7%9A%84limit%E4%BC%98%E5%8C%96%E5%92%8C%E6%B5%81%E5%BC%8F%E6%9F%A5%E8%AF%A2/" rel="next" title="mysql的limit优化和流式查询">
-      mysql的limit优化和流式查询 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -469,7 +472,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HiveServer-amp-HiveSever2"><span class="nav-number">1.</span> <span class="nav-text">HiveServer &amp; HiveSever2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban插件实现原理"><span class="nav-number">2.</span> <span class="nav-text">Azkaban插件实现原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于HiveServer2-的插件实现"><span class="nav-number">3.</span> <span class="nav-text">基于HiveServer2 的插件实现</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#三色扫描"><span class="nav-number">1.</span> <span class="nav-text">三色扫描</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SATB"><span class="nav-number">2.</span> <span class="nav-text">SATB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RSet"><span class="nav-number">3.</span> <span class="nav-text">RSet</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
