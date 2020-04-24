@@ -6,7 +6,7 @@
     <content><![CDATA[<p>深入了解G1垃圾收集器背后的核心原理。</p>
 <a id="more"></a>
 
-<h2 id="三色扫描"><a href="#三色扫描" class="headerlink" title="三色扫描"></a>三色扫描</h2><p>CMS收集器使用了Incremental Update算法，而G1收集器使用的是SATB算法那。这两者背后的思想都使用了三色标记算法，标记算法如下：</p>
+<h2 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h2><p>CMS收集器使用了Incremental Update算法，而G1收集器使用的是SATB算法。这两者背后的思想都使用了三色标记算法，标记算法如下：</p>
 <ul>
 <li>黑色(black):自己已经被标记，且字段全部标记完毕的对象；</li>
 <li>灰色(gray): 自己已经被标记，但尚有字段未被标记的对象（collector正在访问的对象）；</li>
@@ -31,7 +31,7 @@
 <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">void</span> G1SATBCardTableModRefBS::enqueue(oop pre_val) &#123;</span><br><span class="line">  <span class="comment">// Nulls should have been already filtered.</span></span><br><span class="line">  assert(pre_val-&gt;is_oop(<span class="literal">true</span>), <span class="string">"Error"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!JavaThread::satb_mark_queue_set().is_active()) <span class="keyword">return</span>;</span><br><span class="line">  Thread* thr = Thread::current();</span><br><span class="line">  <span class="keyword">if</span> (thr-&gt;is_Java_thread()) &#123;</span><br><span class="line">    JavaThread* jt = (JavaThread*)thr;</span><br><span class="line">    jt-&gt;satb_mark_queue().enqueue(pre_val);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    MutexLockerEx x(Shared_SATB_Q_lock, Mutex::_no_safepoint_check_flag);</span><br><span class="line">    JavaThread::satb_mark_queue_set().shared_satb_queue()-&gt;enqueue(pre_val);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>但这很可能有对象在snapshot中是活的，但随着并发GC的进行它可能本来已经死了，但SATB还是会让它活过这次GC。这就导致所谓的浮动垃圾。</p>
-<h2 id="RSet"><a href="#RSet" class="headerlink" title="RSet"></a>RSet</h2><p>**该章节摘录自<a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></p>
+<h2 id="RSet"><a href="#RSet" class="headerlink" title="RSet"></a>RSet</h2><p> <strong>该章节摘录自<a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></strong></p>
 <p>全称是Remembered Set，是辅助GC过程的一种结构，典型的空间换时间工具，和Card Table有些类似。还有一种数据结构也是辅助GC的：Collection Set（CSet），它记录了GC要收集的Region集合，集合里的Region可以是任意年代的。在GC的时候，对于old-&gt;young和old-&gt;old的跨代对象引用，只要扫描对应的CSet中的RSet即可。 逻辑上说每个Region都有一个RSet，RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。而Card Table则是一种points-out（我引用了谁的对象）的结构，每个Card 覆盖一定范围的Heap（一般为512Bytes）。G1的RSet是在Card Table的基础上实现的：每个Region会记录下别的Region有指向自己的指针，并标记这些指针分别在哪些Card的范围内。 这个RSet其实是一个Hash Table，Key是别的Region的起始地址，Value是一个集合，里面的元素是Card Table的Index。</p>
 <p>下图表示了RSet、Card和Region的关系（<a href="http://www.infoq.com/articles/tuning-tips-G1-GC" target="_blank" rel="noopener">出处</a>）：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg" alt="Remembered Sets.jpg"></p>
