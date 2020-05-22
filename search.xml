@@ -3,7 +3,7 @@
   <entry>
     <title>认识 Java NIO</title>
     <url>/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/</url>
-    <content><![CDATA[<p>Java支持三种IO模式，分别是同步阻塞IO（BIO）、同步非阻塞IO（NIO)以及异步IO(AIO)。本文第一章节将简单介绍这三种IO模式，后续章节将详细介绍同步非阻塞IO</p>
+    <content><![CDATA[<p>Java支持三种IO模式，分别是同步阻塞IO（BIO）、同步非阻塞IO（NIO)以及异步IO(AIO)。本文第一章节将简单介绍这三种IO模式，后续章节将详细介绍同步非阻塞IO（NIO）。</p>
 <p>(首页图是蔚来NIO图，侵权必删。= =! )</p>
 <a id="more"></a>
 <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="同步阻塞IO"><a href="#同步阻塞IO" class="headerlink" title="同步阻塞IO"></a>同步阻塞IO</h3><p>传统的IO是同步阻塞型IO（BIO）。阻塞型IO主要问题是会造成大量的系统资源浪费。例如我们通过Socket读取一个TCP连接的数据，当没有读取到数据时，read方法会阻塞当前线程。如下：</p>
@@ -182,7 +182,7 @@
 
 <ul>
 <li><strong>参考资料</strong></li>
-<li><strong>Java NIO Tutorial</strong> 很好的NIO教程，比国内的大部分资料都齐全。</li>
+<li><a href="http://tutorials.jenkov.com/java-nio/index.html" target="_blank" rel="noopener"><strong>Java NIO Tutorial</strong></a> 很好的NIO教程，比国内的大部分资料都齐全。</li>
 </ul>
 ]]></content>
       <categories>
