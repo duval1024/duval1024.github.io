@@ -136,8 +136,9 @@
 </ul>
 <h2 id="Selector"><a href="#Selector" class="headerlink" title="Selector"></a>Selector</h2><p>Selector是NIO实现IO多路复用模型的重要组件。多个Channel可以被注册到同一个Selector上，然后Selector会不断的轮询注册在它上面的Channel。一旦某个Channel有了新的IO事件就会被筛选出来进一步处理。因此，只需要一个线程负责Selector的轮询，就能够支撑大量的连接，从而能够支撑高并发服务的开发。基于Selector实现的IO多路复用模型示意图如下：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%BA%86%E8%A7%A3Java%20NIO%2FIO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E6%A8%A1%E5%9E%8B.png" alt="IO多路复用模型.png"></p>
-<h3 id="KQueueSelectorImpl"><a href="#KQueueSelectorImpl" class="headerlink" title="KQueueSelectorImpl"></a>KQueueSelectorImpl</h3><p>Selector的默认实现是KQueueSelectorImpl，可以在JDK8源码下找到（openjdk-jdk8u-jdk8u/jdk/src/macosx/classes/sun/nio/ch/KQueueSelectorImpl.java）</p>
+<h3 id="KQueueSelectorImpl"><a href="#KQueueSelectorImpl" class="headerlink" title="KQueueSelectorImpl"></a>KQueueSelectorImpl</h3><p>在MacOS下，Selector的默认实现是KQueueSelectorImpl，可以在JDK8源码下找到：openjdk-jdk8u-jdk8u/jdk/src/macosx/classes/sun/nio/ch/KQueueSelectorImpl.java</p>
 <p>KQueueSelectorImpl继承关系如下：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%BA%86%E8%A7%A3Java%20NIO%2FKQueueSelectorImpl.jpg" alt="KQueueSelectorImpl.jpg"></p>
+<p>而在Linux 2.6+内核下，Selector的默认实现是是EPollSelectorImpl，源码在中：openjdk-jdk8u-jdk8u/jdk/src/solaris/classes/sun/nio/ch/EPollSelectorImpl.java</p>
 <p>我们从父类SelectorImpl里可以看到两个字段：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// The set of keys with data ready for an operation</span></span><br><span class="line"><span class="keyword">protected</span> Set&lt;SelectionKey&gt; selectedKeys;</span><br><span class="line"></span><br><span class="line"><span class="comment">// The set of keys registered with this Selector</span></span><br><span class="line"><span class="keyword">protected</span> HashSet&lt;SelectionKey&gt; keys;</span><br></pre></td></tr></table></figure>
 
