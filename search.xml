@@ -188,6 +188,7 @@
 <ul>
 <li><strong>参考资料</strong></li>
 <li><a href="http://tutorials.jenkov.com/java-nio/index.html" target="_blank" rel="noopener"><strong>Java NIO Tutorial</strong></a> 很好的NIO教程，比国内的大部分资料都齐全。</li>
+<li><a href="https://www.cnblogs.com/crazymakercircle/p/10225159.html" target="_blank" rel="noopener"><strong>10分钟看懂， Java NIO 底层原理</strong></a> 将Java四大IO模型讲得通俗易懂透彻的文章。</li>
 </ul>
 ]]></content>
       <categories>
