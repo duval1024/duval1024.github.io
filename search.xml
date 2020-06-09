@@ -3,7 +3,7 @@
   <entry>
     <title>认识 Java NIO</title>
     <url>/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/</url>
-    <content><![CDATA[<p>Java支持三种IO模式，分别是同步阻塞IO（BIO）、同步非阻塞IO（NIO)以及异步IO(AIO)。本文第一章节将简单介绍这三种IO模式，后续章节将详细介绍同步非阻塞IO（NIO）。</p>
+    <content><![CDATA[<p>Java支持三种IO模式，分别是同步阻塞IO（BIO）、同步非阻塞IO（NIO)、多路复用IO（I/O multiplexing）以及异步IO(AIO)。本文第一章节将简单介绍这三种IO模式，后续章节将详细介绍同步非阻塞IO（NIO）以及多路复用IO。</p>
 <p>(首页图是蔚来NIO图，侵权必删。= =! )</p>
 <a id="more"></a>
 <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><h3 id="同步阻塞IO"><a href="#同步阻塞IO" class="headerlink" title="同步阻塞IO"></a>同步阻塞IO</h3><p>传统的IO是同步阻塞型IO（BIO）。阻塞型IO主要问题是会造成大量的系统资源浪费。例如我们通过Socket读取一个TCP连接的数据，当没有读取到数据时，read方法会阻塞当前线程。如下：</p>
@@ -15,8 +15,12 @@
 
 <p>如果服务端接受了大量客户端请求，很有可能使得大量的线程阻塞而占用大量机器资源，甚至使得服务器崩溃。</p>
 <p>除此之外，传统IO是基于字节流的，用户只能顺序地从流中读取数据，且不能随意改变读取指针。</p>
-<h3 id="Java-NIO"><a href="#Java-NIO" class="headerlink" title="Java NIO"></a>Java NIO</h3><p>Java NIO是同步非阻塞型IO（也有人将其归类为IO多路复用类型）。NIO引入了Channel和Buffer这两个概念，用户可以从Channel中读取Buffer，也可以将Buffer写入Channel。</p>
-<p>此外，Selector是NIO的核心组件。NIO通过将Chanel注册进Selector中，由Selector来监听多个Channel的IO事件，从而避免单个Channel的读写阻塞导致整个线程挂起的情况。这样子，NIO就可以通过一个线程同时高效地管理多个Channel。</p>
+<h3 id="Java-NIO"><a href="#Java-NIO" class="headerlink" title="Java NIO"></a>Java NIO</h3><p>Java NIO是同步非阻塞型IO。NIO引入了Channel和Buffer这两个概念，用户可以从Channel中读取Buffer，也可以将Buffer写入Channel。<br>实现了AbstractSelectableChannel父类的Channel，可以通过configureBlocking方法可以将一个Channel设置为非阻塞模式，如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">serverSocketChannel.configureBlocking(<span class="keyword">false</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="Java-多路复用IO"><a href="#Java-多路复用IO" class="headerlink" title="Java 多路复用IO"></a>Java 多路复用IO</h3><p>我在这里将多路复用IO从上一小节剥离出来，是想让大家区分同步非阻塞型IO和多路复用IO的区别。</p>
+<p>基于Java NIO的同步非阻塞IO，再结合Java NIO提供的Selector多路复用选择器，Java可以实现多路复用IO。NIO通过将Chanel注册进Selector中，由Selector来监听多个Channel的IO事件，从而避免单个Channel的读写阻塞导致整个线程挂起的情况。这样子，NIO就可以通过一个线程同时高效地管理多个Channel。</p>
+<p>Selector的底层使用了底层系统调用，包括epoll、select等等，在主流的各个系统都有支持。但这部分内容不在本文的探讨范围之内。</p>
 <h3 id="Java-AIO"><a href="#Java-AIO" class="headerlink" title="Java AIO"></a>Java AIO</h3><p>AIO在Java中不常用，可以参考大咖写的 <a href="https://colobu.com/2014/11/13/java-aio-introduction/" target="_blank" rel="noopener">Java AIO编程</a></p>
 <h2 id="Buffer"><a href="#Buffer" class="headerlink" title="Buffer"></a>Buffer</h2><p>Buffer在NIO中作为数据的载体，用户可以从Channel中读取Buffer，也可以将Buffer写入Channel。</p>
 <p>Buffer根据数据类型划分为ByteBuffer、ShortBuffer、CharBuffer、DoubleBuffer、FloatBuffer、IntBuffer等类型。这些Buffer都包含了两个子类实现，一个是DirectBuffer，另外一个是HeapBuffer。</p>
@@ -152,7 +156,7 @@
 <li><strong>public abstract Selector selector()</strong> 返回该key关联的Selector</li>
 <li><strong>public final boolean isAcceptable()</strong> 检查OP_ACCEPT事件是否就绪。如果就绪，表示有新的stocket连接。</li>
 <li><strong>public final boolean isConnectable()</strong> 检查OP_CONNECT事件是否就绪。如果就绪，表示可以发起连接到服务器。</li>
-<li><strong>public final boolean isReadable()</strong> 检查OP_READ事件是否继续，如果就绪则表示可以开始读取socket中的数据。</li>
+<li><strong>public final boolean isReadable()</strong> 检查OP_READ事件是否就绪，如果就绪则表示可以开始读取socket中的数据。</li>
 <li><strong>public final boolean isWritable()</strong> 检查OP_WRITE事件是否就绪，如果就绪，表示可以写数据到Channel中。</li>
 </ul>
 <p>从上可以看到，SelectionKey其实是将channel实例和Selector关联起来，并且包含了就绪事件集合以及附加物的一个数据结构。</p>
