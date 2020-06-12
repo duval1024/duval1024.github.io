@@ -74,6 +74,7 @@
 <li><a href="https://www.cnblogs.com/crazymakercircle/p/9833847.html" target="_blank" rel="noopener">Reactor模式</a> 这篇文章讲得比较清晰，但是画的图相对容易理解，但是不完全吻合Doug Lea在文章所描述的意思。</li>
 <li><a href="https://segmentfault.com/a/1190000007403873" target="_blank" rel="noopener">Netty源码分析</a> 目前网上最好的Netty源码分析</li>
 <li><a href="https://www.infoq.cn/article/netty-threading-model" target="_blank" rel="noopener">Netty 系列之 Netty 线程模型</a> 这文章线程模型总结的比较细致</li>
+<li><a href="https://time.geekbang.org/column/article/8805" target="_blank" rel="noopener">单服务器高性能模式：Reactor与Proactor</a> 这文章介绍了Reactor模型以及Proactor模型</li>
 </ul>
 ]]></content>
       <categories>
