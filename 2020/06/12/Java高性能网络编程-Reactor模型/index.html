@@ -49,18 +49,18 @@
   };
 </script>
 
-  <meta name="description" content="简介Reactor模型是基于事件驱动的模型，是高性能网络编程中非常重要概念，常用于解决多核服务器下的如何处理海量I&#x2F;O问题。Java中大名鼎鼎的Netty网络编程框架的线程模型正是基于Reactor模型。 本文主要基于Doug Lea的文章Scalable IO in Java来介绍下Reactor模型。本文所有内容均基于前人资料总结而成，如有侵权必删。">
+  <meta name="description" content="Reactor模型是基于事件驱动的模型，是高性能网络编程中非常重要概念，常用于解决多核服务器下的如何处理海量I&#x2F;O问题。Java中大名鼎鼎的Netty网络编程框架的线程模型正是基于Reactor模型。 本文主要基于Doug Lea的文章Scalable IO in Java来介绍下Reactor模型。本文所有内容均基于前人资料总结而成，如有侵权必删。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java高性能网络编程--Reactor模型">
 <meta property="og:url" content="https://duval1024.github.io/2020/06/12/Java%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B-Reactor%E6%A8%A1%E5%9E%8B/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="简介Reactor模型是基于事件驱动的模型，是高性能网络编程中非常重要概念，常用于解决多核服务器下的如何处理海量I&#x2F;O问题。Java中大名鼎鼎的Netty网络编程框架的线程模型正是基于Reactor模型。 本文主要基于Doug Lea的文章Scalable IO in Java来介绍下Reactor模型。本文所有内容均基于前人资料总结而成，如有侵权必删。">
+<meta property="og:description" content="Reactor模型是基于事件驱动的模型，是高性能网络编程中非常重要概念，常用于解决多核服务器下的如何处理海量I&#x2F;O问题。Java中大名鼎鼎的Netty网络编程框架的线程模型正是基于Reactor模型。 本文主要基于Doug Lea的文章Scalable IO in Java来介绍下Reactor模型。本文所有内容均基于前人资料总结而成，如有侵权必删。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B--Reactor%E6%A8%A1%E5%9E%8B%2F%E5%8D%95%E7%BA%BF%E7%A8%8BReactor%E6%A8%A1%E5%9E%8B.jpg">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B--Reactor%E6%A8%A1%E5%9E%8B%2F%E5%A4%9A%E7%BA%BF%E7%A8%8BReactor%E6%A8%A1%E5%9E%8B.jpg">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E9%AB%98%E6%80%A7%E8%83%BD%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B--Reactor%E6%A8%A1%E5%9E%8B%2F%E5%A4%9AReactor%E5%A4%9A%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B.jpg">
 <meta property="article:published_time" content="2020-06-12T06:48:28.000Z">
-<meta property="article:modified_time" content="2020-06-12T10:24:13.275Z">
+<meta property="article:modified_time" content="2020-06-12T10:28:23.815Z">
 <meta property="article:author" content="Duval">
 <meta property="article:tag" content="NIO">
 <meta property="article:tag" content="Reactor">
@@ -293,7 +293,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Reactor模型是基于事件驱动的模型，是高性能网络编程中非常重要概念，常用于解决多核服务器下的如何处理海量I/O问题。Java中大名鼎鼎的Netty网络编程框架的线程模型正是基于Reactor模型。</p>
+        <p>Reactor模型是基于事件驱动的模型，是高性能网络编程中非常重要概念，常用于解决多核服务器下的如何处理海量I/O问题。Java中大名鼎鼎的Netty网络编程框架的线程模型正是基于Reactor模型。</p>
 <p>本文主要基于Doug Lea的文章<a href="http://gee.cs.oswego.edu/dl/cpjslides/nio.pdf" target="_blank" rel="noopener">Scalable IO in Java</a>来介绍下Reactor模型。<br>本文所有内容均基于前人资料总结而成，如有侵权必删。</p>
 <a id="more"></a>
 
@@ -504,7 +504,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#传统网络编程"><span class="nav-number">2.</span> <span class="nav-text">传统网络编程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#单线程版本"><span class="nav-number">3.</span> <span class="nav-text">单线程版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多线程版本"><span class="nav-number">4.</span> <span class="nav-text">多线程版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主从Reator多线程版本"><span class="nav-number">5.</span> <span class="nav-text">主从Reator多线程版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reactor模型在Netty中的应用"><span class="nav-number">6.</span> <span class="nav-text">Reactor模型在Netty中的应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#传统网络编程"><span class="nav-number">1.</span> <span class="nav-text">传统网络编程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#单线程版本"><span class="nav-number">2.</span> <span class="nav-text">单线程版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多线程版本"><span class="nav-number">3.</span> <span class="nav-text">多线程版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主从Reator多线程版本"><span class="nav-number">4.</span> <span class="nav-text">主从Reator多线程版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Reactor模型在Netty中的应用"><span class="nav-number">5.</span> <span class="nav-text">Reactor模型在Netty中的应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">6.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
