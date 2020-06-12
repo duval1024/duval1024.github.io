@@ -255,14 +255,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>7.1k</span>
+              <span>7.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>6 分钟</span>
+              <span>7 分钟</span>
             </span>
 
         </div>
@@ -340,14 +340,12 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">NioEventLoopGroup bossGroup = <span class="keyword">new</span> NioEventLoopGroup();</span><br><span class="line">NioEventLoopGroup workerGroup = <span class="keyword">new</span> NioEventLoopGroup();</span><br><span class="line">ServerBootstrap bootstrap = <span class="keyword">new</span> ServerBootstrap();</span><br><span class="line">bootstrap.group(bossGroup,workerGroup)</span><br><span class="line">        .channel(NioServerSocketChannel<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">        .<span class="title">option</span>(<span class="title">ChannelOption</span>.<span class="title">TCP_NODELAY</span>, <span class="title">true</span>)</span></span><br><span class="line"><span class="class">        .<span class="title">option</span>(<span class="title">ChannelOption</span>.<span class="title">SO_BACKLOG</span>, 1024)</span></span><br><span class="line"><span class="class">        .<span class="title">childHandler</span>(<span class="title">new</span> <span class="title">ServerHandlerInitializer</span>())</span>;</span><br></pre></td></tr></table></figure>
 
 
-
-
-
-
-
-
-
-
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://gee.cs.oswego.edu/dl/cpjslides/nio.pdf" target="_blank" rel="noopener">Scalable IO in Java</a>   Doug Lea大牛写的文章，简明扼要，网上的资料基本都是从这文章衍生出来的。</li>
+<li><a href="https://www.cnblogs.com/crazymakercircle/p/9833847.html" target="_blank" rel="noopener">Reactor模式</a> 这篇文章讲得比较清晰，但是画的图相对容易理解，但是不完全吻合Doug Lea在文章所描述的意思。</li>
+<li><a href="https://segmentfault.com/a/1190000007403873" target="_blank" rel="noopener">Netty源码分析</a> 目前网上最好的Netty源码分析</li>
+<li><a href="https://www.infoq.cn/article/netty-threading-model" target="_blank" rel="noopener">Netty 系列之 Netty 线程模型</a> 这文章线程模型总结的比较细致</li>
+</ul>
 
       
     </div>
