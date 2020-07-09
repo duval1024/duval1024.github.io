@@ -25,6 +25,12 @@
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
 <h2 id="ByteBuf继承关系"><a href="#ByteBuf继承关系" class="headerlink" title="ByteBuf继承关系"></a>ByteBuf继承关系</h2><h2 id="ByteBuf接口常用方法"><a href="#ByteBuf接口常用方法" class="headerlink" title="ByteBuf接口常用方法"></a>ByteBuf接口常用方法</h2><h2 id="AbstractByteBuf底层实现"><a href="#AbstractByteBuf底层实现" class="headerlink" title="AbstractByteBuf底层实现"></a>AbstractByteBuf底层实现</h2><h2 id="AbstractByteBuf的浅复制实现"><a href="#AbstractByteBuf的浅复制实现" class="headerlink" title="AbstractByteBuf的浅复制实现"></a>AbstractByteBuf的浅复制实现</h2><h2 id="AbstractReferenceCountedByteBuf的引用计数实现"><a href="#AbstractReferenceCountedByteBuf的引用计数实现" class="headerlink" title="AbstractReferenceCountedByteBuf的引用计数实现"></a>AbstractReferenceCountedByteBuf的引用计数实现</h2><h2 id="池化和非池化"><a href="#池化和非池化" class="headerlink" title="池化和非池化"></a>池化和非池化</h2><h2 id="Unsafe的ByteBuf"><a href="#Unsafe的ByteBuf" class="headerlink" title="Unsafe的ByteBuf"></a>Unsafe的ByteBuf</h2><h2 id="ByteBuf的分配"><a href="#ByteBuf的分配" class="headerlink" title="ByteBuf的分配"></a>ByteBuf的分配</h2><h2 id="ByteBuf的释放"><a href="#ByteBuf的释放" class="headerlink" title="ByteBuf的释放"></a>ByteBuf的释放</h2>]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Netty</tag>
+      </tags>
   </entry>
   <entry>
     <title>Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</title>
