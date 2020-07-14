@@ -296,7 +296,7 @@
 
 
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文详细介绍了ByteBuf及其子类的实现原理，包括读写指针、常用方法、浅复制、引用计数、池化、Unsafe对象等实现原理。<br>通过上述深入分析，我们了解到ByteBuf在Netty中承担着运载数据的重要功能。如果将Netty比作一个完整的生物体，那么将ByteBuf比作血液，那就再恰当不过了。</p>
-<h2 id="参考资料："><a href="#参考资料：" class="headerlink" title="参考资料："></a>参考资料：</h2><ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://blog.csdn.net/mycs2012/article/details/94591307" target="_blank" rel="noopener">Netty ByteBuf（图解 ）之一</a></li>
 <li><a href="https://blog.csdn.net/crazymakercircle/article/details/84205697" target="_blank" rel="noopener">Netty ByteBuf（图解二）：API 图解</a></li>
 <li><a href="https://blog.csdn.net/mycs2012/article/details/94591307" target="_blank" rel="noopener">池化和非池化ByteBuf</a></li>
