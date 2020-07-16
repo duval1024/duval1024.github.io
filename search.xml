@@ -25,6 +25,7 @@
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
 <h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h3 id="链式结构"><a href="#链式结构" class="headerlink" title="链式结构"></a>链式结构</h3><p>我们先来回忆下在<a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">《Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)》</a>提到过来的handler链式结构：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%85%AD%20Handler%20%E7%9A%84%E5%90%84%E7%A7%8D%E5%A7%BF%E5%8A%BF%2FNettyHandler%E9%93%BE%E5%BC%8F%E7%BB%93%E6%9E%84.jpg" alt="NettyHandler链式结构.jpg"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%85%AD%20Handler%20%E7%9A%84%E5%90%84%E7%A7%8D%E5%A7%BF%E5%8A%BF%2FNettyHandler%E9%93%BE%E5%BC%8F%E7%BB%93%E6%9E%84.png" alt="NettyHandler链式结构.png"></p>
 <ul>
 <li>handler分为实现ChannelInboundHandler接口的入站处理器和实现ChannelOutboundHandler接口的出站处理器；</li>
 <li>handler由DefaultChannelHandlerContext进行包装，并组成一个双向链表；</li>
