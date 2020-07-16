@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Netty 源码分析之 六 Handler的各种姿势</title>
-    <url>/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-Handler%E7%9A%84%E5%90%84%E7%A7%8D%E5%A7%BF%E5%8A%BF/</url>
+    <title>Netty 源码分析之 六 流水线处理器: Handler</title>
+    <url>/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/</url>
     <content><![CDATA[<p>本文是永顺大牛写的系列教程<a href="https://segmentfault.com/a/1190000007282628#comment-area" target="_blank" rel="noopener">《源码之下无秘密 ── 做最好的 Netty 源码分析教程》</a>的续写章节。本章主要介绍Netty中用来处理数据流的handler以及底层原理。</p>
 <a id="more"></a>
 <h2 id="写在最前"><a href="#写在最前" class="headerlink" title="写在最前"></a>写在最前</h2><p>永顺前辈已写完的章节有如下：</p>
@@ -20,10 +20,20 @@
 <ul>
 <li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
 <li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="">Netty 源码分析之 六 Handler 的各种姿势</a></li>
+<li><a href="">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
-<h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h2 id="入站handler"><a href="#入站handler" class="headerlink" title="入站handler"></a>入站handler</h2><h2 id="出站handler"><a href="#出站handler" class="headerlink" title="出站handler"></a>出站handler</h2><h2 id="解码器decoder"><a href="#解码器decoder" class="headerlink" title="解码器decoder"></a>解码器decoder</h2><h2 id="编码器encoder"><a href="#编码器encoder" class="headerlink" title="编码器encoder"></a>编码器encoder</h2><h2 id="SimpleChannelInboundHandler"><a href="#SimpleChannelInboundHandler" class="headerlink" title="SimpleChannelInboundHandler"></a>SimpleChannelInboundHandler</h2><h2 id="实例分析"><a href="#实例分析" class="headerlink" title="实例分析"></a>实例分析</h2>]]></content>
+<h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h3 id="链式结构"><a href="#链式结构" class="headerlink" title="链式结构"></a>链式结构</h3><p>我们先来回忆下在<a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">《Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)》</a>提到过来的handler链式结构：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%85%AD%20Handler%20%E7%9A%84%E5%90%84%E7%A7%8D%E5%A7%BF%E5%8A%BF%2FNettyHandler%E9%93%BE%E5%BC%8F%E7%BB%93%E6%9E%84.jpg" alt="NettyHandler链式结构.jpg"></p>
+<ul>
+<li>handler分为实现ChannelInboundHandler接口的入站处理器和实现ChannelOutboundHandler接口的出站处理器；</li>
+<li>handler由DefaultChannelHandlerContext进行包装，并组成一个双向链表；</li>
+<li>所有的入站操作从HeadContext出发，沿着链表经由每一个入站处理器处理后向TailContext方向传递；</li>
+<li>所有的出站操作从TailContext出发，沿着链表经由每一个出站处理器处理后向HeadContext方向传递；</li>
+<li>无论是入站操作抑或是出站操作的传递，都可以在handler中按照业务需求被中断或者改变传递方向。</li>
+</ul>
+<p>本文的封面图使用了一张流水线卡通图，正因为这个链式结构非常类似于制造业里的流水线，handler就像是流水里的处理节点，而入站出站数据就如同流水线上被加工的产品。</p>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><h2 id="入站handler"><a href="#入站handler" class="headerlink" title="入站handler"></a>入站handler</h2><h2 id="出站handler"><a href="#出站handler" class="headerlink" title="出站handler"></a>出站handler</h2><h2 id="解码器decoder"><a href="#解码器decoder" class="headerlink" title="解码器decoder"></a>解码器decoder</h2><h2 id="编码器encoder"><a href="#编码器encoder" class="headerlink" title="编码器encoder"></a>编码器encoder</h2><h2 id="SimpleChannelInboundHandler"><a href="#SimpleChannelInboundHandler" class="headerlink" title="SimpleChannelInboundHandler"></a>SimpleChannelInboundHandler</h2><h2 id="实例分析"><a href="#实例分析" class="headerlink" title="实例分析"></a>实例分析</h2>]]></content>
       <categories>
         <category>Java</category>
       </categories>
