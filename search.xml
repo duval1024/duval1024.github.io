@@ -78,6 +78,7 @@
         <category>Java</category>
       </categories>
       <tags>
+        <tag>源码分析</tag>
         <tag>Netty</tag>
       </tags>
   </entry>
@@ -398,6 +399,7 @@
         <category>Java</category>
       </categories>
       <tags>
+        <tag>源码分析</tag>
         <tag>Netty</tag>
       </tags>
   </entry>
@@ -494,6 +496,7 @@
         <category>Java</category>
       </categories>
       <tags>
+        <tag>源码分析</tag>
         <tag>Netty</tag>
       </tags>
   </entry>
@@ -1295,8 +1298,6 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
         <category>生产问题</category>
       </categories>
       <tags>
-        <tag>Java</tag>
-        <tag>问题排查</tag>
         <tag>bugfix</tag>
       </tags>
   </entry>
@@ -2266,7 +2267,6 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
         <tag>以太坊</tag>
         <tag>Web3j</tag>
         <tag>智能合约</tag>
-        <tag>Duval</tag>
       </tags>
   </entry>
   <entry>
@@ -2312,7 +2312,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
         <category>Drools</category>
       </categories>
       <tags>
-        <tag>Drools Workbench</tag>
+        <tag>Drools</tag>
       </tags>
   </entry>
   <entry>
@@ -2354,7 +2354,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
         <category>Drools</category>
       </categories>
       <tags>
-        <tag>Drools Workbench</tag>
+        <tag>Drools</tag>
       </tags>
   </entry>
   <entry>
@@ -2619,7 +2619,6 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Java</tag>
         <tag>线程池</tag>
       </tags>
   </entry>
