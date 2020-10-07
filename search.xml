@@ -2,8 +2,10 @@
 <search>
   <entry>
     <title>再读Spring源码之二-FactoryBean</title>
-    <url>/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/</url>
+    <url>/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/</url>
     <content><![CDATA[<p>本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。</p>
+<a id="more"></a>
+
 <h2 id="FactoryBean简介"><a href="#FactoryBean简介" class="headerlink" title="FactoryBean简介"></a>FactoryBean简介</h2><p>正如名字所言，FactoryBean本质上一个是工厂类，用于构造用户所需的Bean。通过FactoryBean可以隐藏到构造某些Bean的复杂参数以及构建逻辑，暴露更加简化的接口。</p>
 <p>FactoryBean的接口方法非常简单：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">FactoryBean</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">  <span class="comment">// 获取对象</span></span><br><span class="line">  <span class="function">T <span class="title">getObject</span><span class="params">()</span> <span class="keyword">throws</span> Exception</span>;</span><br><span class="line">  <span class="comment">// 获取对象类型</span></span><br><span class="line">  <span class="function">Class&lt;T&gt; <span class="title">getObjectType</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="comment">// 判断是否为单例</span></span><br><span class="line">  <span class="function"><span class="keyword">boolean</span> <span class="title">isSingleton</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>

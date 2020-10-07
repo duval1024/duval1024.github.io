@@ -49,21 +49,21 @@
   };
 </script>
 
-  <meta name="description" content="本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。 FactoryBean简介正如名字所言，FactoryBean本质上一个是工厂类，用于构造用户所需的Bean。通过FactoryBean可以隐藏到构造某些Bean的复杂参数以及构建逻辑，暴露更加简化的接口。 FactoryBean的接口方法非常简单： 1234567">
+  <meta name="description" content="本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="再读Spring源码之二-FactoryBean">
-<meta property="og:url" content="https://duval1024.github.io/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/index.html">
+<meta property="og:url" content="https://duval1024.github.io/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。 FactoryBean简介正如名字所言，FactoryBean本质上一个是工厂类，用于构造用户所需的Bean。通过FactoryBean可以隐藏到构造某些Bean的复杂参数以及构建逻辑，暴露更加简化的接口。 FactoryBean的接口方法非常简单： 1234567">
+<meta property="og:description" content="本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2020-09-29T10:33:39.000Z">
-<meta property="article:modified_time" content="2020-10-07T13:18:52.131Z">
+<meta property="article:published_time" content="2020-10-07T13:00:39.000Z">
+<meta property="article:modified_time" content="2020-10-07T13:22:28.050Z">
 <meta property="article:author" content="Duval">
 <meta property="article:tag" content="源码分析">
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://duval1024.github.io/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/">
+<link rel="canonical" href="https://duval1024.github.io/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">
 
 
 <script id="page-configurations">
@@ -211,7 +211,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/">
+    <link itemprop="mainEntityOfPage" href="https://duval1024.github.io/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -234,7 +234,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-09-29 18:33:39" itemprop="dateCreated datePublished" datetime="2020-09-29T18:33:39+08:00">2020-09-29</time>
+              <time title="创建时间：2020-10-07 21:00:39" itemprop="dateCreated datePublished" datetime="2020-10-07T21:00:39+08:00">2020-10-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -249,7 +249,7 @@
             </span>
 
           
-            <span id="/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/" class="post-meta-item leancloud_visitors" data-flag-title="再读Spring源码之二-FactoryBean" title="阅读次数">
+            <span id="/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/" class="post-meta-item leancloud_visitors" data-flag-title="再读Spring源码之二-FactoryBean" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -264,8 +264,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -295,6 +295,8 @@
 
       
         <p>本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。</p>
+<a id="more"></a>
+
 <h2 id="FactoryBean简介"><a href="#FactoryBean简介" class="headerlink" title="FactoryBean简介"></a>FactoryBean简介</h2><p>正如名字所言，FactoryBean本质上一个是工厂类，用于构造用户所需的Bean。通过FactoryBean可以隐藏到构造某些Bean的复杂参数以及构建逻辑，暴露更加简化的接口。</p>
 <p>FactoryBean的接口方法非常简单：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">FactoryBean</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">  <span class="comment">// 获取对象</span></span><br><span class="line">  <span class="function">T <span class="title">getObject</span><span class="params">()</span> <span class="keyword">throws</span> Exception</span>;</span><br><span class="line">  <span class="comment">// 获取对象类型</span></span><br><span class="line">  <span class="function">Class&lt;T&gt; <span class="title">getObjectType</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="comment">// 判断是否为单例</span></span><br><span class="line">  <span class="function"><span class="keyword">boolean</span> <span class="title">isSingleton</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -343,10 +345,10 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
+      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
+      <div class="popular-posts-title"><a href="/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/08/21/再读Spring源码之一-Spring如何对付循环引用/" rel="bookmark">再读Spring源码之一 Spring如何对付循环引用</a></div>
@@ -393,7 +395,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.github.io/2020/09/29/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B-FactoryBean/" title="再读Spring源码之二-FactoryBean">https://duval1024.github.io/2020/09/29/再读Spring源码之-FactoryBean/</a>
+    <a href="https://duval1024.github.io/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/" title="再读Spring源码之二-FactoryBean">https://duval1024.github.io/2020/10/07/再读Spring源码之二-FactoryBean/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
