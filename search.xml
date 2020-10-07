@@ -43,6 +43,7 @@
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文详细介绍了FactoryBean的使用方法、实现原理和应用场景。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://juejin.im/post/6844903954615107597" target="_blank" rel="noopener">FactoryBean——Spring的扩展点之一</a></li>
+<li><a href="https://spring.io/blog/2011/08/09/what-s-a-factorybean" target="_blank" rel="noopener">What’s a FactoryBean?</a></li>
 </ul>
 ]]></content>
       <categories>
