@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>mysql学习笔记之一-基础篇</title>
+    <url>/2020/10/07/mysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80-%E5%9F%BA%E7%A1%80%E7%AF%87/</url>
+    <content><![CDATA[<p>最近深入学习mysql底层知识，学习过程中产出若干备忘文章。这是本系列的第一篇，主要是介绍mysql的一些基础的知识。</p>
+<a id="more"></a>
+
+<h2 id="基础架构"><a href="#基础架构" class="headerlink" title="基础架构"></a>基础架构</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg" alt="mysql架构图.jpg"></p>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>mysql</tag>
+        <tag>数据库</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>再读Spring源码之二-FactoryBean</title>
     <url>/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/</url>
     <content><![CDATA[<p>本文是《再读Spring源码》系列第二篇，一起来探讨下Spring框架常见扩展点FactoryBean，了解它的使用场景和实现原理。</p>
@@ -2863,8 +2879,8 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>数据库</tag>
         <tag>mysql</tag>
+        <tag>数据库</tag>
       </tags>
   </entry>
   <entry>
