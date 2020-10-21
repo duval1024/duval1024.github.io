@@ -68,7 +68,7 @@
 <blockquote>
 <p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
 </blockquote>
-<h3 id="延伸阅读："><a href="#延伸阅读：" class="headerlink" title="延伸阅读："></a>延伸阅读：</h3><ul>
+<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><ul>
 <li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
 <li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
 </ul>
@@ -158,7 +158,7 @@
 <li>更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”（current read）。具体见：<a href="https://time.geekbang.org/column/article/70562" target="_blank" rel="noopener">08 | 事务到底是隔离的还是不隔离的？
 </a></li>
 </ul>
-<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><p>-<a href="https://juejin.im/post/6874330052461330446" target="_blank" rel="noopener">理解MySQL的锁机制和事务原理</a></p>
+<h3 id="延伸阅读-1"><a href="#延伸阅读-1" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><p>-<a href="https://juejin.im/post/6874330052461330446" target="_blank" rel="noopener">理解MySQL的锁机制和事务原理</a></p>
 <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="常见索引模型"><a href="#常见索引模型" class="headerlink" title="常见索引模型"></a>常见索引模型</h3><table>
 <thead>
 <tr>
