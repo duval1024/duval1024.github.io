@@ -298,14 +298,13 @@
 <li><p>5.MySQL出现抖动原因</p>
 <blockquote>
 <p>很有可能在刷脏页。刷脏页触发原因有：</p>
-<pre><code>- redo log写满；
-- 内存不足（其实是buffer pool）的时候淘汰了脏页；</code></pre><ul>
-<li>MySQL在认为空闲的时段，会自行刷脏页；<ul>
+<ul>
+<li>redo log写满；</li>
+<li>内存不足（其实是buffer pool）的时候淘汰了脏页；</li>
+<li>MySQL在认为空闲的时段，会自行刷脏页；</li>
 <li>MySQL关闭前会刷脏页；<br>刷脏页的策略调优：</li>
 <li>磁盘能力。能力越大，脏页刷的越快。参数：innodb_io_capacity；</li>
-<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">	<span class="keyword">set</span> <span class="keyword">global</span> show_compatibility_56=<span class="keyword">on</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @a <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_dirty'</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @b <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_total'</span>;</span><br><span class="line"><span class="keyword">select</span> @a/@b;</span><br></pre></td></tr></table></figure></li>
-</ul>
-</li>
+<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：   <figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">	<span class="keyword">set</span> <span class="keyword">global</span> show_compatibility_56=<span class="keyword">on</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @a <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_dirty'</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @b <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_total'</span>;</span><br><span class="line"><span class="keyword">select</span> @a/@b;</span><br></pre></td></tr></table></figure></li>
 <li>刷相邻脏页。机械磁盘建议打开（1），SSD磁盘可以关闭（0）。参数：innodb_flush_neighbors</li>
 </ul>
 </blockquote>
@@ -313,13 +312,17 @@
 <li><p>6.删除了数据，但是表文件没有缩小？</p>
 <blockquote>
 <p>表数据既可以存在共享表空间里，也可以是单独的文件。这个行为是由参数 innodb_file_per_table 控制的：</p>
-<pre><code>- 这个参数设置为 OFF 表示的是，表的数据放在系统共享表空间，也就是跟数据字典放在一起，此时drop表不会回收表空间。</code></pre><ul>
+<ul>
+<li>这个参数设置为 OFF 表示的是，表的数据放在系统共享表空间，也就是跟数据字典放在一起，此时drop表不会回收表空间。</li>
 <li>这个参数设置为 ON 表示的是，每个 InnoDB 表数据存储在一个以 .ibd 为后缀的文件中，此时drop表会回收表空间。</li>
 </ul>
+</blockquote>
+<blockquote>
 <p>删除数据记录不一定回收空间，一般只是标记为可复用，此时数据页会留下空洞的，等待新的数据插入复用这些空洞。</p>
 <p>主动回收表空间的方法：</p>
-<pre><code>- 使用alter table t engine = InnoDB；该命令会使用Online DDL重建新表（MySQL5.6+），因此可以在业务低峰期执行。；
-- 使用analyze table t 。该命令会对表的索引信息做重新统计，没有修改数据，这个过程中加了 MDL 读锁；</code></pre><ul>
+<ul>
+<li>使用alter table t engine = InnoDB；该命令会使用Online DDL重建新表（MySQL5.6+），因此可以在业务低峰期执行。；</li>
+<li>使用analyze table t 。该命令会对表的索引信息做重新统计，没有修改数据，这个过程中加了 MDL 读锁；</li>
 <li>使用optimize table t 相当于重建表+重新统计索引信息。</li>
 </ul>
 </blockquote>
