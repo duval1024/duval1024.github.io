@@ -404,7 +404,7 @@
   <entry>
     <title>再读Spring源码之一 Spring如何对付循环引用</title>
     <url>/2020/08/21/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80-Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8/</url>
-    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" target="_blank" rel="noopener">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
+    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
 <a id="more"></a>
 
 <h2 id="Bean循环依赖"><a href="#Bean循环依赖" class="headerlink" title="Bean循环依赖"></a>Bean循环依赖</h2><p>spring框架的bean可以互相依赖，因此，可能存在循环依赖的情况，例如：</p>
@@ -515,9 +515,9 @@
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
 <h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h3 id="链式结构"><a href="#链式结构" class="headerlink" title="链式结构"></a>链式结构</h3><p>我们先来回忆下在<a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">《Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)》</a>提到过来的handler链式结构：</p>
@@ -575,8 +575,8 @@
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Netty</tag>
         <tag>源码分析</tag>
+        <tag>Netty</tag>
       </tags>
   </entry>
   <entry>
@@ -597,12 +597,12 @@
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
-<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/" target="_blank" rel="noopener">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
+<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
 <ul>
 <li>ByteBuffer底层实现包含四个关键字段，并满足大小关系：mark &lt;= position &lt;= limit &lt;= capacity；</li>
 <li>ByteBuffer存在写模式和读模式两种状态，内部方法可以触发状态切换，比如flip方法从写状态切换为读状态；</li>
@@ -896,8 +896,8 @@
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Netty</tag>
         <tag>源码分析</tag>
+        <tag>Netty</tag>
       </tags>
   </entry>
   <entry>
@@ -918,9 +918,9 @@
 </ul>
 <p>续写章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33</em></p>
 <h2 id="Future和Promise的关系"><a href="#Future和Promise的关系" class="headerlink" title="Future和Promise的关系"></a>Future<V>和Promise<V>的关系</h2><p>Netty内部的io.netty.util.concurrent.Future<V> 继承自java.util.concurrent.Future<V>，而Promise<V>是前者的一个特殊实现。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%9B%9B%20Promise%20%E4%B8%8E%20Future%3A%20%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86%2FFuture%E5%92%8CPromise%E7%B1%BB%E5%9B%BE.png" alt="Future和Promise类图.png"></p>
@@ -993,8 +993,8 @@
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Netty</tag>
         <tag>源码分析</tag>
+        <tag>Netty</tag>
       </tags>
   </entry>
   <entry>
@@ -1779,7 +1779,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">  PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND</span><br><span class="line"> 2972 prod      20   0   12.0g   7.8g  18008 R 99.9 57.1  54624:29 java</span><br><span class="line"> 2971 prod      20   0   12.0g   7.8g  18008 R 99.9 57.1  54620:12 java</span><br><span class="line"> 3233 prod      20   0   12.0g   7.8g  18008 S  0.3 57.1 886:17.26 java</span><br><span class="line"> 3248 prod      20   0   12.0g   7.8g  18008 S  0.3 57.1 994:43.62 java</span><br><span class="line"> 8902 prod      20   0   12.0g   7.8g  18008 S  0.3 57.1 511:27.79 java</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
 <p>上边的列表打印出来了这个JAVA进程的线程号(PID)、CPU占用（%CPU)等信息。呵！可以看到PID为2971和2972的线程排在前边，两个都几乎占了一个CPU核心！想必就是死循环了吧!</p>
 <h2 id="问题诊断"><a href="#问题诊断" class="headerlink" title="问题诊断"></a>问题诊断</h2><p>既然明确了是这两个线程的问题，那就把这两个线程找出来，看看代码逻辑便知。</p>
-<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/" target="_blank" rel="noopener">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
+<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
 <p>这两个线程的PID从<a href="https://tool.oschina.net/hexconvert" target="_blank" rel="noopener">十进制转化为十六进制</a>，分别是b9b和b9c，然后用这两个值去jstack结果里边查找一下，便有如下结果：</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[prod@xxxxxxxxxxxx xxxx-xxxxxxxxx-service]$ jstack 2652 |egrep -A 8 <span class="string">"b9b|b9c"</span></span><br><span class="line"><span class="string">"Pool-Default-schedule-0"</span> <span class="comment">#26 prio=5 os_prio=0 tid=0x00007f9eb243e000 nid=0xb9c runnable [0x00007f9e1dff6000]</span></span><br><span class="line">   java.lang.Thread.State: RUNNABLE</span><br><span class="line">	at java.util.concurrent.ScheduledThreadPoolExecutor<span class="variable">$DelayedWorkQueue</span>.poll(ScheduledThreadPoolExecutor.java:809)</span><br><span class="line">	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1073)</span><br><span class="line">	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)</span><br><span class="line">	at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:624)</span><br><span class="line">	at java.lang.Thread.run(Thread.java:748)</span><br><span class="line"></span><br><span class="line"><span class="string">"Pool-Monitor-schedule-0"</span> <span class="comment">#25 prio=5 os_prio=0 tid=0x00007f9eb2576000 nid=0xb9b runnable [0x00007f9e1e0f7000]</span></span><br><span class="line">   java.lang.Thread.State: RUNNABLE</span><br><span class="line">	at java.util.concurrent.ScheduledThreadPoolExecutor<span class="variable">$DelayedWorkQueue</span>.poll(ScheduledThreadPoolExecutor.java:809)</span><br><span class="line">	at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1073)</span><br><span class="line">	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)</span><br><span class="line">	at java.util.concurrent.ThreadPoolExecutor<span class="variable">$Worker</span>.run(ThreadPoolExecutor.java:624)</span><br><span class="line">	at java.lang.Thread.run(Thread.java:748)</span><br></pre></td></tr></table></figure>
 
@@ -1908,7 +1908,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 
 <p>正式开始前先废话一下：</p>
 <div style="margin-top: -20px;"><div class="fold_hider"><div class="close hider_title"><span style="color:gray;font-size:12px">点击显/隐</span></div></div><div class="fold">
-<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
+<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
 <p>我明白直接研究Spring的核心机制，不应该从RestfultWeb入手，因为那样子其实是从Spring boot层面开始阅读源码了。</p>
 <p>可以阅读这篇文章<a href="https://www.jianshu.com/p/42620a0a2c33" target="_blank" rel="noopener">《Spring,Spring MVC及Spring Boot区别》</a>大致了解。</p>
 <p>所以直接按照书上介绍的内容去啃源码就对了。另外提一下就是书上的Spring版本要比现在的版本老了，但是核心思想一样的，底层的源码改动不大，可以正常阅读。</p>
