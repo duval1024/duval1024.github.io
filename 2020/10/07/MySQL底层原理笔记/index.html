@@ -61,7 +61,7 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png">
 <meta property="article:published_time" content="2020-10-07T14:31:32.000Z">
-<meta property="article:modified_time" content="2020-10-21T10:01:14.940Z">
+<meta property="article:modified_time" content="2020-10-21T10:06:08.558Z">
 <meta property="article:author" content="Duval">
 <meta property="article:tag" content="MySQL">
 <meta property="article:tag" content="数据库">
@@ -376,7 +376,46 @@
 <li><strong>可重复读</strong>：一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的；</li>
 <li><strong>串行化</strong>：对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。</li>
 </ul>
-<p>四种隔离级别区别：<br>|隔离级别|脏读可能性|不可重复读可能性|幻读可能性|加锁读|<br>|–|–|–|–|–|<br>|读未提交|Y|Y|Y|N|<br>|读提交|N|Y|Y|N|<br>|可重复读|N|N|Y|N|<br>|串行化|N|N|N|Y|</p>
+<p>四种隔离级别区别：</p>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏读可能性</th>
+<th>不可重复读可能性</th>
+<th>幻读可能性</th>
+<th>加锁读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>读未提交</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr>
+<td>读提交</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr>
+<td>可重复读</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr>
+<td>串行化</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+</tbody></table>
 <h3 id="MySQL中的事务"><a href="#MySQL中的事务" class="headerlink" title="MySQL中的事务"></a>MySQL中的事务</h3><p>MySQL提供了两种事务型存储引擎：InnoDB和NDB Cluster，而MyISAM并不支持事务。</p>
 <h4 id="MVCC与事务隔离实现"><a href="#MVCC与事务隔离实现" class="headerlink" title="MVCC与事务隔离实现"></a>MVCC与事务隔离实现</h4><p>四种隔离级别的在InnoDB实现：</p>
 <ul>
