@@ -23,7 +23,7 @@
 <li>a custom init-method definition</li>
 <li><strong>BeanPostProcessors</strong>‘s postProcessAfterInitialization methods</li>
 </ul>
-<p>BeanFactory关闭扩展点顺序：<br>On shutdown of a bean factory, the following lifecycle methods apply:</p>
+<p>BeanFactory关闭扩展点顺序：</p>
 <ul>
 <li><strong>DestructionAwareBeanPostProcessors</strong> postProcessBeforeDestruction methods</li>
 <li><strong>DisposableBean</strong>‘s destroy</li>
@@ -444,8 +444,8 @@
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>数据库</tag>
         <tag>MySQL</tag>
+        <tag>数据库</tag>
       </tags>
   </entry>
   <entry>
