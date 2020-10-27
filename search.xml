@@ -90,6 +90,13 @@
 
 <h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">《再读Spring源码之二 FactoryBean》</a></p>
 ]]></content>
+      <categories>
+        <category>Spring</category>
+      </categories>
+      <tags>
+        <tag>源码分析</tag>
+        <tag>Spring</tag>
+      </tags>
   </entry>
   <entry>
     <title>MySQL底层原理笔记</title>
@@ -437,8 +444,8 @@
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
