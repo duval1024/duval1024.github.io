@@ -63,10 +63,10 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png">
 <meta property="article:published_time" content="2020-10-07T14:31:32.000Z">
-<meta property="article:modified_time" content="2020-10-23T07:24:56.854Z">
+<meta property="article:modified_time" content="2020-11-04T09:53:56.165Z">
 <meta property="article:author" content="Duval">
-<meta property="article:tag" content="MySQL">
 <meta property="article:tag" content="数据库">
+<meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg">
 
@@ -282,7 +282,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>9.4k</span>
+              <span>9.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -519,7 +519,7 @@
 </ul>
 <h3 id="全局锁"><a href="#全局锁" class="headerlink" title="全局锁"></a>全局锁</h3><ul>
 <li>加全局锁办法：<em>flush table with read lock；</em> （解锁使用<em>unlock table;</em>)会使得整个数据库实例处于只读状态。一般用在MySIAM引擎下进行全库逻辑备份，而在InnoDB下一般不采用这种办法，应该使用mysqldump –single-transaction 通过事务来获得一致性视图，而不用加全局锁。</li>
-<li>不要使用<em>set global readonly=true；</em>来加全局锁。因为readonly值会被用在其他用途，并且当客户端发生异常，readonly值会持久化到数据库上，导致数据库锁不能释放。读锁之间不互斥，因此你可以有多个线程同时对一张表增删改查。读写锁之间、写锁之间是互斥的，用来保证变更表结构操作的安全性。因此，如果有两个线程要同时给一个表加字段，其中一个要等另一个执行完才能开始执行。</li>
+<li>不要使用 <em>set global readonly=true；</em> 来加全局锁。因为readonly值会被用在其他用途，并且当客户端发生异常，readonly值会持久化到数据库上，导致数据库锁不能释放。读锁之间不互斥，因此你可以有多个线程同时对一张表增删改查。读写锁之间、写锁之间是互斥的，用来保证变更表结构操作的安全性。因此，如果有两个线程要同时给一个表加字段，其中一个要等另一个执行完才能开始执行。</li>
 </ul>
 <h3 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h3><ul>
 <li>MySQL支持表锁，一般使用 <em>lock tables [tablename] read/write</em> 进行加锁。该命令的加锁会对所有的线程生效。</li>
@@ -531,7 +531,16 @@
 <li>InnoDB通过给索引项加锁来实现行锁，如果没有索引，则通过隐藏的聚簇索引来对记录加锁。如果操作不通过索引条件检索数据，InnoDB 则对表中的所有记录加锁，实际效果就和表锁一样。</li>
 <li>当查询的索引是唯一索引(不存在两个数据行具有完全相同的键值)时，InnoDB存储引擎会将Next-Key Lock降级为Record Lock，即只锁住索引本身，而不是范围。如果是范围查询，则边界的Next-Key Lock也有可能不会降级。<a href="https://time.geekbang.org/column/article/75659" target="_blank" rel="noopener">21 | 为什么我只改一行的语句，锁这么多？</a></li>
 <li>InnoDB对于辅助索引使用Next-Key Lock锁，也就是说不仅会锁住辅助索引值所在的范围以及记录本身，还会将其下一键值加上Gap LOCK。</li>
-<li>Next-Key Lock本质是Record Lock + Gap Lock</li>
+<li>Next-Key Lock本质是Record Lock + Gap Lock；</li>
+<li>Next-Key Lock是前开后闭区间</li>
+</ul>
+<h3 id="加锁原则"><a href="#加锁原则" class="headerlink" title="加锁原则"></a>加锁原则</h3><p>两个“原则”、两个“优化”和一个“bug”。</p>
+<ul>
+<li>原则 1：加锁的基本单位是 next-key lock。希望你还记得，next-key lock 是前开后闭区间。</li>
+<li>原则 2：查找过程中访问到的对象才会加锁。</li>
+<li>优化 1：索引上的等值查询，给唯一索引加锁的时候，next-key lock 退化为行锁。</li>
+<li>优化 2：索引上的等值查询，向右遍历时且最后一个值不满足等值条件的时候，next-key lock 退化为间隙锁。</li>
+<li>一个 bug：唯一索引上的范围查询会访问到不满足条件的第一个值为止。</li>
 </ul>
 <h3 id="意向排他锁"><a href="#意向排他锁" class="headerlink" title="意向排他锁"></a>意向排他锁</h3><ul>
 <li>InnoDB支持多粒度锁，允许行锁和表锁共存。而意向锁属于一种表锁，意向锁互相之间不会排斥，但意向锁和表级的X锁存在互斥关系。具体参考：<a href="https://juejin.im/post/6844903666332368909" target="_blank" rel="noopener">详解 MySql InnoDB 中意向锁的作用</a></li>
@@ -700,8 +709,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
               <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+              <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
           </div>
 
         
@@ -778,7 +787,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL基本架构"><span class="nav-number">1.</span> <span class="nav-text">MySQL基本架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#连接器"><span class="nav-number">1.1.</span> <span class="nav-text">连接器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解析器"><span class="nav-number">1.2.</span> <span class="nav-text">解析器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优化器"><span class="nav-number">1.3.</span> <span class="nav-text">优化器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行器"><span class="nav-number">1.4.</span> <span class="nav-text">执行器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询缓存"><span class="nav-number">1.5.</span> <span class="nav-text">查询缓存</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志系统"><span class="nav-number">2.</span> <span class="nav-text">日志系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#binlog（归档日志）"><span class="nav-number">2.1.</span> <span class="nav-text">binlog（归档日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redo-log（重做日志）"><span class="nav-number">2.2.</span> <span class="nav-text">redo log（重做日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#两阶段提交"><span class="nav-number">2.3.</span> <span class="nav-text">两阶段提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读"><span class="nav-number">2.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">3.</span> <span class="nav-text">事务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ACID概念"><span class="nav-number">3.1.</span> <span class="nav-text">ACID概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#隔离性和隔离级别"><span class="nav-number">3.2.</span> <span class="nav-text">隔离性和隔离级别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL中的事务"><span class="nav-number">3.3.</span> <span class="nav-text">MySQL中的事务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#MVCC与事务隔离实现"><span class="nav-number">3.3.1.</span> <span class="nav-text">MVCC与事务隔离实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#事务的启动"><span class="nav-number">3.3.2.</span> <span class="nav-text">事务的启动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看修改事务隔离级别"><span class="nav-number">3.3.3.</span> <span class="nav-text">查看修改事务隔离级别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他注意"><span class="nav-number">3.3.4.</span> <span class="nav-text">其他注意</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读-1"><span class="nav-number">3.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引"><span class="nav-number">4.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#常见索引模型"><span class="nav-number">4.1.</span> <span class="nav-text">常见索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB索引模型"><span class="nav-number">4.2.</span> <span class="nav-text">InnoDB索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL误判索引解决办法"><span class="nav-number">4.3.</span> <span class="nav-text">MySQL误判索引解决办法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁"><span class="nav-number">5.</span> <span class="nav-text">锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局锁"><span class="nav-number">5.1.</span> <span class="nav-text">全局锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表锁"><span class="nav-number">5.2.</span> <span class="nav-text">表锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#行锁"><span class="nav-number">5.3.</span> <span class="nav-text">行锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#意向排他锁"><span class="nav-number">5.4.</span> <span class="nav-text">意向排他锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#死锁检测策略"><span class="nav-number">5.5.</span> <span class="nav-text">死锁检测策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题汇总"><span class="nav-number">6.</span> <span class="nav-text">问题汇总</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL基本架构"><span class="nav-number">1.</span> <span class="nav-text">MySQL基本架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#连接器"><span class="nav-number">1.1.</span> <span class="nav-text">连接器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解析器"><span class="nav-number">1.2.</span> <span class="nav-text">解析器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优化器"><span class="nav-number">1.3.</span> <span class="nav-text">优化器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行器"><span class="nav-number">1.4.</span> <span class="nav-text">执行器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询缓存"><span class="nav-number">1.5.</span> <span class="nav-text">查询缓存</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志系统"><span class="nav-number">2.</span> <span class="nav-text">日志系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#binlog（归档日志）"><span class="nav-number">2.1.</span> <span class="nav-text">binlog（归档日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redo-log（重做日志）"><span class="nav-number">2.2.</span> <span class="nav-text">redo log（重做日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#两阶段提交"><span class="nav-number">2.3.</span> <span class="nav-text">两阶段提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读"><span class="nav-number">2.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">3.</span> <span class="nav-text">事务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ACID概念"><span class="nav-number">3.1.</span> <span class="nav-text">ACID概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#隔离性和隔离级别"><span class="nav-number">3.2.</span> <span class="nav-text">隔离性和隔离级别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL中的事务"><span class="nav-number">3.3.</span> <span class="nav-text">MySQL中的事务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#MVCC与事务隔离实现"><span class="nav-number">3.3.1.</span> <span class="nav-text">MVCC与事务隔离实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#事务的启动"><span class="nav-number">3.3.2.</span> <span class="nav-text">事务的启动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看修改事务隔离级别"><span class="nav-number">3.3.3.</span> <span class="nav-text">查看修改事务隔离级别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他注意"><span class="nav-number">3.3.4.</span> <span class="nav-text">其他注意</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读-1"><span class="nav-number">3.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引"><span class="nav-number">4.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#常见索引模型"><span class="nav-number">4.1.</span> <span class="nav-text">常见索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB索引模型"><span class="nav-number">4.2.</span> <span class="nav-text">InnoDB索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL误判索引解决办法"><span class="nav-number">4.3.</span> <span class="nav-text">MySQL误判索引解决办法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁"><span class="nav-number">5.</span> <span class="nav-text">锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局锁"><span class="nav-number">5.1.</span> <span class="nav-text">全局锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表锁"><span class="nav-number">5.2.</span> <span class="nav-text">表锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#行锁"><span class="nav-number">5.3.</span> <span class="nav-text">行锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加锁原则"><span class="nav-number">5.4.</span> <span class="nav-text">加锁原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#意向排他锁"><span class="nav-number">5.5.</span> <span class="nav-text">意向排他锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#死锁检测策略"><span class="nav-number">5.6.</span> <span class="nav-text">死锁检测策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题汇总"><span class="nav-number">6.</span> <span class="nav-text">问题汇总</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -877,7 +886,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:12</span>
+    <span title="站点阅读时长">5:13</span>
 
 </div>
 
