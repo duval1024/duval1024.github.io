@@ -1,6 +1,232 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>代码整洁之道</title>
+    <url>/2020/11/14/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/</url>
+    <content><![CDATA[<p>如何写出整洁代码是一名优秀程序员的必修课。整洁的代码有助于项目提高迭代质量，减轻历史包袱；同时也能让别人更易看懂代码，促进团队协作分工。最近看完《代码整洁之道》一书，里边有不少观点值得采纳。本文摘录文章主要内容，以备后忘。</p>
+<a id="more"></a>
+
+
+<h2 id="有意义的命名"><a href="#有意义的命名" class="headerlink" title="有意义的命名"></a>有意义的命名</h2><ul>
+<li>命名应当名副其实，能准确体现对象的含义；</li>
+<li>避免误导性命名。比如：不要使用”l”、”1” 以及其他专有名称；</li>
+<li>命名应该做有意义的区分。比如：ProductInfo 、ProductData和Product没区别，moneyAmount和money没区别；</li>
+<li>使用可以读出来的命名。比如：使用generationTimestamp，而不是genymdhms；</li>
+<li>使用可以搜索的命名。比如：”e” 或者魔法数在代码中难以搜索；</li>
+<li>避免使用编码（包括匈牙利标记法、成员前缀或接口实现标记等等）。比如：IShapeFactory无论是作为子类或者其实现，其首字母的标记”I”都是累赘的，应该使用ShapeFactory；</li>
+<li>类名或者对象名应该是名词，如：Customer、WikiPage、Account、AddressParser。避免使用含义不确切的名词：Manager、Processor、Data、Info等，更不应使用动词；</li>
+<li>方法名应该是动词或者动词短语；</li>
+<li>添加有意义的语境。比如：firstName、secondName、street、houseNumber等零散字段，可以增加前缀”addr-“作为语境，明确暗示它们构成一个地址；更好的办法是封装为Address类；</li>
+<li>不要添加无用的语境。比如开发一个名为GSD的系统，不应该给所有的类都加上GSD前缀；</li>
+</ul>
+<h2 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h2><ul>
+<li>函数第一规则：短小</li>
+<li>函数的缩进层次要控制的两层之内；</li>
+<li>函数应该做一件事，做好这件事，只做一件事；</li>
+<li>使用抽象工厂类隐藏switch语句；</li>
+<li>使用描述性命名，长而具有描述性的命名，要比短而令人费解的命名要好；</li>
+<li>函数参数越少越好，当参数数量需要两个、三个或三个以上的时候，就说明其中一些参数可能应该封装为类；</li>
+<li>标志参数丑陋不堪，不应该向函数传入布尔值，而是拆分为两个方法。比如：setStatus(Boolean start) 应该拆分为 start() 和 stop();</li>
+<li>分隔询问和指令。比如if (set(“username”, “unclebob”)… 应该拆分为：  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (attributeExists(<span class="string">"username"</span>) &#123;</span><br><span class="line">    setAttribute(<span class="string">"username"</span>, <span class="string">"unclebob"</span>);`</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>使用异常替代返回错误码；</li>
+<li>try/catch代码块会搞乱代码结构，应该将try和catch代码块的主体部分抽离出来形成独立函数。比如:  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    deletePageAndAllReferences(page);</span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    logError(e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>避免重复的代码；</li>
+</ul>
+<h2 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h2><ul>
+<li>恰当的注释是用来弥补我们用代码表达意图时所遭遇的失败。如果发现自己需要写注释，先复盘下是否可以通过代码表达而不是注释；</li>
+<li>注释不能美化糟糕的代码。与其花时间编写解释糟糕代码的注释，还不如花时间清理下糟糕的代码；</li>
+<li>通过良好的代码来阐述逻辑。比如：<ul>
+<li>良好代码：<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (employee.isEligibleForFullBenefits())</span><br></pre></td></tr></table></figure></li>
+<li>而不要采用糟糕注释：<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// check to see if the employee is eligible for full benefits</span></span><br><span class="line"><span class="keyword">if</span> ((employee.flags &amp; HOURLY_FLAG) &amp;&amp; employee.age &gt; <span class="number">65</span>))</span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>好注释<ul>
+<li>法律信息</li>
+<li>提供信息的注释</li>
+<li>对意图的解释</li>
+<li>阐释</li>
+<li>警示</li>
+<li>TODO注释</li>
+<li>放大</li>
+<li>公共API的Javadoc</li>
+</ul>
+</li>
+<li>坏注释<ul>
+<li>喃喃自语</li>
+<li>多余的注释</li>
+<li>误导性注释</li>
+<li>循规式注释</li>
+<li>日志式注释</li>
+<li>废话式注释</li>
+<li>注释掉的代码</li>
+<li>HTML注释</li>
+<li>非公共API的Javadoc</li>
+</ul>
+</li>
+</ul>
+<h2 id="格式"><a href="#格式" class="headerlink" title="格式"></a>格式</h2><ul>
+<li>单个文件控制在恰当的长度（比如200~500行）；</li>
+<li>源文件应该像报纸一样。名称应该简单且一目了然。名称本身应该足够告诉我们是否在正确的模块中。源文件最顶部应该给出高层次概念和算法。细节应该往下渐次展开，直至找到源文件中最底层的函数和细节。</li>
+<li>源文件内部在垂直方向上，不同概念之间应该有间隔。比如：import块、import static块、变量定义、方法区等等，它们之间应该有空行间隔；</li>
+<li>紧密相关的代码应该相互靠近。比如：<ul>
+<li>不必在变量之间插入无用的注释；</li>
+<li>变量声明应该尽可能靠近其实用的位置；</li>
+<li>循环中的控制变量应该尽量在循环语句中声明；</li>
+<li>被调用的函数应该在调用函数的下方；</li>
+<li>概念相关的代码应该放在一起；</li>
+</ul>
+</li>
+<li>每行代码长度控制在120个字符以内；</li>
+<li>代码行中恰当使用空格。比如：逗号后加一个空格；</li>
+<li>统一的缩进风格；</li>
+</ul>
+<h2 id="对象和数据结构"><a href="#对象和数据结构" class="headerlink" title="对象和数据结构"></a>对象和数据结构</h2><ul>
+<li>数据抽象以避免曝露数据细节，以抽象形态表述数据；</li>
+<li>过程式代码便于在不改动既有数据机构的前提下添加新函数。面向对象代码便于在不改动既有函数的前提下添加新类；</li>
+<li>反之亦然，过程式代码难以添加新数据结构，因为必须修改所有函数。面向对象代码难以添加新函数，因为必须修改所有类；</li>
+</ul>
+<h2 id="错误处理"><a href="#错误处理" class="headerlink" title="错误处理"></a>错误处理</h2><ul>
+<li>使用异常而非返回码；</li>
+<li>不要在方法中返回null值，而是抛出异常或返回特例对象；</li>
+<li>不要向方法传递null值；</li>
+</ul>
+<h2 id="边界"><a href="#边界" class="headerlink" title="边界"></a>边界</h2><h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><ul>
+<li>不要遵循TDD三定律（所谓的编写生产代码前先编写单元测试）；</li>
+<li>保持测试代码的整洁，抽象隐藏测试准备细节，突出测试逻辑；</li>
+<li>单元测试中优先考虑简介，再考虑执行效率；</li>
+<li>每个测试有且只有一个断言；</li>
+</ul>
+<h2 id="类"><a href="#类" class="headerlink" title="类"></a>类</h2><ul>
+<li>类应该保持短小；</li>
+<li>类应该遵守单一权责原则（SRP）；</li>
+<li>类内部应该保持高内聚（保持每个方法都操作内部的一个或者多个变量）；</li>
+</ul>
+<h2 id="系统"><a href="#系统" class="headerlink" title="系统"></a>系统</h2><ul>
+<li><p>系统的构造和使用分开的办法：</p>
+<ul>
+<li>分离构造过程，创建系统所需的对象，并传递给应用程序，应用程序只管使用；</li>
+<li>在应用程序中使用抽象工厂方法来隐藏构建细节；</li>
+<li>使用依赖注入来分离构造和使用；</li>
+</ul>
+</li>
+<li><p>Java AOP三种机制：</p>
+<ul>
+<li>Java代理，常用的字节码操作库有：CGLIB、ASM、Javassist；</li>
+<li>纯Java AOP框架；</li>
+<li>AspectJ；</li>
+</ul>
+</li>
+</ul>
+<h2 id="迭进"><a href="#迭进" class="headerlink" title="迭进"></a>迭进</h2><ul>
+<li>运行所有测试；</li>
+<li>不可重复；</li>
+<li>调整代码，确保具有良好的表达力；</li>
+<li>尽可能少的类和方法；</li>
+</ul>
+<h2 id="并发编程"><a href="#并发编程" class="headerlink" title="并发编程"></a>并发编程</h2><ul>
+<li>对象是过程的抽象，线程是调度的抽象；</li>
+<li>并发防御性原则<ul>
+<li>单一权责原则；</li>
+<li>限制数据作用域；</li>
+<li>使用数据副本；</li>
+<li>线程应尽可能独立；</li>
+</ul>
+</li>
+<li>了解Java并发安全库；</li>
+<li>了解并发执行模型；</li>
+<li>保持同步区域微小；</li>
+</ul>
+<h2 id="味道与启发"><a href="#味道与启发" class="headerlink" title="味道与启发"></a>味道与启发</h2><h3 id="注释-1"><a href="#注释-1" class="headerlink" title="注释"></a>注释</h3><ul>
+<li>不恰当的信息</li>
+<li>废弃的注释</li>
+<li>冗余的注释</li>
+<li>糟糕的注释</li>
+<li>注释掉的代码</li>
+</ul>
+<h3 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h3><ul>
+<li>需要多步才能实现的构建</li>
+<li>需要多步才能做到的测试</li>
+</ul>
+<h3 id="函数-1"><a href="#函数-1" class="headerlink" title="函数"></a>函数</h3><ul>
+<li>过多的参数</li>
+<li>输出参数</li>
+<li>标志参数（布尔值参数）</li>
+<li>不被调用的死函数</li>
+</ul>
+<h3 id="一般性问题"><a href="#一般性问题" class="headerlink" title="一般性问题"></a>一般性问题</h3><ul>
+<li>一个源文件存在多种语言</li>
+<li>明显的行为未被实现</li>
+<li>不正确的边界行为</li>
+<li>忽视安全（防御性编程）</li>
+<li>重复代码</li>
+<li>在错误的抽象层级上的代码</li>
+<li>基类依赖于派生类</li>
+<li>信息过多（类中方法过多、函数变量过多等等）</li>
+<li>不执行的代码</li>
+<li>垂直距离过大（变量、函数应该在靠近使用的地方定义）</li>
+<li>前后不一致（不同地方的相似概念应该用相似一致的命名，如方法名processVerificationRequest和processDeletionRequest）</li>
+<li>混淆视听的代码（如：没有实现的默认构造函数、没用的变量、无调用的函数、无信息量的注释）</li>
+<li>人为耦合。（不相互依赖的东西不应该耦合）</li>
+<li>特性依恋。（类的方法只应对所属类中的变量和函数感兴趣，不应该垂青其他类中的变量和函数）</li>
+<li>选择算子参数。选择算子可能是boolean、枚举、整数等形式，通常可以拆分为多个小函数</li>
+<li>晦涩的意图，包括联排表达式、匈牙利语标记法、魔术数等</li>
+<li>位置错误的权责</li>
+<li>不恰当的静态方法。如果的确需要静态方法，那么请确保没机会打算让它有多态行为</li>
+<li>使用解释性变量</li>
+<li>函数名称应该表达其行为</li>
+<li>理解算法</li>
+<li>把逻辑依赖改为物理依赖。（比如某些写死的静态变量，改为从实体的get方法获取）</li>
+<li>用多态替代If/Else或Switch/Case</li>
+<li>团队成员应遵循标准约定</li>
+<li>用命名常量替代魔术数</li>
+<li>封装布尔条件</li>
+<li>避免否定性布尔条件</li>
+<li>函数只做一件事</li>
+<li>掩蔽时序耦合</li>
+<li>封装边界条件（比如level+1、level-1）</li>
+<li>函数应该只在一个抽象层级</li>
+<li>在较高层级放置可配置数据</li>
+</ul>
+<h2 id="Java"><a href="#Java" class="headerlink" title="Java"></a>Java</h2><ul>
+<li>通过使用通配符避免过长的导入清单（import）</li>
+<li>不要继承常量</li>
+<li>优先使用枚举而不是常量</li>
+</ul>
+<h2 id="名称"><a href="#名称" class="headerlink" title="名称"></a>名称</h2><ul>
+<li>采用描述性名称</li>
+<li>名称应该与抽象层级相符</li>
+<li>尽可能使用标准命名法</li>
+<li>无歧义的名称</li>
+<li>作用范围较大的名称选用长名称（范围小的可以用短名称，比如循环变量i）</li>
+<li>避免编码式命名（比如匈牙利语标记法等）</li>
+<li>名称应该说明副作用（比如createOrReturnOos优于getOos）</li>
+</ul>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><ul>
+<li>测试不足</li>
+<li>使用覆盖率工具包</li>
+<li>别略过小测试</li>
+<li>被忽略的测试就是对不确定事物的疑问</li>
+<li>测试边界条件</li>
+<li>全面测试相近的缺陷</li>
+<li>测试失败的模式有启发性</li>
+<li>测试覆盖率的模式有启发性</li>
+<li>测试应该快速</li>
+</ul>
+]]></content>
+      <categories>
+        <category>读书笔记</category>
+      </categories>
+      <tags>
+        <tag>读书笔记</tag>
+        <tag>代码整洁之道</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>再读Spring源码之三 常用扩展点</title>
     <url>/2020/10/26/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%89-%E5%B8%B8%E7%94%A8%E6%89%A9%E5%B1%95%E7%82%B9/</url>
     <content><![CDATA[<p>本来打算逐个详解Spring的扩展点，但网上关于扩展点的有关资料其实已经非常多，没必要重复造轮子。于是，我决定用这篇文章扼要总结备忘下Spring的各个扩展点的原理和使用场景。</p>
