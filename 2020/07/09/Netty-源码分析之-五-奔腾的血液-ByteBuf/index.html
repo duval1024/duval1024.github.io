@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本文是永顺大牛写的系列教程《源码之下无秘密 ── 做最好的 Netty 源码分析教程》的续写章节。本章主要介绍Netty中用来承接数据的ByteBuf的底层实现原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty 源码分析之 五 奔腾的血液: ByteBuf">
+<meta property="og:url" content="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/index.html">
+<meta property="og:site_name" content="Duval">
+<meta property="og:description" content="本文是永顺大牛写的系列教程《源码之下无秘密 ── 做最好的 Netty 源码分析教程》的续写章节。本章主要介绍Netty中用来承接数据的ByteBuf的底层实现原理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E4%BA%94%20%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2%3A%20ByteBuf%2Fclass-diagram.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E4%BA%94%20%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2%3A%20ByteBuf%2FByteBuf%E8%AF%BB%E5%86%99%E6%8C%87%E9%92%88.png">
+<meta property="article:published_time" content="2020-07-09T15:30:20.000Z">
+<meta property="article:modified_time" content="2020-07-17T02:47:18.229Z">
+<meta property="article:author" content="Duval">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="Netty">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E4%BA%94%20%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2%3A%20ByteBuf%2Fclass-diagram.png">
+
+<link rel="canonical" href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Netty 源码分析之 五 奔腾的血液: ByteBuf | Duval</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Duval</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">技术与生活</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="Duval">
+      <meta itemprop="description" content="学习技术，记录生活">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Duval">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Netty 源码分析之 五 奔腾的血液: ByteBuf
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-07-09 23:30:20" itemprop="dateCreated datePublished" datetime="2020-07-09T23:30:20+08:00">2020-07-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" class="post-meta-item leancloud_visitors" data-flag-title="Netty 源码分析之 五 奔腾的血液: ByteBuf" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>20k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>18 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文是永顺大牛写的系列教程<a href="https://segmentfault.com/a/1190000007282628#comment-area" target="_blank" rel="noopener">《源码之下无秘密 ── 做最好的 Netty 源码分析教程》</a>的续写章节。本章主要介绍Netty中用来承接数据的ByteBuf的底层实现原理。</p>
+<a id="more"></a>
+<h2 id="写在最前"><a href="#写在最前" class="headerlink" title="写在最前"></a>写在最前</h2><p>永顺前辈已写完的章节有如下：</p>
+<ul>
+<li><a href="https://segmentfault.com/a/1190000006824091" target="_blank" rel="noopener">Netty 源码分析之 番外篇 Java NIO 的前生今世</a></li>
+<li><a href="https://segmentfault.com/a/1190000007282597" target="_blank" rel="noopener">Netty 源码分析之 零 磨刀不误砍柴工 源码分析环境搭建</a></li>
+<li><a href="https://segmentfault.com/a/1190000007282789" target="_blank" rel="noopener">Netty 源码分析之 一 揭开 Bootstrap 神秘的红盖头 (客户端)</a></li>
+<li><a href="https://segmentfault.com/a/1190000007283053" target="_blank" rel="noopener">Netty 源码分析之 一 揭开 Bootstrap 神秘的红盖头 (服务器端)</a></li>
+<li><a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)</a></li>
+<li><a href="https://segmentfault.com/a/1190000007309311" target="_blank" rel="noopener">Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (二)</a></li>
+<li><a href="https://segmentfault.com/a/1190000007403873" target="_blank" rel="noopener">Netty 源码分析之 三 我就是大名鼎鼎的 EventLoop(一)</a></li>
+<li><a href="https://segmentfault.com/a/1190000007403937" target="_blank" rel="noopener">Netty 源码分析之 三 我就是大名鼎鼎的 EventLoop(二)</a></li>
+</ul>
+<p>笔者尝试续写的章节：</p>
+<ul>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+</ul>
+<p><em>本文使用的netty版本为4.1.33.Final</em></p>
+<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
+<ul>
+<li>ByteBuffer底层实现包含四个关键字段，并满足大小关系：mark &lt;= position &lt;= limit &lt;= capacity；</li>
+<li>ByteBuffer存在写模式和读模式两种状态，内部方法可以触发状态切换，比如flip方法从写状态切换为读状态；</li>
+<li>不同类型的ByteBuffer支持不同的数据类型，包括ByteBuffer、ShortBuffer、CharBuffer、DoubleBuffer、FloatBuffer、IntBuffer等类型。</li>
+</ul>
+<p>Netty的ByteBuf的底层实现有些许类似，但相比ByteBuffer实现了非常多扩展，并摒弃了一些不足：</p>
+<ul>
+<li>不区分读写状态，不需要切换状态；</li>
+<li>支持池化，避免频繁的GC回收；</li>
+<li>支持引用计数；</li>
+<li>类型兼容（同一个ByteBuf可以承载各种数据类型）；</li>
+<li>支持Unsafe操作的ByteBuf；</li>
+<li>支持堆外和堆内两种ByteBuf；</li>
+<li>支持零拷贝的复合类型CompositeByteBuf；</li>
+<li>…</li>
+</ul>
+<h2 id="ByteBuf继承关系"><a href="#ByteBuf继承关系" class="headerlink" title="ByteBuf继承关系"></a>ByteBuf继承关系</h2><p>我们先来看看ByteBuf的类图：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E4%BA%94%20%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2%3A%20ByteBuf%2Fclass-diagram.png" alt="class-diagram.png"></p>
+<p>ByteBuf以及其子类的命名非常规整，仅从名字上我们就可以将各个子类划分为以下几类：</p>
+<ul>
+<li>池化和非池化的ByteBuf，例如：PooledHeapByteBuf 和 UnpooledHeapByteBuf；</li>
+<li>含Unsafe操作的ByteBuf，例如：PooledUnsafeHeapByteBuf;</li>
+<li>分片类型的ByteBuf，例如：PooledSliceByteBuf和PooledDuplicatedByteBuf；</li>
+<li>组合ByteBuf，例如：CompositeBuf;</li>
+<li>实现了引用计数的ByteBuf。</li>
+</ul>
+<p>以上各种类型的都会在下文展开分析。</p>
+<h2 id="ByteBuf的读写指针"><a href="#ByteBuf的读写指针" class="headerlink" title="ByteBuf的读写指针"></a>ByteBuf的读写指针</h2><p>类似NIO ByteBuffer，ByteBuf底层实现也是字节数组，也同样由读写指针来控制读写位置。在ByteBuf的继承类AbstractByteBuf中定义了以下读写指针字段：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 当前读指针</span></span><br><span class="line"><span class="keyword">int</span> readerIndex;</span><br><span class="line"><span class="comment">// 当前写指针</span></span><br><span class="line"><span class="keyword">int</span> writerIndex;</span><br><span class="line"><span class="comment">// 暂存的读指针</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">int</span> markedReaderIndex;</span><br><span class="line"><span class="comment">// 暂存的写指针</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">int</span> markedWriterIndex;</span><br><span class="line"><span class="comment">// 最大容量</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">int</span> maxCapacity;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的事maxCapacity是对底层字节数组进行扩容的最大容量，并不是当前容量capacity。通过这几个指针，其实可以将字节数组划分为以下几部分：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E4%BA%94%20%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2%3A%20ByteBuf%2FByteBuf%E8%AF%BB%E5%86%99%E6%8C%87%E9%92%88.png" alt="ByteBuf读写指针.png"></p>
+<p>有如下性质：</p>
+<ul>
+<li>每读取一个字节，readerIndex递增1；直到readerIndex等于writerIndex，表示ByteBuf已经不可读；</li>
+<li>每写入一个字节，writerIndex递增1；直到writerIndex等于capacity，表示ByteBuf已经不可写；</li>
+<li>当writerIndex等于capacity表示底层字节数组需要扩容，且最大扩容不能超过max capacity。</li>
+</ul>
+<p>有如上性质，可以推出以下ByteBuf的一些方法实现：</p>
+<ul>
+<li>readableBytes()：可读字节数 –&gt; this.writerIndex - this.readerIndex</li>
+<li>writableBytes()：可写字节数 –&gt; this.capacity - this.writerIndex</li>
+<li>isReadable()：是否可读 –&gt; this.writerIndex - this.readerIndex &gt; 0</li>
+<li>isWritable()：是否可写 –&gt; this.capacity - this.writerIndex &gt; 0</li>
+</ul>
+<p>更多方法见下。</p>
+<h2 id="ByteBuf接口常用方法"><a href="#ByteBuf接口常用方法" class="headerlink" title="ByteBuf接口常用方法"></a>ByteBuf接口常用方法</h2><p>ByteBuf继承了Comparable和RefrenceCounted，其中后者是支持引用计数的接口，它的核心方法包含两个：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 引用数加1</span></span><br><span class="line"><span class="function">ReferenceCounted <span class="title">retain</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 引用数减1，如果引用数减为0，则释放该对象。</span></span><br><span class="line"><span class="comment">// 如果该对象被释放则返回true，否则返回false。</span></span><br><span class="line"><span class="comment">// 注意：子类实现其实是减2，后文会提到。</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">release</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>再来看ByteBuf的核心方法：</p>
+<ul>
+<li><p>容量有关方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1.返回当前容量</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">capacity</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 2.调整当前容量</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">capacity</span><span class="params">(<span class="keyword">int</span> newCapacity)</span></span>;</span><br><span class="line"><span class="comment">// 3.最大容量（capacity的最大上限）</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">maxCapacity</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<p>注意 capacity() &lt;= maxCapacity()。</p>
+</li>
+<li><p>读写指针有关方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 读写指针相关方法</span></span><br><span class="line"><span class="comment">// 1.获取当前读指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">readerIndex</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 2.设置当前读指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">readerIndex</span><span class="params">(<span class="keyword">int</span> readerIndex)</span></span>;</span><br><span class="line"><span class="comment">// 3.获取当前写指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">writerIndex</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 4.设置当前写指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writerIndex</span><span class="params">(<span class="keyword">int</span> writerIndex)</span></span>;</span><br><span class="line"><span class="comment">// 5.同时设置读写指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">setIndex</span><span class="params">(<span class="keyword">int</span> readerIndex, <span class="keyword">int</span> writerIndex)</span></span>;</span><br><span class="line"><span class="comment">// 6.获取可读字节数(this.writerIndex - this.readerIndex)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">readableBytes</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 7.获取可写字节数(this.capacity - this.writerIndex)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">writableBytes</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 8.获取最大可写字节数 (this.maxCapacity - this.writerIndex)&#125;</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">maxWritableBytes</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 9.是否可读(this.writerIndex - this.readerIndex)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">isReadable</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 10.是否可写(this.capacity - this.writerIndex)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">isWritable</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 11.清空(相当于setIndex(0, 0))</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">clear</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 12.记录读指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">markReaderIndex</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 13.从记录中恢复读指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">resetReaderIndex</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 14.记录写指针 </span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">markWriterIndex</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 15.从记录中恢复写指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">resetWriterIndex</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 16.丢弃已读字节</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">discardReadBytes</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>上述方法都是围绕着readerIndex、writerIndex、capital、maxcapital等四个值衍生的方法。实现都非常类似而简单。</p>
+<ul>
+<li>随机读写数据有关方法</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 随机读写数据</span></span><br><span class="line"><span class="comment">// ... 这部分类似的方法非常多，以下只列举一部分 ...</span></span><br><span class="line"><span class="comment">// 1.从指定位置读取数据</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">getBoolean</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">short</span> <span class="title">getUnsignedByte</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">short</span> <span class="title">getShort</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span> <span class="title">getUnsignedShort</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span>   <span class="title">getInt</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">long</span>  <span class="title">getLong</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">double</span> <span class="title">getDouble</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">short</span> <span class="title">getShortLE</span><span class="params">(<span class="keyword">int</span> index)</span></span>;（LE：Little Endian <span class="keyword">byte</span> order，表示小端序，下同）</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span>   <span class="title">getIntLE</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">long</span>  <span class="title">getLongLE</span><span class="params">(<span class="keyword">int</span> index)</span></span>;</span><br><span class="line"><span class="comment">// 略...</span></span><br><span class="line"><span class="comment">// 2.在指定位置写入数据</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">setBoolean</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">boolean</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">setByte</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">setShortLE</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">setInt</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">setIntLE</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="comment">// 略...</span></span><br></pre></td></tr></table></figure>
+
+<p>上述方法支持指定位置的读写数据，其中读数据并不会改变指针值。</p>
+<ul>
+<li>顺序读写数据有关方法。<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 在readerIndex位置读取数据并移动指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">readBoolean</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">byte</span>  <span class="title">readByte</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">short</span> <span class="title">readShort</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">short</span> <span class="title">readShortLE</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span>   <span class="title">readInt</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">int</span>   <span class="title">readIntLE</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 略...</span></span><br><span class="line"><span class="comment">// 2. 在位置写入数据并移动指针</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writeBoolean</span><span class="params">(<span class="keyword">boolean</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writeByte</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writeShort</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writeShortLE</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writeInt</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">writeIntLE</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</span><br><span class="line"><span class="comment">// 略...</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>上述方法从读(或写)指针位置顺序往后读(或写)数据，并移动读(或写)指针。</p>
+<ul>
+<li>分片相关方法</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">slice</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">slice</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> length)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">duplicate</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">retainedSlice</span><span class="params">()</span></span>; <span class="comment">// 更新引用计数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> ByteBuf <span class="title">retainedDuplicate</span><span class="params">()</span></span>; <span class="comment">// 更新引用计数</span></span><br></pre></td></tr></table></figure>
+<p>ByteBuf支持分片获取，实现快速的低成本浅复制。</p>
+<ul>
+<li>其他方法<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 判断底层是否为NIO direct buffer</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">boolean</span> <span class="title">isDirect</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="ByteBuf浅复制实现"><a href="#ByteBuf浅复制实现" class="headerlink" title="ByteBuf浅复制实现"></a>ByteBuf浅复制实现</h2><p>上一节我们提到了ByteBuf支持浅复制分片，其中分为slice浅复制和duplicate浅复制。duplicate与slice的区别是，duplicate是对整个ByteBuf的浅复制，而slice只是对ByteBuf中的一部分进行浅复制。</p>
+<p>ByteBuf的浅复制分片其实就是与原来的ByteBuf共享同一个存储空间，并且也可以被多个分片同时共享。以slice(int index, int length)方法为例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// io.netty.buffer.AbstractByteBuf.java</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuf <span class="title">slice</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> length)</span> </span>&#123;</span><br><span class="line">    ensureAccessible();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> UnpooledSlicedByteBuf(<span class="keyword">this</span>, index, length);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>slice方法内非常简单，只是新建了一个分片对象<em>UnpooledSlicedByteBuf</em>，构造函数传入了当前ByteBuf（this）、开始索引（index）以及分片长度（length）；</p>
+<p>在父类的构造行数里，对该分片对象进行了初始化：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 被分片的ByteBuf</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ByteBuf buffer;</span><br><span class="line"><span class="comment">// 偏移量</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> adjustment;</span><br><span class="line"></span><br><span class="line">AbstractUnpooledSlicedByteBuf(ByteBuf buffer, <span class="keyword">int</span> index, <span class="keyword">int</span> length) &#123;</span><br><span class="line">    <span class="keyword">super</span>(length);</span><br><span class="line">    checkSliceOutOfBounds(index, length, buffer);</span><br><span class="line">    <span class="keyword">if</span> (buffer <span class="keyword">instanceof</span> AbstractUnpooledSlicedByteBuf) &#123;</span><br><span class="line">        <span class="comment">// 如果传入的是slice分片，则需要叠加其偏移量</span></span><br><span class="line">        <span class="keyword">this</span>.buffer = ((AbstractUnpooledSlicedByteBuf) buffer).buffer;</span><br><span class="line">        adjustment = ((AbstractUnpooledSlicedByteBuf) buffer).adjustment + index;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (buffer <span class="keyword">instanceof</span> DuplicatedByteBuf) &#123;</span><br><span class="line">        <span class="comment">// 如果传入的是dulicated分片，不需要叠加(因为其偏移量为0)</span></span><br><span class="line">        <span class="keyword">this</span>.buffer = buffer.unwrap();</span><br><span class="line">        adjustment = index;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.buffer = buffer;</span><br><span class="line">        adjustment = index;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 初始化当前最大容量，对分片来说，最大容量不能超过length</span></span><br><span class="line">    initLength(length);</span><br><span class="line">    <span class="comment">// 初始化写指针</span></span><br><span class="line">    writerIndex(length);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可见，slice分片仅仅是对原ByteBuf进行了一层封装，并没有发生任何内存复制行为，所以是非常高效快捷的操作。</p>
+<p>与slice类似，duplicate也是如此手法。唯一不同是，duplicate是对整个ByteBuf进行浅复制：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">DuplicatedByteBuf</span><span class="params">(ByteBuf buffer)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>(buffer, buffer.readerIndex(), buffer.writerIndex());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">DuplicatedByteBuf(ByteBuf buffer, <span class="keyword">int</span> readerIndex, <span class="keyword">int</span> writerIndex) &#123;</span><br><span class="line">    <span class="keyword">super</span>(buffer.maxCapacity());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (buffer <span class="keyword">instanceof</span> DuplicatedByteBuf) &#123;</span><br><span class="line">        <span class="keyword">this</span>.buffer = ((DuplicatedByteBuf) buffer).buffer;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (buffer <span class="keyword">instanceof</span> AbstractPooledDerivedByteBuf) &#123;</span><br><span class="line">        <span class="keyword">this</span>.buffer = buffer.unwrap();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.buffer = buffer;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 直接复用原ByteBuf的读写指针</span></span><br><span class="line">    setIndex(readerIndex, writerIndex);</span><br><span class="line">    markReaderIndex();</span><br><span class="line">    markWriterIndex();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>值得注意的是，无论是slice还是duplicate，都没有调用retain()方法来改变底层ByteBuf的引用计数。</strong> 所以，如果底层ByteBuf调用release()后被释放，那么所有基于该ByteBuf的浅复制对象都不能进行读写。所以要确保浅复制实例的使用安全，需要通过调用一次retain()方法来递增底层ByteBuf的引用计数；然后在浅复制实例使用结束后，再调用一次release()来递减底层ByteBuf的引用计数。</p>
+<h2 id="CompositeByteBuf"><a href="#CompositeByteBuf" class="headerlink" title="CompositeByteBuf"></a>CompositeByteBuf</h2><p>CompositeByteBuf也是一个非常典型的ByteBuf，用来将多个ByteBuf组合在一起，形成一个逻辑上的ByteBuf。这点和分片ByteBuf非常类似，都属于在逻辑层面上避免拷贝，实现所谓的“零复制”（Zero Copy)。</p>
+<p>CompositeByteBuf在内部维护一个可扩容的components数组，所有被组合的ByteBuf被封装为Component对象，对象中缓存了该ByteBuf的偏移量adjustment、开始索引offset、结束索引endOffset等。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Component[] components; <span class="comment">// resized when needed</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Component</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> ByteBuf buf;</span><br><span class="line">    <span class="keyword">int</span> adjustment;</span><br><span class="line">    <span class="keyword">int</span> offset;</span><br><span class="line">    <span class="keyword">int</span> endOffset;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> ByteBuf slice; <span class="comment">// cached slice, may be null</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对CompositeByteBuf的读写，需要先在components数组里二分查找对应索引所在的Component对象，然后对Component对象所包装的ByteBuf进行读写。如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">byte</span> <span class="title">_getByte</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 确定索引index所在的Component对象</span></span><br><span class="line">    Component c = findComponent0(index);</span><br><span class="line">    <span class="comment">// 对Component对象所包装的ByteBuf进行读写</span></span><br><span class="line">    <span class="keyword">return</span> c.buf.getByte(c.idx(index));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> Component <span class="title">findComponent0</span><span class="params">(<span class="keyword">int</span> offset)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 先检查最近访问的Component是否满足条件</span></span><br><span class="line">    Component la = lastAccessed;</span><br><span class="line">    <span class="keyword">if</span> (la != <span class="keyword">null</span> &amp;&amp; offset &gt;= la.offset &amp;&amp; offset &lt; la.endOffset) &#123;</span><br><span class="line">       <span class="keyword">return</span> la;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 否则二分查找</span></span><br><span class="line">    <span class="keyword">return</span> findIt(offset);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 二分查找</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> Component <span class="title">findIt</span><span class="params">(<span class="keyword">int</span> offset)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> low = <span class="number">0</span>, high = componentCount; low &lt;= high;) &#123;</span><br><span class="line">        <span class="keyword">int</span> mid = low + high &gt;&gt;&gt; <span class="number">1</span>;</span><br><span class="line">        Component c = components[mid];</span><br><span class="line">        <span class="keyword">if</span> (offset &gt;= c.endOffset) &#123;</span><br><span class="line">            low = mid + <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (offset &lt; c.offset) &#123;</span><br><span class="line">            high = mid - <span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            lastAccessed = c;</span><br><span class="line">            <span class="keyword">return</span> c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">"should not reach here"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>CompositeByteBuf的核心思想大致如上，其他细节不作深究。</p>
+<h2 id="ByteBuf引用计数实现"><a href="#ByteBuf引用计数实现" class="headerlink" title="ByteBuf引用计数实现"></a>ByteBuf引用计数实现</h2><h3 id="引用计数字段"><a href="#引用计数字段" class="headerlink" title="引用计数字段"></a>引用计数字段</h3><p>引用计数功能是在<em>AbstractReferenceCountedByteBuf</em>类中实现的。核心功能使用CAS原子操作和位运算实现。关键字段有两个：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> AtomicIntegerFieldUpdater&lt;AbstractReferenceCountedByteBuf&gt; refCntUpdater =</span><br><span class="line">        AtomicIntegerFieldUpdater.newUpdater(AbstractReferenceCountedByteBuf.class, "refCnt");</span><br><span class="line"></span><br><span class="line"><span class="comment">// even =&gt; "real" refcount is (refCnt &gt;&gt;&gt; 1); odd =&gt; "real" refcount is 0</span></span><br><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"unused"</span>)</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">int</span> refCnt = <span class="number">2</span>;</span><br></pre></td></tr></table></figure>
+<p>refCntUpdater是修改refCnt字段的原子更新器。而refCnt是存储引用计数的字段。注意，当前ByteBuf的引用数为 refCnt / 2，因此当refCnt等于1时，引用数为0。</p>
+<h3 id="增加引用retain"><a href="#增加引用retain" class="headerlink" title="增加引用retain"></a>增加引用retain</h3><p>retain方法可以增加ByteBuf的引用计数。核心代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ByteBuf <span class="title">retain</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> retain0(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> ByteBuf <span class="title">retain0</span><span class="params">(<span class="keyword">final</span> <span class="keyword">int</span> increment)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 将increment扩大两倍为adjustedIncrement</span></span><br><span class="line">    <span class="keyword">int</span> adjustedIncrement = increment &lt;&lt; <span class="number">1</span>; <span class="comment">// 此处允许溢出，因为后边有判断溢出的逻辑</span></span><br><span class="line">    <span class="comment">// 将adjustedIncrement更新到refCnt，因此refCnt初始值为2，所以恒为偶数</span></span><br><span class="line">    <span class="keyword">int</span> oldRef = refCntUpdater.getAndAdd(<span class="keyword">this</span>, adjustedIncrement);</span><br><span class="line">    <span class="comment">// 如果oldRef不是偶数，直接抛异常</span></span><br><span class="line">    <span class="keyword">if</span> ((oldRef &amp; <span class="number">1</span>) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalReferenceCountException(<span class="number">0</span>, increment);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果oldRef 和 oldRef + adjustedIncrement 正负异号，则意味着已经溢出。</span></span><br><span class="line">    <span class="keyword">if</span> ((oldRef &lt;= <span class="number">0</span> &amp;&amp; oldRef + adjustedIncrement &gt;= <span class="number">0</span>)</span><br><span class="line">            || (oldRef &gt;= <span class="number">0</span> &amp;&amp; oldRef + adjustedIncrement &lt; oldRef)) &#123;</span><br><span class="line">        <span class="comment">// 发生溢出需要回滚adjustedIncrement</span></span><br><span class="line">        refCntUpdater.getAndAdd(<span class="keyword">this</span>, -adjustedIncrement);</span><br><span class="line">        <span class="comment">// 然后抛异常</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalReferenceCountException(realRefCnt(oldRef), increment);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注释已经讲得很明白，这里再补充下：每次调用retain()，都会尝试给refCnt加2，所以确保了refCnt恒为偶数，也就是说当前引用数为refCnt / 2。这里为啥设计为递增2而不是递增1，估计是位运算更加高效吧，而且实际应用中Integer.MAX_VALUE / 2的引用数也是绰绰有余。</p>
+<h3 id="释放引用release"><a href="#释放引用release" class="headerlink" title="释放引用release"></a>释放引用release</h3><p>恰恰相反，release()操作每次减少引用计数2，如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">release</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> release0(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">release0</span><span class="params">(<span class="keyword">int</span> decrement)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> rawCnt = nonVolatileRawCnt(), realCnt = toLiveRealCnt(rawCnt, decrement);</span><br><span class="line">    <span class="keyword">if</span> (decrement == realCnt) &#123;</span><br><span class="line">        <span class="comment">// 如果decrement == realCnt，意味着需要释放对象</span></span><br><span class="line">        <span class="keyword">if</span> (refCntUpdater.compareAndSet(<span class="keyword">this</span>, rawCnt, <span class="number">1</span>)) &#123;</span><br><span class="line">            deallocate();</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> retryRelease0(decrement);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> releaseNonFinal0(decrement, rawCnt, realCnt);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">releaseNonFinal0</span><span class="params">(<span class="keyword">int</span> decrement, <span class="keyword">int</span> rawCnt, <span class="keyword">int</span> realCnt)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (decrement &lt; realCnt</span><br><span class="line">            <span class="comment">// all changes to the raw count are 2x the "real" change</span></span><br><span class="line">            &amp;&amp; refCntUpdater.compareAndSet(<span class="keyword">this</span>, rawCnt, rawCnt - (decrement &lt;&lt; <span class="number">1</span>))) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 上述更新失败则调用重试方法</span></span><br><span class="line">    <span class="keyword">return</span> retryRelease0(decrement);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">retryRelease0</span><span class="params">(<span class="keyword">int</span> decrement)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 死循环不断重试释放引用</span></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="keyword">int</span> rawCnt = refCntUpdater.get(<span class="keyword">this</span>), realCnt = toLiveRealCnt(rawCnt, decrement);</span><br><span class="line">        <span class="keyword">if</span> (decrement == realCnt) &#123;</span><br><span class="line">            <span class="keyword">if</span> (refCntUpdater.compareAndSet(<span class="keyword">this</span>, rawCnt, <span class="number">1</span>)) &#123;</span><br><span class="line">                <span class="comment">// 如果refCnt为1，意味着实际的引用数为1/2=0，所以需要释放掉</span></span><br><span class="line">                deallocate();</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (decrement &lt; realCnt) &#123;</span><br><span class="line">            <span class="comment">// 如果当前引用数realCnt大于decrement，则可以正常更新</span></span><br><span class="line">            <span class="keyword">if</span> (refCntUpdater.compareAndSet(<span class="keyword">this</span>, rawCnt, rawCnt - (decrement &lt;&lt; <span class="number">1</span>))) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 如果当前引用数realCnt小于decrement，则抛出引用异常</span></span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalReferenceCountException(realCnt, -decrement);</span><br><span class="line">        &#125;</span><br><span class="line">        Thread.yield(); <span class="comment">// this benefits throughput under high contention</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Like &#123;<span class="doctag">@link</span> #realRefCnt(int)&#125; but throws if refCnt == 0</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">toLiveRealCnt</span><span class="params">(<span class="keyword">int</span> rawCnt, <span class="keyword">int</span> decrement)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> ((rawCnt &amp; <span class="number">1</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 如果是偶数，则引用数为rawCnt &gt;&gt;&gt; 1</span></span><br><span class="line">        <span class="keyword">return</span> rawCnt &gt;&gt;&gt; <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果是奇数，意味着该对象可能已经被释放掉</span></span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalReferenceCountException(<span class="number">0</span>, -decrement);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>release0算法流程：</strong></p>
+<ul>
+<li><ol>
+<li>获取当前计数rawCnt，获取实际引用数realCnt；</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>判断decrement是否等于realCnt；</li>
+</ol>
+</li>
+<li><ul>
+<li>2.1 如果相等，意味着本次release之后，对象需要被释放，尝试原子操作修改引用数；</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>2.1.1 如果修改成功，直接释放对象并返回true；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>2.2.2 如果修改失败，调用retryRelease0进行循环重试释放；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ul>
+<li>2.2 如果不相等，意味着本次release之后，对象依然存活，尝试调用releaseNonFinal0；</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>2.2.1 如果decrement &lt; realCnt，且原子修改引用计数成功，直接返回false；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>2.2.2 否则，调用retryRelease0进行循环重试释放。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>retryRelease0算法流程：</strong></p>
+<ul>
+<li><ol>
+<li>死循环开始；</li>
+</ol>
+</li>
+<li><ol start="2">
+<li>获取当前计数rawCnt，获取实际引用数realCnt；</li>
+</ol>
+</li>
+<li><ol start="3">
+<li>判断decrement == realCnt；</li>
+</ol>
+</li>
+<li><ul>
+<li>3.1 如果相等，意味着本次release之后，对象需要被释放，尝试原子操作修改引用数；</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>3.1.1 如果修改成功，直接释放对象并返回true；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>3.1.2 否则跳转6；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ol start="4">
+<li>判断decrement &lt; realCnt；</li>
+</ol>
+</li>
+<li><ul>
+<li>4.1 如果成立，意味着本次release之后，对象依然存活，尝试原子更新引用计数；</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>4.1.1 如果修改成功，直接返回false；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ul>
+<li><ul>
+<li>4.1.2 否则跳转6；</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><ol start="5">
+<li>其他情况（decrement &gt; realCnt) 直接抛异常；</li>
+</ol>
+</li>
+<li><ol start="6">
+<li>Thread.yield()；</li>
+</ol>
+</li>
+<li><ol start="7">
+<li>跳转到1。</li>
+</ol>
+</li>
+</ul>
+<h2 id="池化和非池化"><a href="#池化和非池化" class="headerlink" title="池化和非池化"></a>池化和非池化</h2><p>我们看到ByteBuf分为两类池化(Pooled)和非池化(Unpooled)。非池化的ByteBuf每次新建都会申请新的内存空间，并且用完即弃，给JVM的垃圾回收带来负担；而池化的ByteBuf通过内部栈来保存闲置的对象空间，每次新建ByteBuf的时候，优先向内部栈申请闲置的对象空间，并且用完之后重新归还给内部栈，从而减少了JVM的垃圾回收压力。</p>
+<h3 id="非池化实现"><a href="#非池化实现" class="headerlink" title="非池化实现"></a>非池化实现</h3><p>非池化的ByteBuf实现非常简单粗暴。下边分别以UnpooledHeapByteBuf和UnpooledDirectByteBuf为例：</p>
+<ul>
+<li>对象分配<br>UnpooledHeapByteBuf在构造函数里直接新建了一个字节数组来保存数据：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ByteBufAllocator alloc;</span><br><span class="line"><span class="comment">// 使用字节数组保存数据</span></span><br><span class="line"><span class="keyword">byte</span>[] array;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">UnpooledHeapByteBuf</span><span class="params">(ByteBufAllocator alloc, <span class="keyword">int</span> initialCapacity, <span class="keyword">int</span> maxCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(maxCapacity);</span><br><span class="line"></span><br><span class="line">    checkNotNull(alloc, <span class="string">"alloc"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (initialCapacity &gt; maxCapacity) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(String.format(</span><br><span class="line">                <span class="string">"initialCapacity(%d) &gt; maxCapacity(%d)"</span>, initialCapacity, maxCapacity));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.alloc = alloc;</span><br><span class="line">    setArray(allocateArray(initialCapacity));</span><br><span class="line">    setIndex(<span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 分配字节数组</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">byte</span> [] allocateArray(<span class="keyword">int</span> initialCapacity) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="keyword">byte</span>[initialCapacity];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而UnpooledDirectByteBuf则在构造函数中直接新建了一个DirectBuffer：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用DirectBuffer保存数据</span></span><br><span class="line"><span class="keyword">private</span> ByteBuffer buffer;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">UnpooledDirectByteBuf</span><span class="params">(ByteBufAllocator alloc, <span class="keyword">int</span> initialCapacity, <span class="keyword">int</span> maxCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(maxCapacity);</span><br><span class="line">    <span class="keyword">if</span> (alloc == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"alloc"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (initialCapacity &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"initialCapacity: "</span> + initialCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (maxCapacity &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"maxCapacity: "</span> + maxCapacity);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (initialCapacity &gt; maxCapacity) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(String.format(</span><br><span class="line">                <span class="string">"initialCapacity(%d) &gt; maxCapacity(%d)"</span>, initialCapacity, maxCapacity));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.alloc = alloc;</span><br><span class="line">    setByteBuffer(allocateDirect(initialCapacity));</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 分配DirectBuffer</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> ByteBuffer <span class="title">allocateDirect</span><span class="params">(<span class="keyword">int</span> initialCapacity)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> ByteBuffer.allocateDirect(initialCapacity);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>对象释放<br>UnpooledHeapByteBuf的释放全权交给JVM：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    freeArray(array);</span><br><span class="line">    array = EmptyArrays.EMPTY_BYTES;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">freeArray</span><span class="params">(<span class="keyword">byte</span>[] array)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// NOOP</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而UnpooledDirectByteBuf则尝试主动释放其拥有的DirectBuffer：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ByteBuffer buffer = <span class="keyword">this</span>.buffer;</span><br><span class="line">    <span class="keyword">if</span> (buffer == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.buffer = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!doNotFree) &#123;</span><br><span class="line">        <span class="comment">// 如果DirectBuffer还没被释放，则尝试释放之</span></span><br><span class="line">        freeDirect(buffer);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Free a direct &#123;<span class="doctag">@link</span> ByteBuffer&#125;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">freeDirect</span><span class="params">(ByteBuffer buffer)</span> </span>&#123;</span><br><span class="line">    PlatformDependent.freeDirectBuffer(buffer);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="池化"><a href="#池化" class="headerlink" title="池化"></a>池化</h3><p>池化的ByteBuf都继承自PooledByteBuf<T>类，包括PooledHeapByteBuf、PooledDirectByteBuf、PooledUnsafeDirectByteBuf、PooledUnsafeHeapByteBuf。</p>
+<p>这四个子类都持有一个回收器字段，例如，在PooledHeapByteBuf中有：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Recycler&lt;PooledHeapByteBuf&gt; RECYCLER = <span class="keyword">new</span> Recycler&lt;PooledHeapByteBuf&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> PooledHeapByteBuf <span class="title">newObject</span><span class="params">(Handle&lt;PooledHeapByteBuf&gt; handle)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> PooledHeapByteBuf(handle, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Recycler<T>是一个抽象类，所有的子类都要实现一个newObject方法，用于新建一个子类ByteBuf对象。</p>
+<p>Recycler<T>本质上实现的是一个栈的功能，新建ByteBuf的时候，可以向Recycler<T>申请一个闲置对象；当ByteBuf使用完毕后，可以回收并归还给Recycler<T>。</p>
+<ul>
+<li><strong>申请ByteBuf</strong></li>
+</ul>
+<p>子类调用RECYCLER.get()来申请闲置对象，方法实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> T <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (maxCapacityPerThread == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> newObject((Handle&lt;T&gt;) NOOP_HANDLE);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 尝试从栈中获取闲置对象</span></span><br><span class="line">    Stack&lt;T&gt; stack = threadLocal.get();</span><br><span class="line">    DefaultHandle&lt;T&gt; handle = stack.pop();</span><br><span class="line">    <span class="keyword">if</span> (handle == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// 如果没有闲置对象，调用newObject新建一个新的对象。</span></span><br><span class="line">        handle = stack.newHandle();</span><br><span class="line">        handle.value = newObject(handle);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (T) handle.value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可见，新建池化的ByteBuf都是优先从栈中获取闲置对象；当栈没有闲置对象再新建。值得注意的是，新建对象还传入了新建的handle，这个handle在对象回收阶段会使用到。</p>
+<p>另外为了抹去历史的使用痕迹，每个新申请的ByteBuf对象，都会调用reuse方法进行初始化（以PooledDirectByteBuf为例）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> PooledDirectByteBuf <span class="title">newInstance</span><span class="params">(<span class="keyword">int</span> maxCapacity)</span> </span>&#123;</span><br><span class="line">    PooledDirectByteBuf buf = RECYCLER.get();</span><br><span class="line">    buf.reuse(maxCapacity);</span><br><span class="line">    <span class="keyword">return</span> buf;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Method must be called before reuse this &#123;<span class="doctag">@link</span> PooledByteBufAllocator&#125;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title">reuse</span><span class="params">(<span class="keyword">int</span> maxCapacity)</span> </span>&#123;</span><br><span class="line">    maxCapacity(maxCapacity);</span><br><span class="line">    setRefCnt(<span class="number">1</span>);</span><br><span class="line">    setIndex0(<span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">    discardMarks();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>回收ByteBuf</strong></li>
+</ul>
+<p>前面我们提到：当ByteBuf引用数为0的时候，会调用deallocate()方法进行释放。实现如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">deallocate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (handle &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">long</span> handle = <span class="keyword">this</span>.handle;</span><br><span class="line">        <span class="keyword">this</span>.handle = -<span class="number">1</span>;</span><br><span class="line">        memory = <span class="keyword">null</span>;</span><br><span class="line">        chunk.arena.free(chunk, tmpNioBuf, handle, maxLength, cache);</span><br><span class="line">        tmpNioBuf = <span class="keyword">null</span>;</span><br><span class="line">        chunk = <span class="keyword">null</span>;</span><br><span class="line">        recycle();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">recycle</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    recyclerHandle.recycle(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如上，最后调用了handler进行回收。所谓的回收动作，其实就是放回栈中：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">DefaultHandle</span>&lt;<span class="title">T</span>&gt; <span class="keyword">implements</span> <span class="title">Handle</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> lastRecycledId;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> recycleId;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">boolean</span> hasBeenRecycled;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Stack&lt;?&gt; stack;</span><br><span class="line">    <span class="keyword">private</span> Object value;</span><br><span class="line"></span><br><span class="line">    DefaultHandle(Stack&lt;?&gt; stack) &#123;</span><br><span class="line">        <span class="keyword">this</span>.stack = stack;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">recycle</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (object != value) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"object does not belong to handle"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Stack&lt;?&gt; stack = <span class="keyword">this</span>.stack;</span><br><span class="line">        <span class="keyword">if</span> (lastRecycledId != recycleId || stack == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"recycled already"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 将该handler重新放入栈中</span></span><br><span class="line">        stack.push(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Unsafe"><a href="#Unsafe" class="headerlink" title="Unsafe"></a>Unsafe</h2><h3 id="Unsafe实现"><a href="#Unsafe实现" class="headerlink" title="Unsafe实现"></a>Unsafe实现</h3><p>还有一类使用了Unsafe操作的ByteBuf，例如：UnpooledUnsafeDirectByteBuf、UnpooledUnsafeHeapByteBuf、PooledUnsafeHeapByteBuf、PooledUnsafeDirectByteBuf。</p>
+<p>这类ByteBuf的特点就是所有的读写操作都是用了sun.misc.Unsafe。如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">byte</span> <span class="title">_getByte</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> UnsafeByteBufUtil.getByte(addr(index));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而UnsafeByteBufUtil底层调用了sum.misc.Unsafe ：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">byte</span> <span class="title">getByte</span><span class="params">(<span class="keyword">long</span> address)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> UNSAFE.getByte(address);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而不是用Unsafe操作的ByteBuf，一般使用的是HeapByteBufUtil：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">byte</span> <span class="title">_getByte</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> HeapByteBufUtil.getByte(memory, idx(index));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而HeapByteBufUtil底层其实是简单的数组寻址：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">byte</span> <span class="title">getByte</span><span class="params">(<span class="keyword">byte</span>[] memory, <span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> memory[index];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Unsafe的性能提升"><a href="#Unsafe的性能提升" class="headerlink" title="Unsafe的性能提升"></a>Unsafe的性能提升</h3><p>Unsafe操作可以带来非常可观的性能提升，我写了一个简单的Benchmark测了下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@BenchmarkMode</span>(&#123;Mode.Throughput&#125;)</span><br><span class="line"><span class="meta">@Warmup</span>(iterations = <span class="number">1</span>)</span><br><span class="line"><span class="meta">@Measurement</span>(iterations = <span class="number">2</span>, time = <span class="number">1</span>)</span><br><span class="line"><span class="meta">@OutputTimeUnit</span>(TimeUnit.SECONDS)</span><br><span class="line"><span class="meta">@Fork</span>(value = <span class="number">2</span>)</span><br><span class="line"><span class="meta">@Threads</span>(<span class="number">8</span>)</span><br><span class="line"><span class="meta">@State</span>(Scope.Benchmark)</span><br><span class="line"><span class="meta">@OperationsPerInvocation</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UnsafeBenchmark</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">byte</span>[] unsafeByteArray;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">byte</span>[] safeByteArray;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Setup</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setup</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        unsafeByteArray = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">100</span>];</span><br><span class="line"></span><br><span class="line">        safeByteArray = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">100</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">unsafeMethod</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> value = <span class="number">1</span>;</span><br><span class="line">        UnsafeByteBufUtil.setByte(unsafeByteArray, <span class="number">0</span>, value);</span><br><span class="line">        UnsafeByteBufUtil.getByte(unsafeByteArray, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">long</span> longValue = <span class="number">100L</span>;</span><br><span class="line">        UnsafeByteBufUtil.setLong(unsafeByteArray, <span class="number">0</span>, longValue);</span><br><span class="line">        UnsafeByteBufUtil.getLong(unsafeByteArray, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">safeMethod</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> value = <span class="number">1</span>;</span><br><span class="line">        HeapByteBufUtil.setByte(safeByteArray, <span class="number">0</span>, value);</span><br><span class="line">        HeapByteBufUtil.getByte(safeByteArray, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">long</span> longValue = <span class="number">100L</span>;</span><br><span class="line">        HeapByteBufUtil.setLong(safeByteArray, <span class="number">0</span>, longValue);</span><br><span class="line">        HeapByteBufUtil.getLong(safeByteArray, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> RunnerException </span>&#123;</span><br><span class="line">        Options opt = <span class="keyword">new</span> OptionsBuilder()</span><br><span class="line">                .include(UnsafeBenchmark<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>())</span></span><br><span class="line"><span class="class">                .<span class="title">build</span>()</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> Runner(opt).run();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>测试结果显示UnsafeByteBufUtil的性能非常优越：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Benchmark                                Mode  Samples           Score            Error  Units</span><br><span class="line">c.t.n.u.UnsafeBenchmark.safeMethod      thrpt        4   168827679.833 ±   71641561.636  ops/s</span><br><span class="line">c.t.n.u.UnsafeBenchmark.unsafeMethod    thrpt        4  3141320463.164 ± 1204482723.948  ops/s</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文详细介绍了ByteBuf及其子类的实现原理，包括读写指针、常用方法、浅复制、引用计数、池化、Unsafe对象等实现原理。<br>通过上述深入分析，我们了解到ByteBuf在Netty中承担着运载数据的重要功能。如果将Netty比作一个完整的生物体，那么将ByteBuf比作血液，那就再恰当不过了。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://blog.csdn.net/mycs2012/article/details/94591307" target="_blank" rel="noopener">Netty ByteBuf（图解 ）之一</a></li>
+<li><a href="https://blog.csdn.net/crazymakercircle/article/details/84205697" target="_blank" rel="noopener">Netty ByteBuf（图解二）：API 图解</a></li>
+<li><a href="https://blog.csdn.net/mycs2012/article/details/94591307" target="_blank" rel="noopener">池化和非池化ByteBuf</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/07/15/Netty-源码分析之-六-流水线处理器-Handler/" rel="bookmark">Netty 源码分析之 六 流水线处理器: Handler</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/07/04/Netty-源码分析之-四-Promise-与-Future-双子星的秘密/" rel="bookmark">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/11/18/Apollo源码详解——防御性编程/" rel="bookmark">Apollo源码学习——防御性编程</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/09/21/Azkaban-源码分析和插件实现/" rel="bookmark">Azkaban 源码分析和插件实现</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Duval
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" title="Netty 源码分析之 五 奔腾的血液: ByteBuf">https://blog.duval.top/2020/07/09/Netty-源码分析之-五-奔腾的血液-ByteBuf/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag"><i class="fa fa-tag"></i> 源码分析</a>
+              <a href="/tags/Netty/" rel="tag"><i class="fa fa-tag"></i> Netty</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" rel="prev" title="Netty 源码分析之 四 Promise 与 Future: 双子星的秘密">
+      <i class="fa fa-chevron-left"></i> Netty 源码分析之 四 Promise 与 Future: 双子星的秘密
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" rel="next" title="Netty 源码分析之 六 流水线处理器: Handler">
+      Netty 源码分析之 六 流水线处理器: Handler <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#写在最前"><span class="nav-number">1.</span> <span class="nav-text">写在最前</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ByteBuf与ByteBuffer"><span class="nav-number">2.</span> <span class="nav-text">ByteBuf与ByteBuffer</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ByteBuf继承关系"><span class="nav-number">3.</span> <span class="nav-text">ByteBuf继承关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ByteBuf的读写指针"><span class="nav-number">4.</span> <span class="nav-text">ByteBuf的读写指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ByteBuf接口常用方法"><span class="nav-number">5.</span> <span class="nav-text">ByteBuf接口常用方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ByteBuf浅复制实现"><span class="nav-number">6.</span> <span class="nav-text">ByteBuf浅复制实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CompositeByteBuf"><span class="nav-number">7.</span> <span class="nav-text">CompositeByteBuf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ByteBuf引用计数实现"><span class="nav-number">8.</span> <span class="nav-text">ByteBuf引用计数实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#引用计数字段"><span class="nav-number">8.1.</span> <span class="nav-text">引用计数字段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增加引用retain"><span class="nav-number">8.2.</span> <span class="nav-text">增加引用retain</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#释放引用release"><span class="nav-number">8.3.</span> <span class="nav-text">释放引用release</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#池化和非池化"><span class="nav-number">9.</span> <span class="nav-text">池化和非池化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#非池化实现"><span class="nav-number">9.1.</span> <span class="nav-text">非池化实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#池化"><span class="nav-number">9.2.</span> <span class="nav-text">池化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Unsafe"><span class="nav-number">10.</span> <span class="nav-text">Unsafe</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Unsafe实现"><span class="nav-number">10.1.</span> <span class="nav-text">Unsafe实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Unsafe的性能提升"><span class="nav-number">10.2.</span> <span class="nav-text">Unsafe的性能提升</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">11.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">12.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Duval"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">Duval</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Duval</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">361k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">5:28</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

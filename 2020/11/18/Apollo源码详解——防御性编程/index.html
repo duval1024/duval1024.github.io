@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Apollo是国内开源社区里质量非常高的一个分布式配置服务。最近我仔细看了一遍Apollo的源码，摘录并总结一些值得学习借鉴的代码开发经验。本文主要介绍Apollo里一些值得学习的防御性编程技巧。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apollo源码学习——防御性编程">
+<meta property="og:url" content="https://blog.duval.top/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/index.html">
+<meta property="og:site_name" content="Duval">
+<meta property="og:description" content="Apollo是国内开源社区里质量非常高的一个分布式配置服务。最近我仔细看了一遍Apollo的源码，摘录并总结一些值得学习借鉴的代码开发经验。本文主要介绍Apollo里一些值得学习的防御性编程技巧。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-11-18T14:00:40.000Z">
+<meta property="article:modified_time" content="2020-11-19T08:37:57.887Z">
+<meta property="article:author" content="Duval">
+<meta property="article:tag" content="Apollo">
+<meta property="article:tag" content="源码分析">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.duval.top/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Apollo源码学习——防御性编程 | Duval</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Duval</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">技术与生活</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="Duval">
+      <meta itemprop="description" content="学习技术，记录生活">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Duval">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Apollo源码学习——防御性编程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-11-18 22:00:40" itemprop="dateCreated datePublished" datetime="2020-11-18T22:00:40+08:00">2020-11-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/" class="post-meta-item leancloud_visitors" data-flag-title="Apollo源码学习——防御性编程" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>13k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Apollo是国内开源社区里质量非常高的一个分布式配置服务。最近我仔细看了一遍Apollo的源码，摘录并总结一些值得学习借鉴的代码开发经验。本文主要介绍Apollo里一些值得学习的防御性编程技巧。</p>
+<a id="more"></a>
+
+<h2 id="入参检查"><a href="#入参检查" class="headerlink" title="入参检查"></a>入参检查</h2><p>Apollo内部的controller层和service层都有大量的入参校验，将大部分的潜在问题请求都拦截下来。</p>
+<ul>
+<li><p>model入参检查<br>检查请求的入参是否有效，无效直接抛出异常：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!Objects.equals(appId, appNamespaceDTO.getAppId())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"AppId not equal. AppId in path = %s, AppId in payload = %s"</span>, appId,</span><br><span class="line">                                                appNamespaceDTO.getAppId()));</span><br><span class="line">&#125;</span><br><span class="line">RequestPrecondition.checkArgumentsNotEmpty(appNamespaceDTO.getAppId(), appNamespaceDTO.getName(),</span><br><span class="line">                                            appNamespaceDTO.getFormat(), appNamespaceDTO.getDataChangeCreatedBy());</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!InputValidator.isValidAppNamespace(appNamespaceDTO.getName())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"Invalid Namespace format: %s"</span>,</span><br><span class="line">                                                InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + <span class="string">" &amp; "</span></span><br><span class="line">                                                + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!ConfigFileFormat.isValidFormat(appNamespaceDTO.getFormat())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"Invalid namespace format. format = %s"</span>, appNamespaceDTO.getFormat()));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">String operator = appNamespaceDTO.getDataChangeCreatedBy();</span><br><span class="line"><span class="keyword">if</span> (userService.findByUserId(operator) == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"Illegal user. user = %s"</span>, operator));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>service入参检查</p>
+</li>
+</ul>
+<p>同样service层也有很多条件检查，比如创建namespace前，先检查app是否存在：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> AppNamespace <span class="title">createAppNamespaceInLocal</span><span class="params">(AppNamespace appNamespace, <span class="keyword">boolean</span> appendNamespacePrefix)</span> </span>&#123;</span><br><span class="line">  String appId = appNamespace.getAppId();</span><br><span class="line"></span><br><span class="line">  <span class="comment">//add app org id as prefix</span></span><br><span class="line">  App app = appService.load(appId);</span><br><span class="line">  <span class="keyword">if</span> (app == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(<span class="string">"App not exist. AppId = "</span> + appId);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//....</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="数据库表字段初始化"><a href="#数据库表字段初始化" class="headerlink" title="数据库表字段初始化"></a>数据库表字段初始化</h2><p>包含自增主键字段或者其他默认字段的表，保存的时候应初始化这些字段。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Cluster <span class="title">saveWithoutInstanceOfAppNamespaces</span><span class="params">(Cluster entity)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!isClusterNameUnique(entity.getAppId(), entity.getName())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(<span class="string">"cluster not unique"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  entity.setId(<span class="number">0</span>);<span class="comment">//protection</span></span><br><span class="line">  Cluster cluster = clusterRepository.save(entity);</span><br><span class="line"></span><br><span class="line">  auditService.audit(Cluster<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>(), <span class="title">cluster</span>.<span class="title">getId</span>(), <span class="title">Audit</span>.<span class="title">OP</span>.<span class="title">INSERT</span>,</span></span><br><span class="line"><span class="class">                     <span class="title">cluster</span>.<span class="title">getDataChangeCreatedBy</span>())</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> cluster;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="统一异常处理"><a href="#统一异常处理" class="headerlink" title="统一异常处理"></a>统一异常处理</h2><p>很多项目常常在controller、sevice层维护一堆异常码，其实维护起来非常麻烦，代码也不够优雅。又或者在service层或者dao层使用try catch捕获异常进行处理，同样非常恶心繁琐。其实像这种业务系统其实应该使用统一异常处理，Apollo正是如此。其service和controller层出现错误直接抛异常，然后由在 <em>GlobalDefaultExceptionHandler</em> 里进行统一的捕获处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GlobalDefaultExceptionHandler</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> Gson gson = <span class="keyword">new</span> Gson();</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Type mapType = <span class="keyword">new</span> TypeToken&lt;Map&lt;String, Object&gt;&gt;() &#123;</span><br><span class="line">  &#125;.getType();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger logger = LoggerFactory.getLogger(GlobalDefaultExceptionHandler<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//处理系统内置的Exception</span></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(Throwable<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">exception</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">Throwable</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, INTERNAL_SERVER_ERROR, ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(&#123;HttpRequestMethodNotSupportedException<span class="class">.<span class="keyword">class</span>, <span class="title">HttpMediaTypeException</span>.<span class="title">class</span>&#125;)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">badRequest</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>,</span></span><br><span class="line"><span class="class">                                                        <span class="title">ServletException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, BAD_REQUEST, ex, WARN);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(HttpStatusCodeException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">restTemplateException</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>,</span></span><br><span class="line"><span class="class">                                                                   <span class="title">HttpStatusCodeException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, ex.getStatusCode(), ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(AccessDeniedException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">accessDeny</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>,</span></span><br><span class="line"><span class="class">                                                        <span class="title">AccessDeniedException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, FORBIDDEN, ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//处理自定义Exception</span></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(&#123;AbstractApolloHttpException<span class="class">.<span class="keyword">class</span>&#125;)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">badRequest</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">AbstractApolloHttpException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, ex.getHttpStatus(), ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(MethodArgumentNotValidException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">handleMethodArgumentNotValidException</span>(</span></span><br><span class="line"><span class="class">      <span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">MethodArgumentNotValidException</span> <span class="title">ex</span></span></span><br><span class="line"><span class="class">  ) </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Optional&lt;ObjectError&gt; firstError = ex.getBindingResult().getAllErrors().stream().findFirst();</span><br><span class="line">    <span class="keyword">if</span> (firstError.isPresent()) &#123;</span><br><span class="line">      <span class="keyword">final</span> String firstErrorMessage = firstError.get().getDefaultMessage();</span><br><span class="line">      <span class="keyword">return</span> handleError(request, BAD_REQUEST, <span class="keyword">new</span> BadRequestException(firstErrorMessage));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, BAD_REQUEST, ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ConstraintViolationException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">handleConstraintViolationException</span>(</span></span><br><span class="line"><span class="class">      <span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">ConstraintViolationException</span> <span class="title">ex</span></span></span><br><span class="line"><span class="class">  ) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, BAD_REQUEST, <span class="keyword">new</span> BadRequestException(ex.getMessage()));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleError(HttpServletRequest request,</span><br><span class="line">                                                          HttpStatus status, Throwable ex) &#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, status, ex, ERROR);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleError(HttpServletRequest request,</span><br><span class="line">                                                          HttpStatus status, Throwable ex, Level logLevel) &#123;</span><br><span class="line">    String message = ex.getMessage();</span><br><span class="line">    printLog(message, ex, logLevel);</span><br><span class="line"></span><br><span class="line">    Map&lt;String, Object&gt; errorAttributes = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">    <span class="keyword">boolean</span> errorHandled = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (ex <span class="keyword">instanceof</span> HttpStatusCodeException) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">//try to extract the original error info if it is thrown from apollo programs, e.g. admin service</span></span><br><span class="line">        errorAttributes = gson.fromJson(((HttpStatusCodeException) ex).getResponseBodyAsString(), mapType);</span><br><span class="line">        status = ((HttpStatusCodeException) ex).getStatusCode();</span><br><span class="line">        errorHandled = <span class="keyword">true</span>;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Throwable th) &#123;</span><br><span class="line">        <span class="comment">//ignore</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!errorHandled) &#123;</span><br><span class="line">      errorAttributes.put(<span class="string">"status"</span>, status.value());</span><br><span class="line">      errorAttributes.put(<span class="string">"message"</span>, message);</span><br><span class="line">      errorAttributes.put(<span class="string">"timestamp"</span>,</span><br><span class="line">          LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));</span><br><span class="line">      errorAttributes.put(<span class="string">"exception"</span>, ex.getClass().getName());</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    HttpHeaders headers = <span class="keyword">new</span> HttpHeaders();</span><br><span class="line">    headers.setContentType(MediaType.APPLICATION_JSON_UTF8);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ResponseEntity&lt;&gt;(errorAttributes, headers, status);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//打印日志, 其中logLevel为日志级别: ERROR/WARN/DEBUG/INFO/TRACE</span></span><br><span class="line">  <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">printLog</span><span class="params">(String message, Throwable ex, Level logLevel)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (logLevel) &#123;</span><br><span class="line">      <span class="keyword">case</span> ERROR:</span><br><span class="line">        logger.error(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> WARN:</span><br><span class="line">        logger.warn(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> DEBUG:</span><br><span class="line">        logger.debug(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> INFO:</span><br><span class="line">        logger.info(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> TRACE:</span><br><span class="line">        logger.trace(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Tracer.logError(ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="数据库逻辑删除"><a href="#数据库逻辑删除" class="headerlink" title="数据库逻辑删除"></a>数据库逻辑删除</h2><p>Apollo所有的实体表都采用逻辑删除，而不是物理删除。这一点在敏感重要数据的删除上其实是很有必要的，当然如果是过期且没有用的数据物理删除倒是无妨。ORM框架一般都支持逻辑删除，比如hibernate中有@SQLDelete和@Where可以非常轻量级实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="meta">@Table</span>(name = <span class="string">"Namespace"</span>)</span><br><span class="line"><span class="meta">@SQLDelete</span>(sql = <span class="string">"Update Namespace set isDeleted = 1 where id = ?"</span>)</span><br><span class="line"><span class="meta">@Where</span>(clause = <span class="string">"isDeleted = 0"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Namespace</span> <span class="keyword">extends</span> <span class="title">BaseEntity</span> </span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="数据更新先读后写"><a href="#数据更新先读后写" class="headerlink" title="数据更新先读后写"></a>数据更新先读后写</h2><p>在后台管理系统这种并发量不高的情景下，这种先读后写的事务逻辑还是可取的：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Item <span class="title">delete</span><span class="params">(<span class="keyword">long</span> id, String operator)</span> </span>&#123;</span><br><span class="line">  Item item = itemRepository.findById(id).orElse(<span class="keyword">null</span>);</span><br><span class="line">  <span class="keyword">if</span> (item == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"item not exist. ID:"</span> + id);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  item.setDeleted(<span class="keyword">true</span>);</span><br><span class="line">  item.setDataChangeLastModifiedBy(operator);</span><br><span class="line">  Item deletedItem = itemRepository.save(item);</span><br><span class="line"></span><br><span class="line">  auditService.audit(Item<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>(), <span class="title">id</span>, <span class="title">Audit</span>.<span class="title">OP</span>.<span class="title">DELETE</span>, <span class="title">operator</span>)</span>;</span><br><span class="line">  <span class="keyword">return</span> deletedItem;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="权限控制"><a href="#权限控制" class="headerlink" title="权限控制"></a>权限控制</h2><h3 id="权限信息保存"><a href="#权限信息保存" class="headerlink" title="权限信息保存"></a>权限信息保存</h3><p>Apollo使用5张表来实现权限控制系统：Permission、Role、RolePermission、UserRole、User。</p>
+<ul>
+<li>Permission表保存权限具体条目；</li>
+<li>Role表保存权限角色信息；</li>
+<li>RolePermission保存某个角色拥有的权限信息；</li>
+<li>UserRole保存的是某个用户拥有的角色信息；</li>
+<li>User保存的是用户名和密码信息。</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from permission limit 5;</span><br><span class="line">+<span class="comment">----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | PermissionType    | TargetId       | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 | CreateApplication | SystemRole     |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |</span><br><span class="line">|  2 | CreateCluster     | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  3 | AssignRole        | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 | CreateNamespace   | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  5 | ManageAppMaster   | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">+<span class="comment">----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">role</span> <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | RoleName                                    | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 | CreateApplication+SystemRole                |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |</span><br><span class="line">|  2 | Master+my-apollo-demo                       |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  3 | ManageAppMaster+my-apollo-demo              |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 | ModifyNamespace+my-apollo-demo+application  |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  5 | ReleaseNamespace+my-apollo-demo+application |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">+<span class="comment">----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> rolepermission <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | RoleId | PermissionId | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 |      1 |            1 |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |</span><br><span class="line">|  2 |      2 |            2 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  3 |      2 |            3 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 |      2 |            4 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  5 |      3 |            5 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">+<span class="comment">----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> userrole <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | UserId | RoleId | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 | apollo |      1 |           | apollo               | 2020-11-09 04:10:13    | apollo                    | 2020-11-09 04:10:13 |</span><br><span class="line">|  2 | root   |      1 |           | apollo               | 2020-11-09 04:44:05    | apollo                    | 2020-11-09 04:44:05 |</span><br><span class="line">|  3 | root   |      2 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 | root   |      4 |           | root                 | 2020-11-09 04:45:19    | root                      | 2020-11-09 04:45:19 |</span><br><span class="line">|  5 | root   |      5 |           | root                 | 2020-11-09 04:45:19    | root                      | 2020-11-09 04:45:19 |</span><br><span class="line">+<span class="comment">----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.03</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">Users</span> <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+----------+--------------------------------------------------------------+-----------------+---------+</span></span><br><span class="line">| Id | Username | Password                                                     | Email           | Enabled |</span><br><span class="line">+<span class="comment">----+----------+--------------------------------------------------------------+-----------------+---------+</span></span><br><span class="line">|  1 | apollo   | $2a$10$7r20uS.BQ9uBpf3Baj3uQOZvMVvB1RN3PYoKE94gtz2.WAOuiiwXS | apollo@acme.com |       1 |</span><br><span class="line">|  2 | root     | $2a$10$udXyw6b8Ybdbt2oPkSdLi.rw.l0hL5NxgZetWptPefpmdnj8JYNIq | root@itiger.com |       1 |</span><br><span class="line">+<span class="comment">----+----------+--------------------------------------------------------------+-----------------+---------+</span></span><br><span class="line">2 rows in <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br></pre></td></tr></table></figure>
+
+<p>通过以上五张表可以非常灵活地保存用户权限信息。</p>
+<h3 id="权限信息检查"><a href="#权限信息检查" class="headerlink" title="权限信息检查"></a>权限信息检查</h3><p>检查入口是在Controller通过注解@PreAuthorize实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@PreAuthorize</span>(value = <span class="string">"@permissionValidator.hasCreateNamespacePermission(#appId)"</span>)</span><br><span class="line"><span class="meta">@PostMapping</span>(<span class="string">"/apps/&#123;appId&#125;/namespaces"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> ResponseEntity&lt;Void&gt; <span class="title">createNamespace</span><span class="params">(@PathVariable String appId,</span></span></span><br><span class="line"><span class="function"><span class="params">                                            @RequestBody List&lt;NamespaceCreationModel&gt; models)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  checkModel(!CollectionUtils.isEmpty(models));</span><br><span class="line"></span><br><span class="line">  String namespaceName = models.get(<span class="number">0</span>).getNamespace().getNamespaceName();</span><br><span class="line">  String operator = userInfoHolder.getUser().getUserId();</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>校验类的实现也非常简单，调用相关sevice类查询数据库确认是否有相关权限：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(<span class="string">"permissionValidator"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PermissionValidator</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> UserInfoHolder userInfoHolder;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> RolePermissionService rolePermissionService;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> PortalConfig portalConfig;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> AppNamespaceService appNamespaceService;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> SystemRoleManagerService systemRoleManagerService;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">hasCreateNamespacePermission</span><span class="params">(String appId)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> rolePermissionService.userHasPermission(userInfoHolder.getUser().getUserId(),</span><br><span class="line">        PermissionType.CREATE_NAMESPACE,</span><br><span class="line">        appId);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">后台管理系统使用这种简单粗暴的权限控制方式还是蛮可行的。</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/09/21/Azkaban-源码分析和插件实现/" rel="bookmark">Azkaban 源码分析和插件实现</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/07/15/Netty-源码分析之-六-流水线处理器-Handler/" rel="bookmark">Netty 源码分析之 六 流水线处理器: Handler</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/07/04/Netty-源码分析之-四-Promise-与-Future-双子星的秘密/" rel="bookmark">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/07/09/Netty-源码分析之-五-奔腾的血液-ByteBuf/" rel="bookmark">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Duval
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/" title="Apollo源码学习——防御性编程">https://blog.duval.top/2020/11/18/Apollo源码详解——防御性编程/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Apollo/" rel="tag"><i class="fa fa-tag"></i> Apollo</a>
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag"><i class="fa fa-tag"></i> 源码分析</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/11/14/%E4%BB%A3%E7%A0%81%E6%95%B4%E6%B4%81%E4%B9%8B%E9%81%93/" rel="prev" title="《代码整洁之道》">
+      <i class="fa fa-chevron-left"></i> 《代码整洁之道》
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#入参检查"><span class="nav-number">1.</span> <span class="nav-text">入参检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库表字段初始化"><span class="nav-number">2.</span> <span class="nav-text">数据库表字段初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#统一异常处理"><span class="nav-number">3.</span> <span class="nav-text">统一异常处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据库逻辑删除"><span class="nav-number">4.</span> <span class="nav-text">数据库逻辑删除</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据更新先读后写"><span class="nav-number">5.</span> <span class="nav-text">数据更新先读后写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#权限控制"><span class="nav-number">6.</span> <span class="nav-text">权限控制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#权限信息保存"><span class="nav-number">6.1.</span> <span class="nav-text">权限信息保存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#权限信息检查"><span class="nav-number">6.2.</span> <span class="nav-text">权限信息检查</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Duval"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">Duval</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Duval</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">361k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">5:28</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

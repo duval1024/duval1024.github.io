@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Azkaban关键字：Azkaban简介、大数据作业调度系统 这篇文章适合对azkaban有一定了解的人阅读。建议先粗读：AZ开发文档：http:&#x2F;&#x2F;azkaban.github.io&#x2F;azkaban&#x2F;docs&#x2F;latest&#x2F;#overview强子哥的源码分析：https:&#x2F;&#x2F;my.oschina.net&#x2F;qiangzigege&#x2F;blog&#x2F;653198(以下内容部分摘自上两个链接) azkaban">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Azkaban Learning">
+<meta property="og:url" content="https://blog.duval.top/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="Duval">
+<meta property="og:description" content="Azkaban关键字：Azkaban简介、大数据作业调度系统 这篇文章适合对azkaban有一定了解的人阅读。建议先粗读：AZ开发文档：http:&#x2F;&#x2F;azkaban.github.io&#x2F;azkaban&#x2F;docs&#x2F;latest&#x2F;#overview强子哥的源码分析：https:&#x2F;&#x2F;my.oschina.net&#x2F;qiangzigege&#x2F;blog&#x2F;653198(以下内容部分摘自上两个链接) azkaban">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E5%A4%9A%E6%89%A7%E8%A1%8C%E8%8A%82%E7%82%B9%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E4%BD%9C%E4%B8%9A%E5%88%86%E5%8F%91%E8%B0%83%E5%BA%A6%E6%B5%81%E7%A8%8B%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0%E5%9B%BE.png">
+<meta property="article:published_time" content="2017-01-11T03:54:03.000Z">
+<meta property="article:modified_time" content="2020-02-05T05:40:23.138Z">
+<meta property="article:author" content="Duval">
+<meta property="article:tag" content="Azkaban">
+<meta property="article:tag" content="大数据组件">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+
+<link rel="canonical" href="https://blog.duval.top/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Azkaban Learning | Duval</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Duval</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">技术与生活</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="Duval">
+      <meta itemprop="description" content="学习技术，记录生活">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Duval">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Azkaban Learning
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-01-11 11:54:03" itemprop="dateCreated datePublished" datetime="2017-01-11T11:54:03+08:00">2017-01-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F/" itemprop="url" rel="index">
+                    <span itemprop="name">调度系统</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/" class="post-meta-item leancloud_visitors" data-flag-title="Azkaban Learning" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>18k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>16 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Azkaban"><a href="#Azkaban" class="headerlink" title="Azkaban"></a>Azkaban</h1><p>关键字：Azkaban简介、大数据作业调度系统</p>
+<p>这篇文章适合对azkaban有一定了解的人阅读。建议先粗读：<br>AZ开发文档：<a href="http://azkaban.github.io/azkaban/docs/latest/#overview" target="_blank" rel="noopener">http://azkaban.github.io/azkaban/docs/latest/#overview</a><br>强子哥的源码分析：<a href="https://my.oschina.net/qiangzigege/blog/653198" target="_blank" rel="noopener">https://my.oschina.net/qiangzigege/blog/653198</a><br>(以下内容部分摘自上两个链接)</p>
+<p>azkaban源码： git clone <a href="https://github.com/azkaban/azkaban.git" target="_blank" rel="noopener">https://github.com/azkaban/azkaban.git</a></p>
+<a id="more"></a>
+
+<h2 id="Azkaban-简介"><a href="#Azkaban-简介" class="headerlink" title="Azkaban 简介"></a>Azkaban 简介</h2><blockquote>
+<p><strong>Azkaban</strong> was implemented at LinkedIn to solve the problem of Hadoop job dependencies. We had jobs that needed to run in  order, from ETL jobs to data analytics products.<br>Initially a single server solution, with the increased number of Hadoop users over the years, Azkaban has evolved to be a more robust solution.</p>
+</blockquote>
+<blockquote>
+<p>Azkaban 是由Linkedln公司为了解决hadoop 作业之间的依赖而实现的。因为有一些ETL作业以及数据分析产品需要按照一定的顺序去执行。<br>随着hadoop用户的逐年增加，Azkaban从一个简单的服务解决方案发展成为一个更加健壮鲁棒的方案。</p>
+</blockquote>
+<p>Azkaban的系统架构主要由三个组件组成：</p>
+<ul>
+<li><strong>WebServer</strong> ：暴露API，提供分发作业和调度作业功能；</li>
+<li><strong>ExecServer</strong> ：对WebServer 暴露 API ，提供执行作业的功能；</li>
+<li><strong>MySQL</strong> ：数据存储，实现Web 和 Exec之间的数据共享和部分状态的同步。</li>
+</ul>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="azkaban架构图"></p>
+<p>多执行节点模式下，更细节一点的架构图可以如下，图中省略MySQL数据库：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E5%A4%9A%E6%89%A7%E8%A1%8C%E8%8A%82%E7%82%B9%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="Azkaban细节图"></p>
+<p>非常简单而直观</p>
+<hr>
+<h2 id="WebServer"><a href="#WebServer" class="headerlink" title="WebServer"></a>WebServer</h2><h3 id="暴露API"><a href="#暴露API" class="headerlink" title="暴露API"></a>暴露API</h3><p>&emsp;在azkaban-webserver工程中，可以非常清晰地看到对外暴露的Servlet，其中最主要的几个是：</p>
+<ul>
+<li><strong>ExecutorServlet</strong> 主要提供立即执行作业、取消作业流、暂停作业流、获取流或节点日志等接口</li>
+<li><strong>ScheduleServlet</strong> 主要提供设置调度、设置Sla报警规则、获取调度信息等接口</li>
+<li><strong>HistoryServlet</strong> 主要提供查看作业流执行历史的接口</li>
+<li><strong>ProjectManagerServlet</strong> 主要提供上传项目zip包、下载项目zip包、删除项目、获取流的DAG等接口</li>
+</ul>
+<h3 id="分发作业"><a href="#分发作业" class="headerlink" title="分发作业"></a>分发作业</h3><p>&emsp;ExecutorManager 主要承担这部分的功能，所有类型的作业（包括立即执行和调度执行）,都会通过submitExecutableFlow(ExecutableFlow exflow, String userId)这个方法进行提交。</p>
+<p>&emsp;在该方法中，我们可以看到：如果是多执行节点模式下，执行实例先放进分发队列中；如果是单节点模式下，立即调用dispatch方法进行分发。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (isMultiExecutorMode()) &#123;</span><br><span class="line">    <span class="comment">//Take MultiExecutor route</span></span><br><span class="line">    executorLoader.addActiveExecutableReference(reference);</span><br><span class="line">    queuedFlows.enqueue(exflow, reference);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// assign only local executor we have</span></span><br><span class="line">    Executor choosenExecutor = activeExecutors.iterator().next();</span><br><span class="line">    executorLoader.addActiveExecutableReference(reference);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        dispatch(reference, exflow, choosenExecutor);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">        executorLoader.removeActiveExecutableReference(reference.getExecId());</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;在多执行节点模式下，执行实例被放进分发队列。队列会被线程 QueueProcessorThread 定时处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Method responsible for processing the non-dispatched flows */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">processQueuedFlows</span><span class="params">(<span class="keyword">long</span> activeExecutorsRefreshWindow,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="keyword">int</span> maxContinuousFlowProcessed)</span> <span class="keyword">throws</span> InterruptedException,</span></span><br><span class="line"><span class="function">  ExecutorManagerException </span>&#123;</span><br><span class="line">  <span class="keyword">long</span> lastExecutorRefreshTime = <span class="number">0</span>;</span><br><span class="line">  Pair&lt;ExecutionReference, ExecutableFlow&gt; runningCandidate;</span><br><span class="line">  <span class="keyword">int</span> currentContinuousFlowProcessed = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (isActive() &amp;&amp; (runningCandidate = queuedFlows.fetchHead()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">    ExecutionReference reference = runningCandidate.getFirst();</span><br><span class="line">    ExecutableFlow exflow = runningCandidate.getSecond();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> currentTime = System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// if we have dispatched more than maxContinuousFlowProcessed or</span></span><br><span class="line">    <span class="comment">// It has been more then activeExecutorsRefreshWindow millisec since we</span></span><br><span class="line">    <span class="comment">// refreshed</span></span><br><span class="line">    <span class="keyword">if</span> (currentTime - lastExecutorRefreshTime &gt; activeExecutorsRefreshWindow</span><br><span class="line">      || currentContinuousFlowProcessed &gt;= maxContinuousFlowProcessed) &#123;</span><br><span class="line">      <span class="comment">// Refresh executorInfo for all activeExecutors</span></span><br><span class="line">      refreshExecutors();</span><br><span class="line">      lastExecutorRefreshTime = currentTime;</span><br><span class="line">      currentContinuousFlowProcessed = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * &lt;pre&gt;</span></span><br><span class="line"><span class="comment">     *  <span class="doctag">TODO:</span> Work around till we improve Filters to have a notion of GlobalSystemState.</span></span><br><span class="line"><span class="comment">     *        Currently we try each queued flow once to infer a global busy state</span></span><br><span class="line"><span class="comment">     * Possible improvements:-</span></span><br><span class="line"><span class="comment">     *   1. Move system level filters in refreshExecutors and sleep if we have all executors busy after refresh</span></span><br><span class="line"><span class="comment">     *   2. Implement GlobalSystemState in selector or in a third place to manage system filters. Basically</span></span><br><span class="line"><span class="comment">     *      taking out all the filters which do not depend on the flow but are still being part of Selector.</span></span><br><span class="line"><span class="comment">     * Assumptions:-</span></span><br><span class="line"><span class="comment">     *   1. no one else except QueueProcessor is updating ExecutableFlow update time</span></span><br><span class="line"><span class="comment">     *   2. re-attempting a flow (which has been tried before) is considered as all executors are busy</span></span><br><span class="line"><span class="comment">     * &lt;/pre&gt;</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">if</span>(exflow.getUpdateTime() &gt; lastExecutorRefreshTime) &#123;</span><br><span class="line">      <span class="comment">// put back in the queue</span></span><br><span class="line">      queuedFlows.enqueue(exflow, reference);</span><br><span class="line">      <span class="keyword">long</span> sleepInterval =</span><br><span class="line">        activeExecutorsRefreshWindow</span><br><span class="line">          - (currentTime - lastExecutorRefreshTime);</span><br><span class="line">      <span class="comment">// wait till next executor refresh</span></span><br><span class="line">      sleep(sleepInterval);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      exflow.setUpdateTime(currentTime);</span><br><span class="line">      <span class="comment">// process flow with current snapshot of activeExecutors</span></span><br><span class="line">      selectExecutorAndDispatchFlow(reference, exflow, <span class="keyword">new</span> HashSet&lt;Executor&gt;(activeExecutors));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// do not count failed flow processsing (flows still in queue)</span></span><br><span class="line">    <span class="keyword">if</span>(queuedFlows.getFlow(exflow.getExecutionId()) == <span class="keyword">null</span>) &#123;</span><br><span class="line">      currentContinuousFlowProcessed++;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;selectExecutorAndDispatchFlow 方法先是选择执行节点（选择节点的实现比较有意思），选好节点后最终也是调用了dispatch进行作业分发。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* process flow with a snapshot of available Executors */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">selectExecutorAndDispatchFlow</span><span class="params">(ExecutionReference reference,</span></span></span><br><span class="line"><span class="function"><span class="params">      ExecutableFlow exflow, Set&lt;Executor&gt; availableExecutors)</span></span></span><br><span class="line"><span class="function">      <span class="keyword">throws</span> ExecutorManagerException </span>&#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (exflow) &#123;</span><br><span class="line">        Executor selectedExecutor = selectExecutor(exflow, availableExecutors);</span><br><span class="line">        <span class="keyword">if</span> (selectedExecutor != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            dispatch(reference, exflow, selectedExecutor);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">            logger.warn(String.format(</span><br><span class="line">              <span class="string">"Executor %s responded with exception for exec: %d"</span>,</span><br><span class="line">              selectedExecutor, exflow.getExecutionId()), e);</span><br><span class="line">            handleDispatchExceptionCase(reference, exflow, selectedExecutor,</span><br><span class="line">              availableExecutors);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          handleNoExecutorSelectedCase(reference, exflow);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;因为Web 和Exec 之间是通过mysql进行数据共享的，所以dispatch进行作业分发的逻辑非常简单，就是简单地通过HTTP请求传递execId等信息，其余所需要的数据都通过数据库读写完成。</p>
+<h3 id="调度作业"><a href="#调度作业" class="headerlink" title="调度作业"></a>调度作业</h3><p>&emsp;&emsp;调度作业是调度系统的最重要的功能之一，也是Azkaban里相对复杂的一个模块。调度是通过ScheduleManager对外暴露，对应着的结构是Schedule；对内是通过TriggerManager来实现，对应着的结构是Trigger。</p>
+<p>&emsp;&emsp;所有的调度信息都通过ScheduleManager.scheduleFlow传入,可以看到传入参数包含了项目id、项目名字、流名字、第一次调度时间戳、时区、调度周期、下一次执行时间、提交时间、提交人。对于一个调度来说，最关键的信息无非是第一次调度时间和调度周期。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Schedule <span class="title">scheduleFlow</span><span class="params">(<span class="keyword">final</span> <span class="keyword">int</span> scheduleId, <span class="keyword">final</span> <span class="keyword">int</span> projectId,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> String projectName, <span class="keyword">final</span> String flowName, <span class="keyword">final</span> String status,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> <span class="keyword">long</span> firstSchedTime, <span class="keyword">final</span> DateTimeZone timezone,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> ReadablePeriod period, <span class="keyword">final</span> <span class="keyword">long</span> lastModifyTime,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> <span class="keyword">long</span> nextExecTime, <span class="keyword">final</span> <span class="keyword">long</span> submitTime, <span class="keyword">final</span> String submitUser)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;从scheduleFlow 往下可以看到调用了TriggerBasedScheduleLoader.insertSchedule。这个方法里边先是将Schedule转换成了Trigger，然后将Trigger放到了TriggerManager里边。scheduleToTrigger方法写的非常简洁巧妙，读者自行研究，此处不作细致分析。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertSchedule</span><span class="params">(Schedule s)</span> <span class="keyword">throws</span> ScheduleManagerException </span>&#123;</span><br><span class="line">   Trigger t = scheduleToTrigger(s);</span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">     triggerManager.insertTrigger(t, t.getSubmitUser());</span><br><span class="line">     s.setScheduleId(t.getTriggerId());</span><br><span class="line">   &#125; <span class="keyword">catch</span> (TriggerManagerException e) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ScheduleManagerException(<span class="string">"Failed to insert new schedule!"</span>, e);</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp; 我们在继续看看Trigger被塞到TriggerManager做了些啥。从下边可以看到，先是调用triggerLoader写进数据库，然后就放到了一个线程runnerThread中去。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertTrigger</span><span class="params">(Trigger t)</span> <span class="keyword">throws</span> TriggerManagerException </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (syncObj) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        triggerLoader.addTrigger(t);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (TriggerLoaderException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> TriggerManagerException(e);</span><br><span class="line">      &#125;</span><br><span class="line">      runnerThread.addTrigger(t);</span><br><span class="line">      triggerIdMap.put(t.getTriggerId(), t);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp; 接下来就显而易见了，这个线程TriggerScannerThread runnerThread 定期检查Trigger是否应该触发（onTriggerTrigger）或者终止（onTriggerExpire）。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">checkAllTriggers</span><span class="params">()</span> <span class="keyword">throws</span> TriggerManagerException </span>&#123;</span><br><span class="line">  <span class="keyword">long</span> now = System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// sweep through the rest of them</span></span><br><span class="line">  <span class="keyword">for</span> (Trigger t : triggers) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      scannerStage = <span class="string">"Checking for trigger "</span> + t.getTriggerId();</span><br><span class="line"></span><br><span class="line">      <span class="keyword">boolean</span> shouldSkip = <span class="keyword">true</span>;</span><br><span class="line">      <span class="keyword">if</span> (shouldSkip &amp;&amp; t.getInfo() != <span class="keyword">null</span> &amp;&amp; t.getInfo().containsKey(<span class="string">"monitored.finished.execution"</span>)) &#123;</span><br><span class="line">        <span class="keyword">int</span> execId = Integer.valueOf((String) t.getInfo().get(<span class="string">"monitored.finished.execution"</span>));</span><br><span class="line">        <span class="keyword">if</span> (justFinishedFlows.containsKey(execId)) &#123;</span><br><span class="line">          logger.info(<span class="string">"Monitored execution has finished. Checking trigger earlier "</span> + t.getTriggerId());</span><br><span class="line">          shouldSkip = <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (shouldSkip &amp;&amp; t.getNextCheckTime() &gt; now) &#123;</span><br><span class="line">        shouldSkip = <span class="keyword">false</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (shouldSkip) &#123;</span><br><span class="line">        logger.info(<span class="string">"Skipping trigger"</span> + t.getTriggerId() + <span class="string">" until "</span> + t.getNextCheckTime());</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">        logger.info(<span class="string">"Checking trigger "</span> + t.getTriggerId());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (t.getStatus().equals(TriggerStatus.READY)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (t.triggerConditionMet()) &#123;</span><br><span class="line">          onTriggerTrigger(t);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (t.expireConditionMet()) &#123;</span><br><span class="line">          onTriggerExpire(t);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (t.getStatus().equals(TriggerStatus.EXPIRED) &amp;&amp; t.getSource().equals(<span class="string">"azkaban"</span>)) &#123;</span><br><span class="line">        removeTrigger(t);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        t.updateNextCheckTime();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable th) &#123;</span><br><span class="line">      <span class="comment">//skip this trigger, moving on to the next one</span></span><br><span class="line">      logger.error(<span class="string">"Failed to process trigger with id : "</span> + t.getTriggerId(), th);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp; Trigger触发的时候就会调用自己的action.doAction()，调度任务的Trigger的action一般都是ExecuteFlowAction，其doAction方法如下。方法主要做了两个事情，第一个是构建执行实例ExecutableFlow，第二个是如果该调度设置了报警规则，则构建SlaTrigger。</p>
+<p>&emsp;&emsp; 构建执行实例完成后，可以看到调用了executorManager.submitExecutableFlow(exflow, submitUser) 进行作业分发，这样子，就跟上文提到的作业分发殊途同归。下边不再分析。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doAction</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (projectManager == <span class="keyword">null</span> || executorManager == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">"ExecuteFlowAction not properly initialized!"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Project project = projectManager.getProject(projectId);</span><br><span class="line">  <span class="keyword">if</span> (project == <span class="keyword">null</span>) &#123;</span><br><span class="line">    logger.error(<span class="string">"Project to execute "</span> + projectId + <span class="string">" does not exist!"</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Error finding the project to execute "</span></span><br><span class="line">        + projectId);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Flow flow = project.getFlow(flowName);</span><br><span class="line">  <span class="keyword">if</span> (flow == <span class="keyword">null</span>) &#123;</span><br><span class="line">    logger.error(<span class="string">"Flow "</span> + flowName + <span class="string">" cannot be found in project "</span></span><br><span class="line">        + project.getName());</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Error finding the flow to execute "</span></span><br><span class="line">        + flowName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ExecutableFlow exflow = <span class="keyword">new</span> ExecutableFlow(project, flow);</span><br><span class="line">  exflow.setSubmitUser(submitUser);</span><br><span class="line">  exflow.addAllProxyUsers(project.getProxyUsers());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (executionOptions == <span class="keyword">null</span>) &#123;</span><br><span class="line">    executionOptions = <span class="keyword">new</span> ExecutionOptions();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!executionOptions.isFailureEmailsOverridden()) &#123;</span><br><span class="line">    executionOptions.setFailureEmails(flow.getFailureEmails());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!executionOptions.isSuccessEmailsOverridden()) &#123;</span><br><span class="line">    executionOptions.setSuccessEmails(flow.getSuccessEmails());</span><br><span class="line">  &#125;</span><br><span class="line">  exflow.setExecutionOptions(executionOptions);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    executorManager.submitExecutableFlow(exflow, submitUser);</span><br><span class="line">    logger.info(<span class="string">"Invoked flow "</span> + project.getName() + <span class="string">"."</span> + flowName);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(e);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// deal with sla</span></span><br><span class="line">  <span class="keyword">if</span> (slaOptions != <span class="keyword">null</span> &amp;&amp; slaOptions.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">int</span> execId = exflow.getExecutionId();</span><br><span class="line">    <span class="keyword">for</span> (SlaOption sla : slaOptions) &#123;</span><br><span class="line">      logger.info(<span class="string">"Adding sla trigger "</span> + sla.toString() + <span class="string">" to execution "</span></span><br><span class="line">          + execId);</span><br><span class="line">      SlaChecker slaFailChecker =</span><br><span class="line">          <span class="keyword">new</span> SlaChecker(<span class="string">"slaFailChecker"</span>, sla, execId);</span><br><span class="line">      Map&lt;String, ConditionChecker&gt; slaCheckers =</span><br><span class="line">          <span class="keyword">new</span> HashMap&lt;String, ConditionChecker&gt;();</span><br><span class="line">      slaCheckers.put(slaFailChecker.getId(), slaFailChecker);</span><br><span class="line">      Condition triggerCond =</span><br><span class="line">          <span class="keyword">new</span> Condition(slaCheckers, slaFailChecker.getId()</span><br><span class="line">              + <span class="string">".isSlaFailed()"</span>);</span><br><span class="line">      <span class="comment">// if whole flow finish before violate sla, just expire</span></span><br><span class="line">      SlaChecker slaPassChecker =</span><br><span class="line">          <span class="keyword">new</span> SlaChecker(<span class="string">"slaPassChecker"</span>, sla, execId);</span><br><span class="line">      Map&lt;String, ConditionChecker&gt; expireCheckers =</span><br><span class="line">          <span class="keyword">new</span> HashMap&lt;String, ConditionChecker&gt;();</span><br><span class="line">      expireCheckers.put(slaPassChecker.getId(), slaPassChecker);</span><br><span class="line">      Condition expireCond =</span><br><span class="line">          <span class="keyword">new</span> Condition(expireCheckers, slaPassChecker.getId()</span><br><span class="line">              + <span class="string">".isSlaPassed()"</span>);</span><br><span class="line">      List&lt;TriggerAction&gt; actions = <span class="keyword">new</span> ArrayList&lt;TriggerAction&gt;();</span><br><span class="line">      List&lt;String&gt; slaActions = sla.getActions();</span><br><span class="line">      <span class="keyword">for</span> (String act : slaActions) &#123;</span><br><span class="line">        <span class="keyword">if</span> (act.equals(SlaOption.ACTION_ALERT)) &#123;</span><br><span class="line">          SlaAlertAction slaAlert =</span><br><span class="line">              <span class="keyword">new</span> SlaAlertAction(<span class="string">"slaAlert"</span>, sla, execId);</span><br><span class="line">          actions.add(slaAlert);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (act.equals(SlaOption.ACTION_CANCEL_FLOW)) &#123;</span><br><span class="line">          KillExecutionAction killAct =</span><br><span class="line">              <span class="keyword">new</span> KillExecutionAction(<span class="string">"killExecution"</span>, execId);</span><br><span class="line">          actions.add(killAct);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      Trigger slaTrigger =</span><br><span class="line">          <span class="keyword">new</span> Trigger(<span class="string">"azkaban_sla"</span>, <span class="string">"azkaban"</span>, triggerCond, expireCond,</span><br><span class="line">              actions);</span><br><span class="line">      slaTrigger.getInfo().put(<span class="string">"monitored.finished.execution"</span>,</span><br><span class="line">          String.valueOf(execId));</span><br><span class="line">      slaTrigger.setResetOnTrigger(<span class="keyword">false</span>);</span><br><span class="line">      slaTrigger.setResetOnExpire(<span class="keyword">false</span>);</span><br><span class="line">      logger.info(<span class="string">"Ready to put in the sla trigger"</span>);</span><br><span class="line">      triggerManager.insertTrigger(slaTrigger);</span><br><span class="line">      logger.info(<span class="string">"Sla inserted."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="WebServer总结"><a href="#WebServer总结" class="headerlink" title="WebServer总结"></a>WebServer总结</h3><p>&emsp;&emsp; 下边用一张图简单总结</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E4%BD%9C%E4%B8%9A%E5%88%86%E5%8F%91%E8%B0%83%E5%BA%A6%E6%B5%81%E7%A8%8B%E5%9B%BE.png" alt="作业分发调度流程图.png"></p>
+<h2 id="ExecServer"><a href="#ExecServer" class="headerlink" title="ExecServer"></a>ExecServer</h2><h3 id="暴露Restful-API"><a href="#暴露Restful-API" class="headerlink" title="暴露Restful API"></a>暴露Restful API</h3><p>&emsp;&emsp;Azkaban3.0后就开始支持多执行节点部署。单个执行节点比较简单，对web暴露的API也比较少，主要是：</p>
+<ul>
+<li><strong>ExecutorServlet</strong> 主要提供执行、取消、暂停、日志查询等接口。</li>
+</ul>
+<h3 id="执行作业"><a href="#执行作业" class="headerlink" title="执行作业"></a>执行作业</h3><p>&emsp;&emsp;这里简单看下执行节点执行一个作业的流程是怎样的。我们在ExecutorServlet中看到所有的执行作业请求都经过handleAjaxExecute方法，这个方法简单地将执行id传递给FlowRunnerManager：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">handleAjaxExecute</span><span class="params">(HttpServletRequest req,</span></span></span><br><span class="line"><span class="function"><span class="params">      Map&lt;String, Object&gt; respMap, <span class="keyword">int</span> execId)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      flowRunnerManager.submitFlow(execId);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      logger.error(e);</span><br><span class="line">      respMap.put(RESPONSE_ERROR, e.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;FlowRunnerManager 通过submitFlow方法提交工作流去执行。先是构建执行实例ExecutableFlow，然后准备执行目录setupFlow(flow)，然后生成FlowRunner，然后提交到线程池去运行executorService.submit(runner)。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">submitFlow</span><span class="params">(<span class="keyword">int</span> execId)</span> <span class="keyword">throws</span> ExecutorManagerException </span>&#123;</span><br><span class="line">   <span class="comment">// Load file and submit</span></span><br><span class="line">   <span class="keyword">if</span> (runningFlows.containsKey(execId)) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(<span class="string">"Execution "</span> + execId</span><br><span class="line">         + <span class="string">" is already running."</span>);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ExecutableFlow flow = <span class="keyword">null</span>;</span><br><span class="line">   flow = executorLoader.fetchExecutableFlow(execId);</span><br><span class="line">   <span class="keyword">if</span> (flow == <span class="keyword">null</span>) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(<span class="string">"Error loading flow with exec "</span></span><br><span class="line">         + execId);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Sets up the project files and execution directory.</span></span><br><span class="line">   setupFlow(flow);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Setup flow runner</span></span><br><span class="line">   FlowWatcher watcher = <span class="keyword">null</span>;</span><br><span class="line">   ExecutionOptions options = flow.getExecutionOptions();</span><br><span class="line">   <span class="keyword">if</span> (options.getPipelineExecutionId() != <span class="keyword">null</span>) &#123;</span><br><span class="line">     Integer pipelineExecId = options.getPipelineExecutionId();</span><br><span class="line">     FlowRunner runner = runningFlows.get(pipelineExecId);</span><br><span class="line"></span><br><span class="line">     <span class="keyword">if</span> (runner != <span class="keyword">null</span>) &#123;</span><br><span class="line">       watcher = <span class="keyword">new</span> LocalFlowWatcher(runner);</span><br><span class="line">     &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">       watcher = <span class="keyword">new</span> RemoteFlowWatcher(pipelineExecId, executorLoader);</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">int</span> numJobThreads = numJobThreadPerFlow;</span><br><span class="line">   <span class="keyword">if</span> (options.getFlowParameters().containsKey(FLOW_NUM_JOB_THREADS)) &#123;</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">       <span class="keyword">int</span> numJobs =</span><br><span class="line">           Integer.valueOf(options.getFlowParameters().get(</span><br><span class="line">               FLOW_NUM_JOB_THREADS));</span><br><span class="line">       <span class="keyword">if</span> (numJobs &gt; <span class="number">0</span> &amp;&amp; (numJobs &lt;= numJobThreads || ProjectWhitelist</span><br><span class="line">               .isProjectWhitelisted(flow.getProjectId(),</span><br><span class="line">                   WhitelistType.NumJobPerFlow))) &#123;</span><br><span class="line">         numJobThreads = numJobs;</span><br><span class="line">       &#125;</span><br><span class="line">     &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">       <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(</span><br><span class="line">           <span class="string">"Failed to set the number of job threads "</span></span><br><span class="line">               + options.getFlowParameters().get(FLOW_NUM_JOB_THREADS)</span><br><span class="line">               + <span class="string">" for flow "</span> + execId, e);</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   FlowRunner runner =</span><br><span class="line">       <span class="keyword">new</span> FlowRunner(flow, executorLoader, projectLoader, jobtypeManager);</span><br><span class="line">   runner.setFlowWatcher(watcher)</span><br><span class="line">       .setJobLogSettings(jobLogChunkSize, jobLogNumFiles)</span><br><span class="line">       .setValidateProxyUser(validateProxyUser)</span><br><span class="line">       .setNumJobThreads(numJobThreads).addListener(<span class="keyword">this</span>);</span><br><span class="line"></span><br><span class="line">   configureFlowLevelMetrics(runner);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Check again.</span></span><br><span class="line">   <span class="keyword">if</span> (runningFlows.containsKey(execId)) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(<span class="string">"Execution "</span> + execId</span><br><span class="line">         + <span class="string">" is already running."</span>);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Finally, queue the sucker.</span></span><br><span class="line">   runningFlows.put(execId, runner);</span><br><span class="line"></span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">     <span class="comment">// The executorService already has a queue.</span></span><br><span class="line">     <span class="comment">// The submit method below actually returns an instance of FutureTask,</span></span><br><span class="line">     <span class="comment">// which implements interface RunnableFuture, which extends both</span></span><br><span class="line">     <span class="comment">// Runnable and Future interfaces</span></span><br><span class="line">     Future&lt;?&gt; future = executorService.submit(runner);</span><br><span class="line">     <span class="comment">// keep track of this future</span></span><br><span class="line">     submittedFlows.put(future, runner.getExecutionId());</span><br><span class="line">     <span class="comment">// update the last submitted time.</span></span><br><span class="line">     <span class="keyword">this</span>.lastFlowSubmittedDate = System.currentTimeMillis();</span><br><span class="line">   &#125; <span class="keyword">catch</span> (RejectedExecutionException re) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(</span><br><span class="line">         <span class="string">"Azkaban server can't execute any more flows. "</span></span><br><span class="line">             + <span class="string">"The number of running flows has reached the system configured limit."</span></span><br><span class="line">             + <span class="string">"Please notify Azkaban administrators"</span>);</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp; FlowRunner本身也继承与Runnable，其run方法里边调用了 runFlow方法，方法内容如下。方法里按照树的层次结构逐层访问DAG图的每一个job，逐个去提交执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">runFlow</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    logger.info(<span class="string">"Starting flows"</span>);</span><br><span class="line">    runReadyJob(<span class="keyword">this</span>.flow);</span><br><span class="line">    updateFlow();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (!flowFinished) &#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (mainSyncObj) &#123;</span><br><span class="line">        <span class="keyword">if</span> (flowPaused) &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            mainSyncObj.wait(CHECK_WAIT_MS);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">if</span> (retryFailedJobs) &#123;</span><br><span class="line">            retryAllFailures();</span><br><span class="line">          &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!progressGraph()) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              mainSyncObj.wait(CHECK_WAIT_MS);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    logger.info(<span class="string">"Finishing up flow. Awaiting Termination"</span>);</span><br><span class="line">    executorService.shutdown();</span><br><span class="line"></span><br><span class="line">    updateFlow();</span><br><span class="line">    logger.info(<span class="string">"Finished Flow"</span>);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>&emsp;&emsp;  对于单个job，最后构造一个JobRunner去执行之。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">runExecutableNode</span><span class="params">(ExecutableNode node)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// Collect output props from the job's dependencies.</span></span><br><span class="line">    prepareJobProperties(node);</span><br><span class="line"></span><br><span class="line">    node.setStatus(Status.QUEUED);</span><br><span class="line">    JobRunner runner = createJobRunner(node);</span><br><span class="line">    logger.info(<span class="string">"Submitting job '"</span> + node.getNestedId() + <span class="string">"' to run."</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      executorService.submit(runner);</span><br><span class="line">      activeJobRunners.add(runner);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RejectedExecutionException e) &#123;</span><br><span class="line">      logger.error(e);</span><br><span class="line">    &#125;</span><br><span class="line">    ;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">private</span> JobRunner <span class="title">createJobRunner</span><span class="params">(ExecutableNode node)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Load job file.</span></span><br><span class="line">    File path = <span class="keyword">new</span> File(execDir, node.getJobSource());</span><br><span class="line"></span><br><span class="line">    JobRunner jobRunner =</span><br><span class="line">        <span class="keyword">new</span> JobRunner(node, path.getParentFile(), executorLoader,</span><br><span class="line">            jobtypeManager);</span><br><span class="line">    <span class="keyword">if</span> (watcher != <span class="keyword">null</span>) &#123;</span><br><span class="line">      jobRunner.setPipeline(watcher, pipelineLevel);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (validateUserProxy) &#123;</span><br><span class="line">      jobRunner.setValidatedProxyUsers(proxyUsers);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    jobRunner.setDelayStart(node.getDelayedExecution());</span><br><span class="line">    jobRunner.setLogSettings(logger, jobLogFileSize, jobLogNumFiles);</span><br><span class="line">    jobRunner.addListener(listener);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (JobCallbackManager.isInitialized()) &#123;</span><br><span class="line">      jobRunner.addListener(JobCallbackManager.getInstance());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    configureJobLevelMetrics(jobRunner);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> jobRunner;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>&emsp;&emsp;每个jobRunner在执行的时候，都去插件模块里边寻找对应的插件来进行job的类型加载。每种job类型都有对应的run方法。最后就是调用run方法去执行job。各种不同类型的job可以参考azkaban默认的job类型以及 azkaban-plugin工程里边实现的一些hadoop相关作业类型。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">       job = jobtypeManager.buildJobExecutor(<span class="keyword">this</span>.jobId, props, logger);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (JobTypeManagerException e) &#123;</span><br><span class="line">       logger.error(<span class="string">"Failed to build job type"</span>, e);</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Azkaban-Plugin"><a href="#Azkaban-Plugin" class="headerlink" title="Azkaban Plugin"></a>Azkaban Plugin</h2><p>&emsp;&emsp;azkaban的插件机制使得可以非常方便的增加插件类型，从而支持运行更多的作业类型。azkaban的hadoop插件可以从以下仓库中找到：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/azkaban/azkaban-plugins.git</span><br></pre></td></tr></table></figure>
+
+<h3 id="插件的实现"><a href="#插件的实现" class="headerlink" title="插件的实现"></a>插件的实现</h3><p>&emsp;&emsp; 其中插件的类继承关系图如下。每种插件作业都会单独起一个进程去执行。其中ProcessJob就是负责起进程的一个类；JavaProcessJob继承自它，特化为Java进程；其他的hadoop插件又各自继承自JavaProcessJob。如果要自己实现插件类型，只要继承JavaProcessJob类，在继承子类里边调用插件的Wrapper类就可以了。具体细节可以看代码实现。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0%E5%9B%BE.png" alt="azkaban插件实现图"></p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/09/21/Azkaban-源码分析和插件实现/" rel="bookmark">Azkaban 源码分析和插件实现</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Duval
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/" title="Azkaban Learning">https://blog.duval.top/2017/01/11/Azkaban学习/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Azkaban/" rel="tag"><i class="fa fa-tag"></i> Azkaban</a>
+              <a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%BB%84%E4%BB%B6/" rel="tag"><i class="fa fa-tag"></i> 大数据组件</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2017/02/05/%E5%9F%BA%E4%BA%8EHiveSever2%E7%9A%84Azkaban%E6%8F%92%E4%BB%B6%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/" rel="next" title="基于HiveSever2的Azkaban插件的实现思路">
+      基于HiveSever2的Azkaban插件的实现思路 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Azkaban"><span class="nav-number">1.</span> <span class="nav-text">Azkaban</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban-简介"><span class="nav-number">1.1.</span> <span class="nav-text">Azkaban 简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#WebServer"><span class="nav-number">1.2.</span> <span class="nav-text">WebServer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#暴露API"><span class="nav-number">1.2.1.</span> <span class="nav-text">暴露API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分发作业"><span class="nav-number">1.2.2.</span> <span class="nav-text">分发作业</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#调度作业"><span class="nav-number">1.2.3.</span> <span class="nav-text">调度作业</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WebServer总结"><span class="nav-number">1.2.4.</span> <span class="nav-text">WebServer总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ExecServer"><span class="nav-number">1.3.</span> <span class="nav-text">ExecServer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#暴露Restful-API"><span class="nav-number">1.3.1.</span> <span class="nav-text">暴露Restful API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行作业"><span class="nav-number">1.3.2.</span> <span class="nav-text">执行作业</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Azkaban-Plugin"><span class="nav-number">1.4.</span> <span class="nav-text">Azkaban Plugin</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#插件的实现"><span class="nav-number">1.4.1.</span> <span class="nav-text">插件的实现</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Duval"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">Duval</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Duval</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">361k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">5:28</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
