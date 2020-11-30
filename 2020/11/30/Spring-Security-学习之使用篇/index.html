@@ -60,7 +60,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2FJdbcUserDetailsManager.png">
 <meta property="article:published_time" content="2020-11-30T09:52:02.006Z">
-<meta property="article:modified_time" content="2020-11-30T10:00:26.271Z">
+<meta property="article:modified_time" content="2020-11-30T10:26:06.889Z">
 <meta property="article:author" content="Duval">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2FJdbcUserDetailsManager.png">
@@ -370,7 +370,7 @@
 <h3 id="实现”记住我”"><a href="#实现”记住我”" class="headerlink" title="实现”记住我”"></a>实现”记住我”</h3><p>两种Service的实现思路都差不多，这里我们只看看TokenBasedRememberMeServices 的构造函数：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">TokenBasedRememberMeServices</span><span class="params">(String key, UserDetailsService userDetailsService)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">super</span>(key, userDetailsService);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
 
-<p>可见只需要传入一个自定义的key，以及一个UserDetailsService即可。自定义key在此处，主要是想增加MD5编码的随机强度，但MD5已经被破解，其实并没有什么作用。</p>
+<p>可见只需要传入一个自定义的key，以及一个UserDetailsService即可。而自定义key在此处，主要是想给密码加盐，增加MD5编码的随机强度。</p>
 <p>于是，可以非常简单地对上述前两个样例进行补充，并实现”记住我”：</p>
 <ul>
 <li><p>表单范例改造：</p>

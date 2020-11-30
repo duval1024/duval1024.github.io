@@ -88,7 +88,7 @@
 <h3 id="实现”记住我”"><a href="#实现”记住我”" class="headerlink" title="实现”记住我”"></a>实现”记住我”</h3><p>两种Service的实现思路都差不多，这里我们只看看TokenBasedRememberMeServices 的构造函数：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">TokenBasedRememberMeServices</span><span class="params">(String key, UserDetailsService userDetailsService)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">super</span>(key, userDetailsService);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
 
-<p>可见只需要传入一个自定义的key，以及一个UserDetailsService即可。自定义key在此处，主要是想增加MD5编码的随机强度，但MD5已经被破解，其实并没有什么作用。</p>
+<p>可见只需要传入一个自定义的key，以及一个UserDetailsService即可。而自定义key在此处，主要是想给密码加盐，增加MD5编码的随机强度。</p>
 <p>于是，可以非常简单地对上述前两个样例进行补充，并实现”记住我”：</p>
 <ul>
 <li><p>表单范例改造：</p>
@@ -862,8 +862,8 @@
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
