@@ -51,21 +51,23 @@
   };
 </script>
 
-  <meta name="description" content="title: ‘Spring Security 学习之使用篇’date: 2020-11-26 22:12:36tags:    - Spring    - 源码分析categories:    - Springimage: https:&#x2F;&#x2F;pic-bed-sz.oss-cn-shenzhen.aliyuncs.com&#x2F;blog%2FSpring%20Security%20%E5%AE%9E%E">
+  <meta name="description" content="服务端开发中常会接触到安全框架，而在Java生态中最常见的莫过于 Apache_Shiro 和 Spring Security。本系列文章主要探讨Spring Security框架的常见使用范例，并且深入了解其背后的实现原理。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Spring-Security-学习之使用篇">
-<meta property="og:url" content="https://blog.duval.top/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/index.html">
+<meta property="og:title" content="Spring Security 学习之使用篇">
+<meta property="og:url" content="https://blog.duval.top/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/index.html">
 <meta property="og:site_name" content="Duval">
-<meta property="og:description" content="title: ‘Spring Security 学习之使用篇’date: 2020-11-26 22:12:36tags:    - Spring    - 源码分析categories:    - Springimage: https:&#x2F;&#x2F;pic-bed-sz.oss-cn-shenzhen.aliyuncs.com&#x2F;blog%2FSpring%20Security%20%E5%AE%9E%E">
+<meta property="og:description" content="服务端开发中常会接触到安全框架，而在Java生态中最常见的莫过于 Apache_Shiro 和 Spring Security。本系列文章主要探讨Spring Security框架的常见使用范例，并且深入了解其背后的实现原理。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2FJdbcUserDetailsManager.png">
-<meta property="article:published_time" content="2020-11-30T09:52:02.006Z">
-<meta property="article:modified_time" content="2020-11-30T10:32:31.561Z">
+<meta property="article:published_time" content="2020-11-26T14:12:36.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:35:40.994Z">
 <meta property="article:author" content="Duval">
+<meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2FJdbcUserDetailsManager.png">
 
-<link rel="canonical" href="https://blog.duval.top/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/">
+<link rel="canonical" href="https://blog.duval.top/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/">
 
 
 <script id="page-configurations">
@@ -77,7 +79,7 @@
   };
 </script>
 
-  <title>Spring-Security-学习之使用篇 | Duval</title>
+  <title>Spring Security 学习之使用篇 | Duval</title>
   
 
 
@@ -213,7 +215,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -226,7 +228,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Spring-Security-学习之使用篇
+          Spring Security 学习之使用篇
         </h1>
 
         <div class="post-meta">
@@ -236,11 +238,22 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2020-11-30 17:52:02" itemprop="dateCreated datePublished" datetime="2020-11-30T17:52:02+08:00">2020-11-30</time>
+              <time title="创建时间：2020-11-26 22:12:36" itemprop="dateCreated datePublished" datetime="2020-11-26T22:12:36+08:00">2020-11-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring</span>
+                  </a>
+                </span>
             </span>
 
           
-            <span id="/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/" class="post-meta-item leancloud_visitors" data-flag-title="Spring-Security-学习之使用篇" title="阅读次数">
+            <span id="/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/" class="post-meta-item leancloud_visitors" data-flag-title="Spring Security 学习之使用篇" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -255,8 +268,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -273,7 +286,7 @@
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>14 分钟</span>
+              <span>13 分钟</span>
             </span>
 
         </div>
@@ -285,10 +298,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <hr>
-<p>title: ‘Spring Security 学习之使用篇’<br>date: 2020-11-26 22:12:36<br>tags:<br>    - Spring<br>    - 源码分析<br>categories:<br>    - Spring<br>image: <a href="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2Fspring%E6%A1%86%E6%9E%B6%E9%A6%96%E9%A1%B5%E5%9B%BE.png" target="_blank" rel="noopener">https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2Fspring%E6%A1%86%E6%9E%B6%E9%A6%96%E9%A1%B5%E5%9B%BE.png</a></p>
-<hr>
-<p>服务端开发中常会接触到安全框架，而在Java生态中最常见的莫过于 <a href="https://shiro.apache.org/" target="_blank" rel="noopener">Apache_Shiro</a> 和 <a href="https://spring.io/projects/spring-security" target="_blank" rel="noopener">Spring Security</a>。本系列文章主要探讨Spring Security框架的常见使用范例，并且深入了解其背后的实现原理。</p>
+        <p>服务端开发中常会接触到安全框架，而在Java生态中最常见的莫过于 <a href="https://shiro.apache.org/" target="_blank" rel="noopener">Apache_Shiro</a> 和 <a href="https://spring.io/projects/spring-security" target="_blank" rel="noopener">Spring Security</a>。本系列文章主要探讨Spring Security框架的常见使用范例，并且深入了解其背后的实现原理。</p>
 <a id="more"></a>
 
 <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Spring Security 框架提供身份认证（authentication）、授权（authorization）以及防范常见攻击等三大功能。在身份认证上，Spring Security只是提供框架，具体的认证模型大多由第三方提供。本文主要介绍企业后台管理系统中最常见的基于表单的身份认证以及LDAP身份认证。</p>
@@ -409,6 +419,24 @@
     
     
       
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/08/21/再读Spring源码之一-Spring如何对付循环引用/" rel="bookmark">再读Spring源码之一 Spring如何对付循环引用</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/10/07/再读Spring源码之二-FactoryBean/" rel="bookmark">再读Spring源码之二 FactoryBean</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/10/26/再读Spring源码之三-常用扩展点/" rel="bookmark">再读Spring源码之三 常用扩展点</a></div>
+    </li>
+  </ul>
 
 <div>
     
@@ -444,7 +472,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://blog.duval.top/2020/11/30/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/" title="Spring-Security-学习之使用篇">https://blog.duval.top/2020/11/30/Spring-Security-学习之使用篇/</a>
+    <a href="https://blog.duval.top/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/" title="Spring Security 学习之使用篇">https://blog.duval.top/2020/11/26/Spring-Security-学习之使用篇/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -455,6 +483,11 @@
 
   <footer class="post-footer">
       <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag"><i class="fa fa-tag"></i> 源码分析</a>
+              <a href="/tags/Spring/" rel="tag"><i class="fa fa-tag"></i> Spring</a>
+          </div>
 
         
 
@@ -626,7 +659,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:42</span>
+    <span title="站点阅读时长">5:41</span>
 
 </div>
 
