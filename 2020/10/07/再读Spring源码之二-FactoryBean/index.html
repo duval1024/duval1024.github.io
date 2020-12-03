@@ -308,7 +308,7 @@
 
 <p>这里只是演示下用法，所以StudentFactoryBean的构建逻辑很简单。实际应用中，FactoryBean一般包含大量复杂业务逻辑。</p>
 <h3 id="在XML配置中使用FactoryBean"><a href="#在XML配置中使用FactoryBean" class="headerlink" title="在XML配置中使用FactoryBean"></a>在XML配置中使用FactoryBean</h3><p>在老版本的spring框架里，常常通过xml配置注入bean。FactoryBean的常见用法是这样的：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span> = <span class="string">"a.b.c.StudentFactoryBean"</span> <span class="attr">id</span> = <span class="string">"bob"</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span> = <span class="string">"name"</span> <span class="attr">value</span> =<span class="string">"Bob"</span>/&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span> = <span class="string">"age"</span> <span class="attr">value</span> =<span class="string">"20"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span> = <span class="string">"a.b.c.Teacher"</span> <span class="attr">id</span> = <span class="string">"Tom"</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span> = <span class="string">"student"</span> <span class="attr">ref</span> = <span class="string">"bob"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span> = <span class="string">"a.b.c.StudentFactoryBean"</span> <span class="attr">id</span> = <span class="string">"bob"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span> = <span class="string">"name"</span> <span class="attr">value</span> =<span class="string">"Bob"</span>/&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span> = <span class="string">"age"</span> <span class="attr">value</span> =<span class="string">"20"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span> = <span class="string">"a.b.c.Teacher"</span> <span class="attr">id</span> = <span class="string">"Tom"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span> = <span class="string">"student"</span> <span class="attr">ref</span> = <span class="string">"bob"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
 <p>这里bob实例的类型虽然为StudentFactoryBean，但在实例化的时候，Spring会调用StudentFactoryBean#getObject进行实例化，并返回Student对象。因此bob实例的最终类型是Student。</p>
 <h3 id="在注解中使用FactoryBean"><a href="#在注解中使用FactoryBean" class="headerlink" title="在注解中使用FactoryBean"></a>在注解中使用FactoryBean</h3><p>在较新版本的Spring中，一般使用注解代替xml配置注入。Factory在注解注入方式的使用上稍有不同。一般如下：</p>
@@ -351,6 +351,9 @@
       <div class="popular-posts-title"><a href="/2020/11/26/Spring-Security-学习之使用篇/" rel="bookmark">Spring Security 学习之使用篇</a></div>
     </li>
     <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/12/01/Spring-Security-学习之原理篇/" rel="bookmark">Spring Security 学习之原理篇</a></div>
+    </li>
+    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
     </li>
     <li class="popular-posts-item">
@@ -358,9 +361,6 @@
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/08/21/再读Spring源码之一-Spring如何对付循环引用/" rel="bookmark">再读Spring源码之一 Spring如何对付循环引用</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/10/26/再读Spring源码之三-常用扩展点/" rel="bookmark">再读Spring源码之三 常用扩展点</a></div>
     </li>
   </ul>
 
@@ -505,7 +505,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -583,12 +583,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">376k</span>
+    <span title="站点总字数">413k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:42</span>
+    <span title="站点阅读时长">6:16</span>
 
 </div>
 

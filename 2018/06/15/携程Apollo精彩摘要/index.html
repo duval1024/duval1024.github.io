@@ -304,7 +304,7 @@
 </div><div class="fold_hider"><div class="close hider_title"><span style="color:gray;font-size:12px">点击显/隐</span></div></div></div>
 
 <p>&emsp;所有数据变动的时候调用ConfigChangeContentBuilder的方法记录这些变动，最后调用hasContent方法检测有否变动，有变动的话调用build方法获得变动情况，然后就入库。这设计思路非常简单而有效。如下：</p>
-<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ConfigChangeContentBuilder builder = <span class="keyword">new</span> <span class="constructor">ConfigChangeContentBuilder()</span>;</span><br><span class="line">builder.update<span class="constructor">Item(<span class="params">beforeUpdateItem</span>, <span class="params">entity</span>)</span>;</span><br><span class="line">itemDTO = <span class="module-access"><span class="module"><span class="identifier">BeanUtils</span>.</span></span>transfrom(<span class="module-access"><span class="module"><span class="identifier">ItemDTO</span>.</span></span><span class="keyword">class</span>, entity);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (builder.has<span class="constructor">Content()</span>) &#123;</span><br><span class="line">  Commit commit = <span class="keyword">new</span> <span class="constructor">Commit()</span>;</span><br><span class="line">  commit.set<span class="constructor">AppId(<span class="params">appId</span>)</span>;</span><br><span class="line">  commit.set<span class="constructor">ClusterName(<span class="params">clusterName</span>)</span>;</span><br><span class="line">  commit.set<span class="constructor">NamespaceName(<span class="params">namespaceName</span>)</span>;</span><br><span class="line">  commit.set<span class="constructor">ChangeSets(<span class="params">builder</span>.<span class="params">build</span>()</span>);</span><br><span class="line">  commit.set<span class="constructor">DataChangeCreatedBy(<span class="params">itemDTO</span>.<span class="params">getDataChangeLastModifiedBy</span>()</span>);</span><br><span class="line">  commit.set<span class="constructor">DataChangeLastModifiedBy(<span class="params">itemDTO</span>.<span class="params">getDataChangeLastModifiedBy</span>()</span>);</span><br><span class="line">  commitService.save(commit);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ConfigChangeContentBuilder builder &#x3D; new ConfigChangeContentBuilder();</span><br><span class="line">builder.updateItem(beforeUpdateItem, entity);</span><br><span class="line">itemDTO &#x3D; BeanUtils.transfrom(ItemDTO.class, entity);</span><br><span class="line"></span><br><span class="line">if (builder.hasContent()) &#123;</span><br><span class="line">  Commit commit &#x3D; new Commit();</span><br><span class="line">  commit.setAppId(appId);</span><br><span class="line">  commit.setClusterName(clusterName);</span><br><span class="line">  commit.setNamespaceName(namespaceName);</span><br><span class="line">  commit.setChangeSets(builder.build());</span><br><span class="line">  commit.setDataChangeCreatedBy(itemDTO.getDataChangeLastModifiedBy());</span><br><span class="line">  commit.setDataChangeLastModifiedBy(itemDTO.getDataChangeLastModifiedBy());</span><br><span class="line">  commitService.save(commit);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
 
@@ -327,19 +327,19 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2017/09/21/Azkaban-源码分析和插件实现/" rel="bookmark">Azkaban 源码分析和插件实现</a></div>
-    </li>
-    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/11/18/Apollo源码详解——防御性编程/" rel="bookmark">Apollo源码学习——防御性编程</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/07/04/Netty-源码分析之-四-Promise-与-Future-双子星的秘密/" rel="bookmark">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></div>
+      <div class="popular-posts-title"><a href="/2017/09/21/Azkaban-源码分析和插件实现/" rel="bookmark">Azkaban 源码分析和插件实现</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/07/09/Netty-源码分析之-五-奔腾的血液-ByteBuf/" rel="bookmark">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/11/26/Spring-Security-学习之使用篇/" rel="bookmark">Spring Security 学习之使用篇</a></div>
+      <div class="popular-posts-title"><a href="/2020/07/15/Netty-源码分析之-六-流水线处理器-Handler/" rel="bookmark">Netty 源码分析之 六 流水线处理器: Handler</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/07/04/Netty-源码分析之-四-Promise-与-Future-双子星的秘密/" rel="bookmark">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></div>
     </li>
   </ul>
 
@@ -483,7 +483,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -561,12 +561,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">376k</span>
+    <span title="站点总字数">413k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:42</span>
+    <span title="站点阅读时长">6:16</span>
 
 </div>
 

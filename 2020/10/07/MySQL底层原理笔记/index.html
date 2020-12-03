@@ -65,8 +65,8 @@
 <meta property="article:published_time" content="2020-10-07T14:31:32.000Z">
 <meta property="article:modified_time" content="2020-11-04T09:53:56.165Z">
 <meta property="article:author" content="Duval">
-<meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="数据库">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg">
 
@@ -614,7 +614,7 @@
 <li>MySQL在认为空闲的时段，会自行刷脏页；</li>
 <li>MySQL关闭前会刷脏页；<br>刷脏页的策略调优：</li>
 <li>磁盘能力。能力越大，脏页刷的越快。参数：innodb_io_capacity；</li>
-<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：   <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">	<span class="keyword">set</span> <span class="keyword">global</span> show_compatibility_56=<span class="keyword">on</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @a <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_dirty'</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @b <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_total'</span>;</span><br><span class="line"><span class="keyword">select</span> @a/@b;</span><br></pre></td></tr></table></figure></li>
+<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：   <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">set</span> <span class="keyword">global</span> show_compatibility_56=<span class="keyword">on</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @a <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_dirty'</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @b <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_total'</span>;</span><br><span class="line"><span class="keyword">select</span> @a/@b;</span><br></pre></td></tr></table></figure></li>
 <li>刷相邻脏页。机械磁盘建议打开（1），SSD磁盘可以关闭（0）。参数：innodb_flush_neighbors</li>
 </ul>
 </blockquote>
@@ -709,8 +709,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
               <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
           </div>
 
         
@@ -803,7 +803,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -881,12 +881,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">376k</span>
+    <span title="站点总字数">413k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:42</span>
+    <span title="站点阅读时长">6:16</span>
 
 </div>
 

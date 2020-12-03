@@ -278,7 +278,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.3k</span>
+              <span>3.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -306,10 +306,10 @@
 
 <h2 id="Step2-依赖jar"><a href="#Step2-依赖jar" class="headerlink" title="Step2 依赖jar"></a>Step2 依赖jar</h2><p>将所需的依赖jar包添加到tomcat下的lib 目录下 </p>
 <h2 id="Step3-配置文件btm-config-properties"><a href="#Step3-配置文件btm-config-properties" class="headerlink" title="Step3 配置文件btm-config.properties"></a>Step3 配置文件btm-config.properties</h2><p>在tomcat的conf文件夹下新建文件btm-config.properties(tomcat 路径酌情更改），并添加如下配置</p>
-<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bitronix<span class="selector-class">.tm</span>.serverId=tomcat-btm-node0</span><br><span class="line">bitronix<span class="selector-class">.tm</span><span class="selector-class">.journal</span><span class="selector-class">.disk</span>.logPart1Filename=/home/apps/apache-tomcat-<span class="number">8.5</span>.<span class="number">23</span>/work/btm1.tlog</span><br><span class="line">bitronix<span class="selector-class">.tm</span><span class="selector-class">.journal</span><span class="selector-class">.disk</span>.logPart2Filename=/home/apps/apache-tomcat-<span class="number">8.5</span>.<span class="number">23</span>/work/btm2.tlog</span><br><span class="line">bitronix<span class="selector-class">.tm</span><span class="selector-class">.resource</span>.configuration=/home/apps/apache-tomcat-<span class="number">8.5</span>.<span class="number">23</span>/conf/resources.properties</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bitronix.tm.serverId&#x3D;tomcat-btm-node0</span><br><span class="line">bitronix.tm.journal.disk.logPart1Filename&#x3D;&#x2F;home&#x2F;apps&#x2F;apache-tomcat-8.5.23&#x2F;work&#x2F;btm1.tlog</span><br><span class="line">bitronix.tm.journal.disk.logPart2Filename&#x3D;&#x2F;home&#x2F;apps&#x2F;apache-tomcat-8.5.23&#x2F;work&#x2F;btm2.tlog</span><br><span class="line">bitronix.tm.resource.configuration&#x3D;&#x2F;home&#x2F;apps&#x2F;apache-tomcat-8.5.23&#x2F;conf&#x2F;resources.properties</span><br></pre></td></tr></table></figure>
 
 <h2 id="Step4-配置文件resources-properties"><a href="#Step4-配置文件resources-properties" class="headerlink" title="Step4 配置文件resources.properties"></a>Step4 配置文件resources.properties</h2><p>在tomcat的conf文件夹下新建文件resources.properties，并添加如下配置：<br>数据库信息酌情更改，并在本地的mysql数据库中创建一个名字为 drools 的数据库</p>
-<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">resource<span class="selector-class">.ds1</span>.className=bitronix<span class="selector-class">.tm</span><span class="selector-class">.resource</span><span class="selector-class">.jdbc</span><span class="selector-class">.lrc</span>.LrcXADataSource</span><br><span class="line">resource<span class="selector-class">.ds1</span>.uniqueName=jdbc/jbpm</span><br><span class="line">resource<span class="selector-class">.ds1</span>.minPoolSize=<span class="number">10</span></span><br><span class="line">resource<span class="selector-class">.ds1</span>.maxPoolSize=<span class="number">20</span></span><br><span class="line">resource<span class="selector-class">.ds1</span><span class="selector-class">.driverProperties</span>.driverClassName=com<span class="selector-class">.mysql</span><span class="selector-class">.jdbc</span>.Driver</span><br><span class="line">resource<span class="selector-class">.ds1</span><span class="selector-class">.driverProperties</span>.url=jdbc:mysql:<span class="comment">//localhost:3306/drools?useUnicode=true&amp;characterEncoding=UTF-8</span></span><br><span class="line">resource<span class="selector-class">.ds1</span><span class="selector-class">.driverProperties</span>.user=root</span><br><span class="line">resource<span class="selector-class">.ds1</span><span class="selector-class">.driverProperties</span>.password=admin</span><br><span class="line">resource<span class="selector-class">.ds1</span>.allowLocalTransactions=true</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">resource.ds1.className&#x3D;bitronix.tm.resource.jdbc.lrc.LrcXADataSource</span><br><span class="line">resource.ds1.uniqueName&#x3D;jdbc&#x2F;jbpm</span><br><span class="line">resource.ds1.minPoolSize&#x3D;10</span><br><span class="line">resource.ds1.maxPoolSize&#x3D;20</span><br><span class="line">resource.ds1.driverProperties.driverClassName&#x3D;com.mysql.jdbc.Driver</span><br><span class="line">resource.ds1.driverProperties.url&#x3D;jdbc:mysql:&#x2F;&#x2F;localhost:3306&#x2F;drools?useUnicode&#x3D;true&amp;characterEncoding&#x3D;UTF-8</span><br><span class="line">resource.ds1.driverProperties.user&#x3D;root</span><br><span class="line">resource.ds1.driverProperties.password&#x3D;admin</span><br><span class="line">resource.ds1.allowLocalTransactions&#x3D;true</span><br></pre></td></tr></table></figure>
 
 <h2 id="Step5修改配置文件context-xml"><a href="#Step5修改配置文件context-xml" class="headerlink" title="Step5修改配置文件context.xml"></a>Step5修改配置文件context.xml</h2><p>修改tomcat 的conf文件夹下的context.xml，在其Context 标签中添加如下配置<br>切记修改链接字符串中的 mysql的账号密码。</p>
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Resource</span> <span class="attr">name</span>=<span class="string">"jdbc/jbpm"</span> <span class="attr">auth</span>=<span class="string">"Container"</span> <span class="attr">type</span>=<span class="string">"javax.sql.DataSource"</span> <span class="attr">driverClassName</span>=<span class="string">"com.mysql.jdbc.Driver"</span> <span class="attr">url</span>=<span class="string">"jdbc:mysql://localhost:3306/drools?useUnicode=true&amp;characterEncoding=UTF-8"</span> <span class="attr">username</span>=<span class="string">"root"</span> <span class="attr">password</span>=<span class="string">"admin"</span> <span class="attr">maxActive</span>=<span class="string">"20"</span> <span class="attr">maxIdle</span>=<span class="string">"1"</span> <span class="attr">maxWait</span>=<span class="string">"5000"</span>/&gt;</span></span><br></pre></td></tr></table></figure>
@@ -485,7 +485,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -563,12 +563,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">376k</span>
+    <span title="站点总字数">413k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">5:42</span>
+    <span title="站点阅读时长">6:16</span>
 
 </div>
 
