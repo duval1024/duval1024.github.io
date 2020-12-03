@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,7 +64,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="G1垃圾收集器入门">
 <meta property="og:url" content="https://blog.duval.top/2020/04/16/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="本文翻译自《Getting Started with the G1 Garbage Collector》">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/HotspotJVM%E6%9E%B6%E6%9E%84.png">
@@ -81,7 +90,7 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FAfter%20Copying%3ACleanup%20Phase.png">
 <meta property="article:published_time" content="2020-04-16T07:18:41.000Z">
 <meta property="article:modified_time" content="2020-04-19T15:31:45.323Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="垃圾回收器">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/HotspotJVM%E6%9E%B6%E6%9E%84.png">
@@ -98,7 +107,7 @@
   };
 </script>
 
-  <title>G1垃圾收集器入门 | Duval</title>
+  <title>G1垃圾收集器入门 | 杜瓦尔</title>
   
 
 
@@ -142,11 +151,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -238,12 +246,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -518,8 +526,7 @@
 <h2 id="命令行参数可选项以及最佳时间"><a href="#命令行参数可选项以及最佳时间" class="headerlink" title="命令行参数可选项以及最佳时间"></a>命令行参数可选项以及最佳时间</h2><p>这个章节里，我们会学习G1的各种命令行选项。</p>
 <h3 id="命令行基本参数"><a href="#命令行基本参数" class="headerlink" title="命令行基本参数"></a>命令行基本参数</h3><p>为了使用G1收集器，需要指定参数：-XX:+UseG1GC</p>
 <p>这是启动Java进程的一个样例：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -Xmx50m -Xms50m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar c:\javademos\demo\jfc\Java2D\Java2demo.jar</span><br></pre></td></tr></table></figure>
-
+<pre><code class="bash">java -Xmx50m -Xms50m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -jar c:\javademos\demo\jfc\Java2D\Java2demo.jar</code></pre>
 <h3 id="命令行关键参数"><a href="#命令行关键参数" class="headerlink" title="命令行关键参数"></a>命令行关键参数</h3><p><strong>-XX:+UseG1GC</strong> - 告诉JVM使用G1垃圾收集器；</p>
 <p><strong>-XX:MaxGCPauseMillis=200</strong> - 设置一个最大的GC停顿时间目标。这是一个软目标，JVM会尽最大能力去满足它。因此，停顿时间有时候并不会满足这个目标。默认值是200ms。</p>
 <p><strong>-XX:InitiatingHeapOccupancyPercent=45</strong> - 触发并发GC的堆内存占用阈值。G1收集器根据整个堆的占用情况而不是某个分代来触发一次并发回收循环。如果这个值指定为0，则意味着会进行恒定的GC循环。默认值为45（占用45%）。</p>
@@ -604,9 +611,8 @@
 <h3 id="设置日志详情"><a href="#设置日志详情" class="headerlink" title="设置日志详情"></a>设置日志详情</h3><p>你可以设置三个不同级别的日志详情。</p>
 <p>(1）<strong>-verbosegc</strong>（与 <strong>-XX:+PrintGC</strong> 相同）设置详情日志的级别为 <em>fine</em>。</p>
 <p><strong>样例输出</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[GC pause (G1 Humongous Allocation) (young) (initial-mark) 24M- &gt;21M(64M), 0.2349730 secs]</span><br><span class="line">[GC pause (G1 Evacuation Pause) (mixed) 66M-&gt;21M(236M), 0.1625268 secs]</span><br></pre></td></tr></table></figure>
-
-<p>(2) <strong>-XX:+PrintGCDetails</strong> 设置详情日志级别为 <em>finer</em>。这个选项展示以下信息：</p>
+<pre><code>[GC pause (G1 Humongous Allocation) (young) (initial-mark) 24M- &gt;21M(64M), 0.2349730 secs]
+[GC pause (G1 Evacuation Pause) (mixed) 66M-&gt;21M(236M), 0.1625268 secs] </code></pre><p>(2) <strong>-XX:+PrintGCDetails</strong> 设置详情日志级别为 <em>finer</em>。这个选项展示以下信息：</p>
 <ul>
 <li>各个阶段的平均用时、最小用时和最大用时；</li>
 <li>根扫描、RSet更新、RSet扫描、对象复制、终止(和尝试次数)；</li>
@@ -614,98 +620,85 @@
 <li>展示Eden、Suvivor以及全堆的占用情况。</li>
 </ul>
 <p><strong>样例输出</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Ext Root Scanning (ms): Avg: 1.7 Min: 0.0 Max: 3.7 Diff: 3.7]</span><br><span class="line">[Eden: 818M(818M)-&gt;0B(714M) Survivors: 0B-&gt;104M Heap: 836M(4096M)-&gt;409M(4096M)]</span><br></pre></td></tr></table></figure>
-
-<p>(3) <strong>-XX:+UnlockExperimentalVMOptions -XX:G1LogLevel=finest</strong> 设置详情级别为 <em>finest*</em>。跟finer级别类似，但包含了个别工作线程的信息。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[Ext Root Scanning (ms): 2.1 2.4 2.0 0.0</span><br><span class="line">           Avg: 1.6 Min: 0.0 Max: 2.4 Diff: 2.3]</span><br><span class="line">       [Update RS (ms):  0.4  0.2  0.4  0.0</span><br><span class="line">           Avg: 0.2 Min: 0.0 Max: 0.4 Diff: 0.4]</span><br><span class="line">           [Processed Buffers : 5 1 10 0</span><br><span class="line">           Sum: 16, Avg: 4, Min: 0, Max: 10, Diff: 10]</span><br></pre></td></tr></table></figure>
-
-<h3 id="指定时间参数"><a href="#指定时间参数" class="headerlink" title="指定时间参数"></a>指定时间参数</h3><p>有一些开关决定打印GC日志中的时间。</p>
+<pre><code>[Ext Root Scanning (ms): Avg: 1.7 Min: 0.0 Max: 3.7 Diff: 3.7]
+[Eden: 818M(818M)-&gt;0B(714M) Survivors: 0B-&gt;104M Heap: 836M(4096M)-&gt;409M(4096M)]</code></pre><p>(3) <strong>-XX:+UnlockExperimentalVMOptions -XX:G1LogLevel=finest</strong> 设置详情级别为 <em>finest*</em>。跟finer级别类似，但包含了个别工作线程的信息。</p>
+<pre><code>[Ext Root Scanning (ms): 2.1 2.4 2.0 0.0
+           Avg: 1.6 Min: 0.0 Max: 2.4 Diff: 2.3]
+       [Update RS (ms):  0.4  0.2  0.4  0.0
+           Avg: 0.2 Min: 0.0 Max: 0.4 Diff: 0.4]
+           [Processed Buffers : 5 1 10 0
+           Sum: 16, Avg: 4, Min: 0, Max: 10, Diff: 10]</code></pre><h3 id="指定时间参数"><a href="#指定时间参数" class="headerlink" title="指定时间参数"></a>指定时间参数</h3><p>有一些开关决定打印GC日志中的时间。</p>
 <p>（1）<strong>-XX:+PrintGCTimeStamps</strong> - 当JVM启动后，打印运行时间。</p>
 <p><strong>样例输出</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1.729: [GC pause (young) 46M-&gt;35M(1332M), 0.0310029 secs]</span><br></pre></td></tr></table></figure>
-<p>（2）<strong>-XX:+PrintGCDateStamps</strong> - 每条记录都打印日期前缀。</p>
+<pre><code>1.729: [GC pause (young) 46M-&gt;35M(1332M), 0.0310029 secs]</code></pre><p>（2）<strong>-XX:+PrintGCDateStamps</strong> - 每条记录都打印日期前缀。</p>
 <p><strong>样例输出</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2012-05-02T11:16:32.057+0200: [GC pause (young) 46M-&gt;35M(1332M), 0.0317225 secs]</span><br></pre></td></tr></table></figure>
-
-<h3 id="认识G1日志"><a href="#认识G1日志" class="headerlink" title="认识G1日志"></a>认识G1日志</h3><p>为了认识GC日志，这个章节使用实际的GC日志输出定义一些术语。以下的例子展示了日志的输出，并且附带了术语的解释。</p>
+<pre><code>2012-05-02T11:16:32.057+0200: [GC pause (young) 46M-&gt;35M(1332M), 0.0317225 secs]</code></pre><h3 id="认识G1日志"><a href="#认识G1日志" class="headerlink" title="认识G1日志"></a>认识G1日志</h3><p>为了认识GC日志，这个章节使用实际的GC日志输出定义一些术语。以下的例子展示了日志的输出，并且附带了术语的解释。</p>
 <p><em>注意:*</em> 了解更多信息请移步<a href="https://blogs.oracle.com/poonam/entry/understanding_g1_gc_logs" target="_blank" rel="noopener">Poonam Bajaj’s Blog post on G1 GC logs.</a></p>
 <h3 id="G1日志术语"><a href="#G1日志术语" class="headerlink" title="G1日志术语"></a>G1日志术语</h3><ul>
-<li>并行时间(Parallel Time)<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">414.557: [GC pause (young), 0.03039600 secs] [Parallel Time: 22.9 ms]</span><br><span class="line">[GC Worker Start (ms): 7096.0 7096.0 7096.1 7096.1 706.1 7096.1 7096.1 7096.1 7096.2 7096.2 7096.2 7096.2</span><br><span class="line">       Avg: 7096.1, Min: 7096.0, Max: 7096.2, Diff: 0.2]</span><br></pre></td></tr></table></figure>
-Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker Start - workers开始的时间戳；</li>
+<li>并行时间(Parallel Time)<br>```</li>
 </ul>
-<p><strong>注意:</strong> 这些日志都按照线程ID排序，并且每个条目都是一致的。</p>
-<ul>
-<li>外部根扫描(External Root Scanning)</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Ext Root Scanning (ms): 3.1 3.4 3.4 3.0 4.2 2.0 3.6 3.2 3.4 7.7 3.7 4.4</span><br><span class="line">     Avg: 3.8, Min: 2.0, Max: 7.7, Diff: 5.7]</span><br></pre></td></tr></table></figure>
-<p>External root scanning - 扫描外部根(例如指向堆空间的系统字典)所耗时间</p>
-<ul>
-<li>更新RSet(Update Remembered Set)</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[Update RS (ms): 0.1 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 Avg: 0.0, Min: 0.0, Max: 0.1, Diff: 0.1]</span><br><span class="line">   [Processed Buffers : 26 0 0 0 0 0 0 0 0 0 0 0</span><br><span class="line">    Sum: 26, Avg: 2, Min: 0, Max: 26, Diff: 26]</span><br></pre></td></tr></table></figure>
+<p>414.557: [GC pause (young), 0.03039600 secs] [Parallel Time: 22.9 ms]<br>[GC Worker Start (ms): 7096.0 7096.0 7096.1 7096.1 706.1 7096.1 7096.1 7096.1 7096.2 7096.2 7096.2 7096.2<br>       Avg: 7096.1, Min: 7096.0, Max: 7096.2, Diff: 0.2]</p>
+<pre><code>Parallel Time - 暂停的主要并行部分的大体运行时间；
+Worker Start - workers开始的时间戳；
+**注意:** 这些日志都按照线程ID排序，并且每个条目都是一致的。
 
-<p>Update Remembered Set - Any buffers that are completed but have not yet been processed by the concurrent refinement thread before the start of the pause have to be updated. Time depends on density of the cards. The more cards, the longer it will take.</p>
-<ul>
-<li>扫描RSet(Scanning Remembered Sets)</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Scan RS (ms): 0.4 0.2 0.1 0.3 0.0 0.0 0.1 0.2 0.0 0.1 0.0 0.0 Avg: 0.1, Min: 0.0, Max: 0.4, Diff: 0.3]F</span><br></pre></td></tr></table></figure>
-<p>Scanning Remembered Sets - Look for pointers that point into the Collection Set.</p>
-<ul>
-<li>对象复制(Object Copy)</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Object Copy (ms): 16.7 16.7 16.7 16.9 16.0 18.1 16.5 16.8 16.7 12.3 16.4 15.7 Avg: 16.3, Min: 12.3, Max:  18.1, Diff: 5.8]</span><br></pre></td></tr></table></figure>
+- 外部根扫描(External Root Scanning)
+</code></pre><p>[Ext Root Scanning (ms): 3.1 3.4 3.4 3.0 4.2 2.0 3.6 3.2 3.4 7.7 3.7 4.4<br>     Avg: 3.8, Min: 2.0, Max: 7.7, Diff: 5.7]</p>
+<pre><code>External root scanning - 扫描外部根(例如指向堆空间的系统字典)所耗时间
 
-<p>Object copy – The time that each individual thread spent copying and evacuating objects.</p>
-<ul>
-<li><p>Termination Time</p>
-</li>
-<li><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Termination (ms): 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0</span><br><span class="line">0.0 Avg: 0.0, Min: 0.0, Max: 0.0, Diff: 0.0] [Termination Attempts : 1 1 1 1 1 1 1 1 1 1 1 1 Sum: 12, Avg: 1, Min: 1, Max: 1, Diff: 0]</span><br></pre></td></tr></table></figure>
-<p>Termination time - When a worker thread is finished with its particular set of objects to copy and scan, it enters the termination protocol. It looks for work to steal and once it’s done with that work it again enters the termination protocol. Termination attempt counts all the attempts to steal work.</p>
-</li>
-<li><p>GC Worker End</p>
-</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[GC Worker End (ms): 7116.4 7116.3 7116.4 7116.3 7116.4 7116.3 7116.4 7116.4 7116.4 7116.4 7116.3 7116.3</span><br><span class="line">    Avg: 7116.4, Min: 7116.3, Max: 7116.4, Diff:   0.1]</span><br><span class="line">[GC Worker (ms): 20.4 20.3 20.3 20.2 20.3 20.2 20.2 20.2 20.3 20.2 20.1 20.1</span><br><span class="line">     Avg: 20.2, Min: 20.1, Max: 20.4, Diff: 0.3]</span><br></pre></td></tr></table></figure>
+- 更新RSet(Update Remembered Set)
+</code></pre><p>[Update RS (ms): 0.1 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 Avg: 0.0, Min: 0.0, Max: 0.1, Diff: 0.1]<br>   [Processed Buffers : 26 0 0 0 0 0 0 0 0 0 0 0<br>    Sum: 26, Avg: 2, Min: 0, Max: 26, Diff: 26]</p>
+<pre><code>
+Update Remembered Set - Any buffers that are completed but have not yet been processed by the concurrent refinement thread before the start of the pause have to be updated. Time depends on density of the cards. The more cards, the longer it will take.
 
-<p>GC worker end time – Timestamp when the individual GC worker stops.</p>
-<p>GC worker time – Time taken by individual GC worker thread.</p>
-<ul>
-<li>GC Worker Other</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[GC Worker Other (ms): 2.6 2.6 2.7 2.7 2.7 2.7 2.7 2.8 2.8 2.8 2.8 2.8</span><br><span class="line">    Avg: 2.7, Min: 2.6, Max: 2.8, Diff: 0.2]</span><br></pre></td></tr></table></figure>
-<p>GC worker other – The time (for each GC thread) that can’t be attributed to the worker phases listed previously. Should be quite low. In the past, we have seen excessively high values and they have been attributed to bottlenecks in other parts of the JVM (e.g., increases in the Code Cache occupancy with Tiered).</p>
-<ul>
-<li>Clear CT</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Clear CT: 0.6 ms]</span><br></pre></td></tr></table></figure>
-<p>Time taken to clear the card table of RSet scanning meta-data</p>
-<ul>
-<li>Other</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Other: 6.8 ms]</span><br></pre></td></tr></table></figure>
+- 扫描RSet(Scanning Remembered Sets)
+</code></pre><p>[Scan RS (ms): 0.4 0.2 0.1 0.3 0.0 0.0 0.1 0.2 0.0 0.1 0.0 0.0 Avg: 0.1, Min: 0.0, Max: 0.4, Diff: 0.3]F</p>
+<pre><code>Scanning Remembered Sets - Look for pointers that point into the Collection Set.
 
-<p>Time taken for various other sequential phases of the GC pause.</p>
-<ul>
-<li><p>CSet</p>
-</li>
-<li><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Choose CSet: 0.1 ms]</span><br></pre></td></tr></table></figure>
-<p>Time taken finalizing the set of regions to collect. Usually very small; slightly longer when having to select old.</p>
-</li>
-<li><p>Ref Proc</p>
-</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Ref Proc: 4.4 ms]</span><br></pre></td></tr></table></figure>
-<p>Time spent processing soft, weak, etc. references deferred from the prior phases of the GC.</p>
-<ul>
-<li>Ref Enq</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Ref Enq: 0.1 ms]</span><br></pre></td></tr></table></figure>
-<p>Time spent placing soft, weak, etc. references on to the pending list.</p>
-<ul>
-<li>Free CSet</li>
-</ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Free CSet: 2.0 ms]</span><br></pre></td></tr></table></figure>
+- 对象复制(Object Copy)
+</code></pre><p>[Object Copy (ms): 16.7 16.7 16.7 16.9 16.0 18.1 16.5 16.8 16.7 12.3 16.4 15.7 Avg: 16.3, Min: 12.3, Max:  18.1, Diff: 5.8]</p>
+<pre><code>
+Object copy – The time that each individual thread spent copying and evacuating objects.
 
+- Termination Time
+- </code></pre><p>[Termination (ms): 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0<br>0.0 Avg: 0.0, Min: 0.0, Max: 0.0, Diff: 0.0] [Termination Attempts : 1 1 1 1 1 1 1 1 1 1 1 1 Sum: 12, Avg: 1, Min: 1, Max: 1, Diff: 0]</p>
+<pre><code>Termination time - When a worker thread is finished with its particular set of objects to copy and scan, it enters the termination protocol. It looks for work to steal and once it&#39;s done with that work it again enters the termination protocol. Termination attempt counts all the attempts to steal work.
+
+- GC Worker End
+</code></pre><p>[GC Worker End (ms): 7116.4 7116.3 7116.4 7116.3 7116.4 7116.3 7116.4 7116.4 7116.4 7116.4 7116.3 7116.3<br>    Avg: 7116.4, Min: 7116.3, Max: 7116.4, Diff:   0.1]<br>[GC Worker (ms): 20.4 20.3 20.3 20.2 20.3 20.2 20.2 20.2 20.3 20.2 20.1 20.1<br>     Avg: 20.2, Min: 20.1, Max: 20.4, Diff: 0.3]</p>
+<pre><code>
+GC worker end time – Timestamp when the individual GC worker stops.
+
+GC worker time – Time taken by individual GC worker thread.
+
+- GC Worker Other
+</code></pre><p>[GC Worker Other (ms): 2.6 2.6 2.7 2.7 2.7 2.7 2.7 2.8 2.8 2.8 2.8 2.8<br>    Avg: 2.7, Min: 2.6, Max: 2.8, Diff: 0.2]</p>
+<pre><code>GC worker other – The time (for each GC thread) that can&#39;t be attributed to the worker phases listed previously. Should be quite low. In the past, we have seen excessively high values and they have been attributed to bottlenecks in other parts of the JVM (e.g., increases in the Code Cache occupancy with Tiered).
+
+- Clear CT
+</code></pre><p>[Clear CT: 0.6 ms]</p>
+<pre><code>Time taken to clear the card table of RSet scanning meta-data
+
+- Other
+</code></pre><p>[Other: 6.8 ms]</p>
+<pre><code>
+Time taken for various other sequential phases of the GC pause.
+
+- CSet
+- </code></pre><p>[Choose CSet: 0.1 ms]</p>
+<pre><code>Time taken finalizing the set of regions to collect. Usually very small; slightly longer when having to select old.
+
+- Ref Proc
+</code></pre><p>[Ref Proc: 4.4 ms]</p>
+<pre><code>Time spent processing soft, weak, etc. references deferred from the prior phases of the GC.
+
+- Ref Enq
+</code></pre><p>[Ref Enq: 0.1 ms]</p>
+<pre><code>Time spent placing soft, weak, etc. references on to the pending list.
+
+- Free CSet
+</code></pre><p>[Free CSet: 2.0 ms]</p>
+<p>```</p>
 <p>Time spent freeing the set of regions that have just been collected, including their remembered sets.</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在本文中，你已经浏览学习了Java JVM里的G1垃圾收集器。首先你学习为何堆和垃圾收集器是Java JVM的重要组成部分。然后回顾了CMS和G1垃圾收集器是如何工作的。接着学习了G1的命令行开关以及使用它们的最佳实践。最后学习了GC日志中的打印对象以及数据。</p>
 <p>在这个教程中，你学习了：</p>
@@ -757,12 +750,12 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -774,7 +767,7 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -874,10 +867,10 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -957,17 +950,17 @@ Parallel Time - 暂停的主要并行部分的大体运行时间；<br>Worker St
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

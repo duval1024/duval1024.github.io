@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,12 +64,12 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="再读Spring源码之三 常用扩展点">
 <meta property="og:url" content="https://blog.duval.top/2020/10/26/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%89-%E5%B8%B8%E7%94%A8%E6%89%A9%E5%B1%95%E7%82%B9/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="本来打算逐个详解Spring的扩展点，但网上关于扩展点的有关资料其实已经非常多，没必要重复造轮子。于是，我决定用这篇文章扼要总结备忘下Spring的各个扩展点的原理和使用场景。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-10-26T10:31:25.000Z">
 <meta property="article:modified_time" content="2020-12-03T09:04:51.721Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="源码分析">
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
@@ -77,7 +86,7 @@
   };
 </script>
 
-  <title>再读Spring源码之三 常用扩展点 | Duval</title>
+  <title>再读Spring源码之三 常用扩展点 | 杜瓦尔</title>
   
 
 
@@ -121,11 +130,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -217,12 +225,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -277,14 +285,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>22k</span>
+              <span>20k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>20 分钟</span>
+              <span>19 分钟</span>
             </span>
 
         </div>
@@ -322,39 +330,295 @@
 <li><strong>DisposableBean</strong>‘s destroy</li>
 <li>a custom destroy-method definition</li>
 </ul>
-<h2 id="BeanFactoryPostProcessor"><a href="#BeanFactoryPostProcessor" class="headerlink" title="BeanFactoryPostProcessor"></a>BeanFactoryPostProcessor</h2><h3 id="接口定义"><a href="#接口定义" class="headerlink" title="接口定义"></a>接口定义</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Factory hook that allows for custom modification of an application context's</span></span><br><span class="line"><span class="comment"> * bean definitions, adapting the bean property values of the context's underlying</span></span><br><span class="line"><span class="comment"> * bean factory.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;Useful for custom config files targeted at system administrators that</span></span><br><span class="line"><span class="comment"> * override bean properties configured in the application context. See</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> PropertyResourceConfigurer&#125; and its concrete implementations for</span></span><br><span class="line"><span class="comment"> * out-of-the-box solutions that address such configuration needs.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;A &#123;<span class="doctag">@code</span> BeanFactoryPostProcessor&#125; may interact with and modify bean</span></span><br><span class="line"><span class="comment"> * definitions, but never bean instances. Doing so may cause premature bean</span></span><br><span class="line"><span class="comment"> * instantiation, violating the container and causing unintended side-effects.</span></span><br><span class="line"><span class="comment"> * If bean instance interaction is required, consider implementing</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> BeanPostProcessor&#125; instead.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;h3&gt;Registration&lt;/h3&gt;</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;An &#123;<span class="doctag">@code</span> ApplicationContext&#125; auto-detects &#123;<span class="doctag">@code</span> BeanFactoryPostProcessor&#125;</span></span><br><span class="line"><span class="comment"> * beans in its bean definitions and applies them before any other beans get created.</span></span><br><span class="line"><span class="comment"> * A &#123;<span class="doctag">@code</span> BeanFactoryPostProcessor&#125; may also be registered programmatically</span></span><br><span class="line"><span class="comment"> * with a &#123;<span class="doctag">@code</span> ConfigurableApplicationContext&#125;.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;h3&gt;Ordering&lt;/h3&gt;</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;&#123;<span class="doctag">@code</span> BeanFactoryPostProcessor&#125; beans that are autodetected in an</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> ApplicationContext&#125; will be ordered according to</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.core.PriorityOrdered&#125; and</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.core.Ordered&#125; semantics. In contrast,</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> BeanFactoryPostProcessor&#125; beans that are registered programmatically</span></span><br><span class="line"><span class="comment"> * with a &#123;<span class="doctag">@code</span> ConfigurableApplicationContext&#125; will be applied in the order of</span></span><br><span class="line"><span class="comment"> * registration; any ordering semantics expressed through implementing the</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> PriorityOrdered&#125; or &#123;<span class="doctag">@code</span> Ordered&#125; interface will be ignored for</span></span><br><span class="line"><span class="comment"> * programmatically registered post-processors. Furthermore, the</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.core.annotation.Order <span class="doctag">@Order</span>&#125; annotation is not</span></span><br><span class="line"><span class="comment"> * taken into account for &#123;<span class="doctag">@code</span> BeanFactoryPostProcessor&#125; beans.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Juergen Hoeller</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Sam Brannen</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 06.07.2003</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> BeanPostProcessor</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> PropertyResourceConfigurer</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@FunctionalInterface</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanFactoryPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Modify the application context's internal bean factory after its standard</span></span><br><span class="line"><span class="comment">	 * initialization. All bean definitions will have been loaded, but no beans</span></span><br><span class="line"><span class="comment">	 * will have been instantiated yet. This allows for overriding or adding</span></span><br><span class="line"><span class="comment">	 * properties even to eager-initializing beans.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> beanFactory the bean factory used by the application context</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">postProcessBeanFactory</span><span class="params">(ConfigurableListableBeanFactory beanFactory)</span> <span class="keyword">throws</span> BeansException</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="BeanFactoryPostProcessor"><a href="#BeanFactoryPostProcessor" class="headerlink" title="BeanFactoryPostProcessor"></a>BeanFactoryPostProcessor</h2><h3 id="接口定义"><a href="#接口定义" class="headerlink" title="接口定义"></a>接口定义</h3><pre><code class="java">/**
+ * Factory hook that allows for custom modification of an application context&#39;s
+ * bean definitions, adapting the bean property values of the context&#39;s underlying
+ * bean factory.
+ *
+ * &lt;p&gt;Useful for custom config files targeted at system administrators that
+ * override bean properties configured in the application context. See
+ * {@link PropertyResourceConfigurer} and its concrete implementations for
+ * out-of-the-box solutions that address such configuration needs.
+ *
+ * &lt;p&gt;A {@code BeanFactoryPostProcessor} may interact with and modify bean
+ * definitions, but never bean instances. Doing so may cause premature bean
+ * instantiation, violating the container and causing unintended side-effects.
+ * If bean instance interaction is required, consider implementing
+ * {@link BeanPostProcessor} instead.
+ *
+ * &lt;h3&gt;Registration&lt;/h3&gt;
+ * &lt;p&gt;An {@code ApplicationContext} auto-detects {@code BeanFactoryPostProcessor}
+ * beans in its bean definitions and applies them before any other beans get created.
+ * A {@code BeanFactoryPostProcessor} may also be registered programmatically
+ * with a {@code ConfigurableApplicationContext}.
+ *
+ * &lt;h3&gt;Ordering&lt;/h3&gt;
+ * &lt;p&gt;{@code BeanFactoryPostProcessor} beans that are autodetected in an
+ * {@code ApplicationContext} will be ordered according to
+ * {@link org.springframework.core.PriorityOrdered} and
+ * {@link org.springframework.core.Ordered} semantics. In contrast,
+ * {@code BeanFactoryPostProcessor} beans that are registered programmatically
+ * with a {@code ConfigurableApplicationContext} will be applied in the order of
+ * registration; any ordering semantics expressed through implementing the
+ * {@code PriorityOrdered} or {@code Ordered} interface will be ignored for
+ * programmatically registered post-processors. Furthermore, the
+ * {@link org.springframework.core.annotation.Order @Order} annotation is not
+ * taken into account for {@code BeanFactoryPostProcessor} beans.
+ *
+ * @author Juergen Hoeller
+ * @author Sam Brannen
+ * @since 06.07.2003
+ * @see BeanPostProcessor
+ * @see PropertyResourceConfigurer
+ */
+@FunctionalInterface
+public interface BeanFactoryPostProcessor {
 
+    /**
+     * Modify the application context&#39;s internal bean factory after its standard
+     * initialization. All bean definitions will have been loaded, but no beans
+     * will have been instantiated yet. This allows for overriding or adding
+     * properties even to eager-initializing beans.
+     * @param beanFactory the bean factory used by the application context
+     * @throws org.springframework.beans.BeansException in case of errors
+     */
+    void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException;
+
+}</code></pre>
 <h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><p>BeanFactoryPostProcessor用于在Bean定义信息加载完成之后、Bean实例化之前进行，对Bean的定义信息进行修改。</p>
 <p>常见例子：PropertySourcesPlaceholderConfigurer，用于配置文件的占位符替换。</p>
 <h3 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h3><p>Spring容器启动过程中会自动加载实现了BeanFactoryPostProcessor接口的Bean。</p>
 <p>并且在refresh()中进行调用：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 见org.springframework.context.support.AbstractApplicationContext</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">refresh</span><span class="params">()</span> <span class="keyword">throws</span> BeansException, IllegalStateException </span>&#123;</span><br><span class="line">  <span class="keyword">synchronized</span> (<span class="keyword">this</span>.startupShutdownMonitor) &#123;</span><br><span class="line">    <span class="comment">// Prepare this context for refreshing.</span></span><br><span class="line">    prepareRefresh();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Tell the subclass to refresh the internal bean factory.</span></span><br><span class="line">    ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Prepare the bean factory for use in this context.</span></span><br><span class="line">    prepareBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// Allows post-processing of the bean factory in context subclasses.</span></span><br><span class="line">      postProcessBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Invoke factory processors registered as beans in the context.</span></span><br><span class="line">      invokeBeanFactoryPostProcessors(beanFactory);</span><br><span class="line">    <span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+<pre><code class="java">// 见org.springframework.context.support.AbstractApplicationContext
+@Override
+public void refresh() throws BeansException, IllegalStateException {
+    synchronized (this.startupShutdownMonitor) {
+        // Prepare this context for refreshing.
+        prepareRefresh();
 
+        // Tell the subclass to refresh the internal bean factory.
+        ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+
+        // Prepare the bean factory for use in this context.
+        prepareBeanFactory(beanFactory);
+
+        try {
+            // Allows post-processing of the bean factory in context subclasses.
+            postProcessBeanFactory(beanFactory);
+
+            // Invoke factory processors registered as beans in the context.
+            invokeBeanFactoryPostProcessors(beanFactory);
+        // ...
+</code></pre>
 <p>具体调用逻辑见org.springframework.context.support.PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors方法，此处不再赘言。</p>
 <h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><p>BeanFactoryPostProcessor是在bean实例化前被触发的，因此绝对不能在BeanFactoryPostProcessor提前实例化bean，否则会破坏容器造成预估不到的副作用。如果需要修改Bean的实例化逻辑，应该使用BeanPostProcessor。</p>
 <h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><ul>
 <li><a href="https://www.cnblogs.com/youzhibing/p/10559337.html" target="_blank" rel="noopener">Spring拓展接口之BeanFactoryPostProcessor，占位符与敏感信息解密原理</a></li>
 <li><a href="https://www.jianshu.com/p/3d099ea43b0e" target="_blank" rel="noopener">使用BeanFactoryPostProcessor——这种姿势不要用</a></li>
 </ul>
-<h2 id="BeanDefinitionRegistryPostProcessor"><a href="#BeanDefinitionRegistryPostProcessor" class="headerlink" title="BeanDefinitionRegistryPostProcessor"></a>BeanDefinitionRegistryPostProcessor</h2><h3 id="接口定义-1"><a href="#接口定义-1" class="headerlink" title="接口定义"></a>接口定义</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Extension to the standard &#123;<span class="doctag">@link</span> BeanFactoryPostProcessor&#125; SPI, allowing for</span></span><br><span class="line"><span class="comment"> * the registration of further bean definitions &lt;i&gt;before&lt;/i&gt; regular</span></span><br><span class="line"><span class="comment"> * BeanFactoryPostProcessor detection kicks in. In particular,</span></span><br><span class="line"><span class="comment"> * BeanDefinitionRegistryPostProcessor may register further bean definitions</span></span><br><span class="line"><span class="comment"> * which in turn define BeanFactoryPostProcessor instances.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Juergen Hoeller</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 3.0.1</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> org.springframework.context.annotation.ConfigurationClassPostProcessor</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanDefinitionRegistryPostProcessor</span> <span class="keyword">extends</span> <span class="title">BeanFactoryPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Modify the application context's internal bean definition registry after its</span></span><br><span class="line"><span class="comment">	 * standard initialization. All regular bean definitions will have been loaded,</span></span><br><span class="line"><span class="comment">	 * but no beans will have been instantiated yet. This allows for adding further</span></span><br><span class="line"><span class="comment">	 * bean definitions before the next post-processing phase kicks in.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> registry the bean definition registry used by the application context</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="BeanDefinitionRegistryPostProcessor"><a href="#BeanDefinitionRegistryPostProcessor" class="headerlink" title="BeanDefinitionRegistryPostProcessor"></a>BeanDefinitionRegistryPostProcessor</h2><h3 id="接口定义-1"><a href="#接口定义-1" class="headerlink" title="接口定义"></a>接口定义</h3><pre><code class="java">/**
+ * Extension to the standard {@link BeanFactoryPostProcessor} SPI, allowing for
+ * the registration of further bean definitions &lt;i&gt;before&lt;/i&gt; regular
+ * BeanFactoryPostProcessor detection kicks in. In particular,
+ * BeanDefinitionRegistryPostProcessor may register further bean definitions
+ * which in turn define BeanFactoryPostProcessor instances.
+ *
+ * @author Juergen Hoeller
+ * @since 3.0.1
+ * @see org.springframework.context.annotation.ConfigurationClassPostProcessor
+ */
+public interface BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor {
+
+    /**
+     * Modify the application context&#39;s internal bean definition registry after its
+     * standard initialization. All regular bean definitions will have been loaded,
+     * but no beans will have been instantiated yet. This allows for adding further
+     * bean definitions before the next post-processing phase kicks in.
+     * @param registry the bean definition registry used by the application context
+     * @throws org.springframework.beans.BeansException in case of errors
+     */
+    void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException;
+
+}
+</code></pre>
 <h3 id="应用场景-1"><a href="#应用场景-1" class="headerlink" title="应用场景"></a>应用场景</h3><p>BeanFactoryPostProcessor的子类，用于注册自定义的BeanDefinition。该拓展点在BeanFactoryPostProcessor之前执行。</p>
 <h3 id="实现原理-1"><a href="#实现原理-1" class="headerlink" title="实现原理"></a>实现原理</h3><p>实现过程和 <em>BeanFactoryPostProcessor</em> 高度相关。<br>请见 <em>org.springframework.context.support.PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors</em> 方法</p>
-<h2 id="BeanPostProcessor"><a href="#BeanPostProcessor" class="headerlink" title="BeanPostProcessor"></a>BeanPostProcessor</h2><h3 id="接口定义-2"><a href="#接口定义-2" class="headerlink" title="接口定义"></a>接口定义</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Factory hook that allows for custom modification of new bean instances &amp;mdash;</span></span><br><span class="line"><span class="comment"> * for example, checking for marker interfaces or wrapping beans with proxies.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;Typically, post-processors that populate beans via marker interfaces</span></span><br><span class="line"><span class="comment"> * or the like will implement &#123;<span class="doctag">@link</span> #postProcessBeforeInitialization&#125;,</span></span><br><span class="line"><span class="comment"> * while post-processors that wrap beans with proxies will normally</span></span><br><span class="line"><span class="comment"> * implement &#123;<span class="doctag">@link</span> #postProcessAfterInitialization&#125;.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;h3&gt;Registration&lt;/h3&gt;</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;An &#123;<span class="doctag">@code</span> ApplicationContext&#125; can autodetect &#123;<span class="doctag">@code</span> BeanPostProcessor&#125; beans</span></span><br><span class="line"><span class="comment"> * in its bean definitions and apply those post-processors to any beans subsequently</span></span><br><span class="line"><span class="comment"> * created. A plain &#123;<span class="doctag">@code</span> BeanFactory&#125; allows for programmatic registration of</span></span><br><span class="line"><span class="comment"> * post-processors, applying them to all beans created through the bean factory.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;h3&gt;Ordering&lt;/h3&gt;</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;&#123;<span class="doctag">@code</span> BeanPostProcessor&#125; beans that are autodetected in an</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> ApplicationContext&#125; will be ordered according to</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.core.PriorityOrdered&#125; and</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.core.Ordered&#125; semantics. In contrast,</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> BeanPostProcessor&#125; beans that are registered programmatically with a</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> BeanFactory&#125; will be applied in the order of registration; any ordering</span></span><br><span class="line"><span class="comment"> * semantics expressed through implementing the</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> PriorityOrdered&#125; or &#123;<span class="doctag">@code</span> Ordered&#125; interface will be ignored for</span></span><br><span class="line"><span class="comment"> * programmatically registered post-processors. Furthermore, the</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.core.annotation.Order <span class="doctag">@Order</span>&#125; annotation is not</span></span><br><span class="line"><span class="comment"> * taken into account for &#123;<span class="doctag">@code</span> BeanPostProcessor&#125; beans.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Juergen Hoeller</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Sam Brannen</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 10.10.2003</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> InstantiationAwareBeanPostProcessor</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> DestructionAwareBeanPostProcessor</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> ConfigurableBeanFactory#addBeanPostProcessor</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> BeanFactoryPostProcessor</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Apply this &#123;<span class="doctag">@code</span> BeanPostProcessor&#125; to the given new bean instance &lt;i&gt;before&lt;/i&gt; any bean</span></span><br><span class="line"><span class="comment">	 * initialization callbacks (like InitializingBean's &#123;<span class="doctag">@code</span> afterPropertiesSet&#125;</span></span><br><span class="line"><span class="comment">	 * or a custom init-method). The bean will already be populated with property values.</span></span><br><span class="line"><span class="comment">	 * The returned bean instance may be a wrapper around the original.</span></span><br><span class="line"><span class="comment">	 * &lt;p&gt;The default implementation returns the given &#123;<span class="doctag">@code</span> bean&#125; as-is.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> bean the new bean instance</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> beanName the name of the bean</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the bean instance to use, either the original or a wrapped one;</span></span><br><span class="line"><span class="comment">	 * if &#123;<span class="doctag">@code</span> null&#125;, no subsequent BeanPostProcessors will be invoked</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@see</span> org.springframework.beans.factory.InitializingBean#afterPropertiesSet</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="meta">@Nullable</span></span><br><span class="line">  <span class="function"><span class="keyword">default</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> bean;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Apply this &#123;<span class="doctag">@code</span> BeanPostProcessor&#125; to the given new bean instance &lt;i&gt;after&lt;/i&gt; any bean</span></span><br><span class="line"><span class="comment">	 * initialization callbacks (like InitializingBean's &#123;<span class="doctag">@code</span> afterPropertiesSet&#125;</span></span><br><span class="line"><span class="comment">	 * or a custom init-method). The bean will already be populated with property values.</span></span><br><span class="line"><span class="comment">	 * The returned bean instance may be a wrapper around the original.</span></span><br><span class="line"><span class="comment">	 * &lt;p&gt;In case of a FactoryBean, this callback will be invoked for both the FactoryBean</span></span><br><span class="line"><span class="comment">	 * instance and the objects created by the FactoryBean (as of Spring 2.0). The</span></span><br><span class="line"><span class="comment">	 * post-processor can decide whether to apply to either the FactoryBean or created</span></span><br><span class="line"><span class="comment">	 * objects or both through corresponding &#123;<span class="doctag">@code</span> bean instanceof FactoryBean&#125; checks.</span></span><br><span class="line"><span class="comment">	 * &lt;p&gt;This callback will also be invoked after a short-circuiting triggered by a</span></span><br><span class="line"><span class="comment">	 * &#123;<span class="doctag">@link</span> InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation&#125; method,</span></span><br><span class="line"><span class="comment">	 * in contrast to all other &#123;<span class="doctag">@code</span> BeanPostProcessor&#125; callbacks.</span></span><br><span class="line"><span class="comment">	 * &lt;p&gt;The default implementation returns the given &#123;<span class="doctag">@code</span> bean&#125; as-is.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> bean the new bean instance</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> beanName the name of the bean</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the bean instance to use, either the original or a wrapped one;</span></span><br><span class="line"><span class="comment">	 * if &#123;<span class="doctag">@code</span> null&#125;, no subsequent BeanPostProcessors will be invoked</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@see</span> org.springframework.beans.factory.InitializingBean#afterPropertiesSet</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@see</span> org.springframework.beans.factory.FactoryBean</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="meta">@Nullable</span></span><br><span class="line">  <span class="function"><span class="keyword">default</span> Object <span class="title">postProcessAfterInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> bean;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="BeanPostProcessor"><a href="#BeanPostProcessor" class="headerlink" title="BeanPostProcessor"></a>BeanPostProcessor</h2><h3 id="接口定义-2"><a href="#接口定义-2" class="headerlink" title="接口定义"></a>接口定义</h3><pre><code class="java">/**
+ * Factory hook that allows for custom modification of new bean instances &amp;mdash;
+ * for example, checking for marker interfaces or wrapping beans with proxies.
+ *
+ * &lt;p&gt;Typically, post-processors that populate beans via marker interfaces
+ * or the like will implement {@link #postProcessBeforeInitialization},
+ * while post-processors that wrap beans with proxies will normally
+ * implement {@link #postProcessAfterInitialization}.
+ *
+ * &lt;h3&gt;Registration&lt;/h3&gt;
+ * &lt;p&gt;An {@code ApplicationContext} can autodetect {@code BeanPostProcessor} beans
+ * in its bean definitions and apply those post-processors to any beans subsequently
+ * created. A plain {@code BeanFactory} allows for programmatic registration of
+ * post-processors, applying them to all beans created through the bean factory.
+ *
+ * &lt;h3&gt;Ordering&lt;/h3&gt;
+ * &lt;p&gt;{@code BeanPostProcessor} beans that are autodetected in an
+ * {@code ApplicationContext} will be ordered according to
+ * {@link org.springframework.core.PriorityOrdered} and
+ * {@link org.springframework.core.Ordered} semantics. In contrast,
+ * {@code BeanPostProcessor} beans that are registered programmatically with a
+ * {@code BeanFactory} will be applied in the order of registration; any ordering
+ * semantics expressed through implementing the
+ * {@code PriorityOrdered} or {@code Ordered} interface will be ignored for
+ * programmatically registered post-processors. Furthermore, the
+ * {@link org.springframework.core.annotation.Order @Order} annotation is not
+ * taken into account for {@code BeanPostProcessor} beans.
+ *
+ * @author Juergen Hoeller
+ * @author Sam Brannen
+ * @since 10.10.2003
+ * @see InstantiationAwareBeanPostProcessor
+ * @see DestructionAwareBeanPostProcessor
+ * @see ConfigurableBeanFactory#addBeanPostProcessor
+ * @see BeanFactoryPostProcessor
+ */
+public interface BeanPostProcessor {
 
+    /**
+     * Apply this {@code BeanPostProcessor} to the given new bean instance &lt;i&gt;before&lt;/i&gt; any bean
+     * initialization callbacks (like InitializingBean&#39;s {@code afterPropertiesSet}
+     * or a custom init-method). The bean will already be populated with property values.
+     * The returned bean instance may be a wrapper around the original.
+     * &lt;p&gt;The default implementation returns the given {@code bean} as-is.
+     * @param bean the new bean instance
+     * @param beanName the name of the bean
+     * @return the bean instance to use, either the original or a wrapped one;
+     * if {@code null}, no subsequent BeanPostProcessors will be invoked
+     * @throws org.springframework.beans.BeansException in case of errors
+     * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
+     */
+    @Nullable
+    default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        return bean;
+    }
+
+    /**
+     * Apply this {@code BeanPostProcessor} to the given new bean instance &lt;i&gt;after&lt;/i&gt; any bean
+     * initialization callbacks (like InitializingBean&#39;s {@code afterPropertiesSet}
+     * or a custom init-method). The bean will already be populated with property values.
+     * The returned bean instance may be a wrapper around the original.
+     * &lt;p&gt;In case of a FactoryBean, this callback will be invoked for both the FactoryBean
+     * instance and the objects created by the FactoryBean (as of Spring 2.0). The
+     * post-processor can decide whether to apply to either the FactoryBean or created
+     * objects or both through corresponding {@code bean instanceof FactoryBean} checks.
+     * &lt;p&gt;This callback will also be invoked after a short-circuiting triggered by a
+     * {@link InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation} method,
+     * in contrast to all other {@code BeanPostProcessor} callbacks.
+     * &lt;p&gt;The default implementation returns the given {@code bean} as-is.
+     * @param bean the new bean instance
+     * @param beanName the name of the bean
+     * @return the bean instance to use, either the original or a wrapped one;
+     * if {@code null}, no subsequent BeanPostProcessors will be invoked
+     * @throws org.springframework.beans.BeansException in case of errors
+     * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet
+     * @see org.springframework.beans.factory.FactoryBean
+     */
+    @Nullable
+    default Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        return bean;
+    }
+
+}
+</code></pre>
 <h3 id="应用场景-2"><a href="#应用场景-2" class="headerlink" title="应用场景"></a>应用场景</h3><p> <em>BeanPostProcessor</em> 允许自定义修改spring bean factory创建的新bean实例。如果你想在Spring容器完成实例化、配置和初始化bean之后实现一些定制逻辑，我们可以插入一个或多个 <em>BeanPostProcessor</em> 实现。</p>
 <p> <em>BeanPostProcessor</em> 通常检查回调接口，或者使用代理包装bean。例如一些Spring AOP基础结构类（例如 <em>AbstractAdvisingBeanPostProcessor</em> ）实现了bean后处理器，提供代理包装逻辑。</p>
 <p>常见例子： <em>AutowiredAnnotationBeanPostProcessor</em>，@Autowire注解的实现</p>
 <h3 id="实现原理-2"><a href="#实现原理-2" class="headerlink" title="实现原理"></a>实现原理</h3><p>Bean在实例化前后分别会调用该拓展点的两个方法。</p>
 <p>例如，在类 <em>org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory</em> 中有如下逻辑：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">initializeBean</span><span class="params">(String beanName, Object bean, @Nullable RootBeanDefinition mbd)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (System.getSecurityManager() != <span class="keyword">null</span>) &#123;</span><br><span class="line">        AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; &#123;</span><br><span class="line">            invokeAwareMethods(beanName, bean);</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;, getAccessControlContext());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        invokeAwareMethods(beanName, bean);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Object wrappedBean = bean;</span><br><span class="line">    <span class="keyword">if</span> (mbd == <span class="keyword">null</span> || !mbd.isSynthetic()) &#123;</span><br><span class="line">    <span class="comment">// 实例化前调用 postProcessBeforeInitialization</span></span><br><span class="line">        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        invokeInitMethods(beanName, wrappedBean, mbd);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(</span><br><span class="line">                (mbd != <span class="keyword">null</span> ? mbd.getResourceDescription() : <span class="keyword">null</span>),</span><br><span class="line">                beanName, <span class="string">"Invocation of init method failed"</span>, ex);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mbd == <span class="keyword">null</span> || !mbd.isSynthetic()) &#123;</span><br><span class="line">    <span class="comment">// 实例化后调用 applyBeanPostProcessorsAfterInitialization</span></span><br><span class="line">        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> wrappedBean;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">applyBeanPostProcessorsBeforeInitialization</span><span class="params">(Object existingBean, String beanName)</span></span></span><br><span class="line"><span class="function">        <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line"></span><br><span class="line">    Object result = existingBean;</span><br><span class="line">    <span class="keyword">for</span> (BeanPostProcessor processor : getBeanPostProcessors()) &#123;</span><br><span class="line">        Object current = processor.postProcessBeforeInitialization(result, beanName);</span><br><span class="line">        <span class="keyword">if</span> (current == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">        &#125;</span><br><span class="line">        result = current;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">applyBeanPostProcessorsAfterInitialization</span><span class="params">(Object existingBean, String beanName)</span></span></span><br><span class="line"><span class="function">        <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line"></span><br><span class="line">    Object result = existingBean;</span><br><span class="line">    <span class="keyword">for</span> (BeanPostProcessor processor : getBeanPostProcessors()) &#123;</span><br><span class="line">        Object current = processor.postProcessAfterInitialization(result, beanName);</span><br><span class="line">        <span class="keyword">if</span> (current == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">        &#125;</span><br><span class="line">        result = current;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
+    if (System.getSecurityManager() != null) {
+        AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; {
+            invokeAwareMethods(beanName, bean);
+            return null;
+        }, getAccessControlContext());
+    }
+    else {
+        invokeAwareMethods(beanName, bean);
+    }
 
+    Object wrappedBean = bean;
+    if (mbd == null || !mbd.isSynthetic()) {
+        // 实例化前调用 postProcessBeforeInitialization
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+    }
+
+    try {
+        invokeInitMethods(beanName, wrappedBean, mbd);
+    }
+    catch (Throwable ex) {
+        throw new BeanCreationException(
+                (mbd != null ? mbd.getResourceDescription() : null),
+                beanName, &quot;Invocation of init method failed&quot;, ex);
+    }
+    if (mbd == null || !mbd.isSynthetic()) {
+        // 实例化后调用 applyBeanPostProcessorsAfterInitialization
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+    }
+
+    return wrappedBean;
+}
+
+@Override
+public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName)
+        throws BeansException {
+
+    Object result = existingBean;
+    for (BeanPostProcessor processor : getBeanPostProcessors()) {
+        Object current = processor.postProcessBeforeInitialization(result, beanName);
+        if (current == null) {
+            return result;
+        }
+        result = current;
+    }
+    return result;
+}
+
+@Override
+public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
+        throws BeansException {
+
+    Object result = existingBean;
+    for (BeanPostProcessor processor : getBeanPostProcessors()) {
+        Object current = processor.postProcessAfterInitialization(result, beanName);
+        if (current == null) {
+            return result;
+        }
+        result = current;
+    }
+    return result;
+}
+</code></pre>
 <h3 id="注意事项-1"><a href="#注意事项-1" class="headerlink" title="注意事项"></a>注意事项</h3><p>无</p>
 <h3 id="参考资料-1"><a href="#参考资料-1" class="headerlink" title="参考资料"></a>参考资料</h3><ul>
 <li><a href="https://juejin.im/post/6844903976886861831" target="_blank" rel="noopener">Spring系列六：Spring BeanPostProcessor</a></li>
 </ul>
 <h2 id="Aware"><a href="#Aware" class="headerlink" title="Aware"></a>Aware</h2><h3 id="接口定义-3"><a href="#接口定义-3" class="headerlink" title="接口定义"></a>接口定义</h3><p>只是一个标记接口，没有其他内部方法。具体实现都在子类中。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * A marker superinterface indicating that a bean is eligible to be notified by the</span></span><br><span class="line"><span class="comment"> * Spring container of a particular framework object through a callback-style method.</span></span><br><span class="line"><span class="comment"> * The actual method signature is determined by individual subinterfaces but should</span></span><br><span class="line"><span class="comment"> * typically consist of just one void-returning method that accepts a single argument.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;Note that merely implementing &#123;<span class="doctag">@link</span> Aware&#125; provides no default functionality.</span></span><br><span class="line"><span class="comment"> * Rather, processing must be done explicitly, for example in a</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> org.springframework.beans.factory.config.BeanPostProcessor&#125;.</span></span><br><span class="line"><span class="comment"> * Refer to &#123;<span class="doctag">@link</span> org.springframework.context.support.ApplicationContextAwareProcessor&#125;</span></span><br><span class="line"><span class="comment"> * for an example of processing specific &#123;<span class="doctag">@code</span> *Aware&#125; interface callbacks.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Chris Beams</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Juergen Hoeller</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 3.1</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Aware</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">/**
+ * A marker superinterface indicating that a bean is eligible to be notified by the
+ * Spring container of a particular framework object through a callback-style method.
+ * The actual method signature is determined by individual subinterfaces but should
+ * typically consist of just one void-returning method that accepts a single argument.
+ *
+ * &lt;p&gt;Note that merely implementing {@link Aware} provides no default functionality.
+ * Rather, processing must be done explicitly, for example in a
+ * {@link org.springframework.beans.factory.config.BeanPostProcessor}.
+ * Refer to {@link org.springframework.context.support.ApplicationContextAwareProcessor}
+ * for an example of processing specific {@code *Aware} interface callbacks.
+ *
+ * @author Chris Beams
+ * @author Juergen Hoeller
+ * @since 3.1
+ */
+public interface Aware {
+}
+</code></pre>
 <h3 id="应用场景-3"><a href="#应用场景-3" class="headerlink" title="应用场景"></a>应用场景</h3><p>Aware 接口是一个标记接口，所有实现该接口的类都会被Spring容器筛选出来，并得到某种通知。所有实现该接口的子接口都提供固定的接收通知的方法。常见的实现包括：</p>
 <ul>
 <li>ApplicationContextAware</li>
@@ -365,22 +629,241 @@
 <li>MessageSourceAware</li>
 </ul>
 <h3 id="实现原理-3"><a href="#实现原理-3" class="headerlink" title="实现原理"></a>实现原理</h3><p>Aware相关接口实现Bean是借助一个 <em>ApplicationContextAwareProcessor</em> 来触发的。<em>ApplicationContextAwareProcessor</em> 实现了 <em>BeanPostProcessor</em> 扩展点:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ApplicationContextAwareProcessor</span> <span class="keyword">implements</span> <span class="title">BeanPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> ConfigurableApplicationContext applicationContext;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> StringValueResolver embeddedValueResolver;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Create a new ApplicationContextAwareProcessor for the given context.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="title">ApplicationContextAwareProcessor</span><span class="params">(ConfigurableApplicationContext applicationContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.applicationContext = applicationContext;</span><br><span class="line">    <span class="keyword">this</span>.embeddedValueResolver = <span class="keyword">new</span> EmbeddedValueResolver(applicationContext.getBeanFactory());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="meta">@Nullable</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    <span class="comment">// 只处理Aware子类，此处提前判断并短路不符合条件的bean。</span></span><br><span class="line">    <span class="comment">// 个人觉得这个布尔条件略丑，为啥不用 bean instanceOf Aware ?</span></span><br><span class="line">    <span class="keyword">if</span> (!(bean <span class="keyword">instanceof</span> EnvironmentAware || bean <span class="keyword">instanceof</span> EmbeddedValueResolverAware ||</span><br><span class="line">        bean <span class="keyword">instanceof</span> ResourceLoaderAware || bean <span class="keyword">instanceof</span> ApplicationEventPublisherAware ||</span><br><span class="line">        bean <span class="keyword">instanceof</span> MessageSourceAware || bean <span class="keyword">instanceof</span> ApplicationContextAware))&#123;</span><br><span class="line">      <span class="keyword">return</span> bean;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    AccessControlContext acc = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (System.getSecurityManager() != <span class="keyword">null</span>) &#123;</span><br><span class="line">      acc = <span class="keyword">this</span>.applicationContext.getBeanFactory().getAccessControlContext();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (acc != <span class="keyword">null</span>) &#123;</span><br><span class="line">      AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; &#123;</span><br><span class="line">        invokeAwareInterfaces(bean);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">      &#125;, acc);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      invokeAwareInterfaces(bean);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bean;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">invokeAwareInterfaces</span><span class="params">(Object bean)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 判断bean类型，并且调用其实现的子接口方法</span></span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> EnvironmentAware) &#123;</span><br><span class="line">      ((EnvironmentAware) bean).setEnvironment(<span class="keyword">this</span>.applicationContext.getEnvironment());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> EmbeddedValueResolverAware) &#123;</span><br><span class="line">      ((EmbeddedValueResolverAware) bean).setEmbeddedValueResolver(<span class="keyword">this</span>.embeddedValueResolver);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ResourceLoaderAware) &#123;</span><br><span class="line">      ((ResourceLoaderAware) bean).setResourceLoader(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ApplicationEventPublisherAware) &#123;</span><br><span class="line">      ((ApplicationEventPublisherAware) bean).setApplicationEventPublisher(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> MessageSourceAware) &#123;</span><br><span class="line">      ((MessageSourceAware) bean).setMessageSource(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (bean <span class="keyword">instanceof</span> ApplicationContextAware) &#123;</span><br><span class="line">      ((ApplicationContextAware) bean).setApplicationContext(<span class="keyword">this</span>.applicationContext);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">class ApplicationContextAwareProcessor implements BeanPostProcessor {
 
-<h2 id="ApplicationListener"><a href="#ApplicationListener" class="headerlink" title="ApplicationListener"></a>ApplicationListener</h2><h3 id="接口定义-4"><a href="#接口定义-4" class="headerlink" title="接口定义"></a>接口定义</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Interface to be implemented by application event listeners.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;Based on the standard &#123;<span class="doctag">@code</span> java.util.EventListener&#125; interface</span></span><br><span class="line"><span class="comment"> * for the Observer design pattern.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;As of Spring 3.0, an &#123;<span class="doctag">@code</span> ApplicationListener&#125; can generically declare</span></span><br><span class="line"><span class="comment"> * the event type that it is interested in. When registered with a Spring</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@code</span> ApplicationContext&#125;, events will be filtered accordingly, with the</span></span><br><span class="line"><span class="comment"> * listener getting invoked for matching event objects only.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Rod Johnson</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Juergen Hoeller</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> &lt;E&gt; the specific &#123;<span class="doctag">@code</span> ApplicationEvent&#125; subclass to listen to</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> org.springframework.context.ApplicationEvent</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> org.springframework.context.event.ApplicationEventMulticaster</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> org.springframework.context.event.EventListener</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@FunctionalInterface</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ApplicationListener</span>&lt;<span class="title">E</span> <span class="keyword">extends</span> <span class="title">ApplicationEvent</span>&gt; <span class="keyword">extends</span> <span class="title">EventListener</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Handle an application event.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> event the event to respond to</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">onApplicationEvent</span><span class="params">(E event)</span></span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    private final ConfigurableApplicationContext applicationContext;
 
+    private final StringValueResolver embeddedValueResolver;
+
+
+    /**
+     * Create a new ApplicationContextAwareProcessor for the given context.
+     */
+    public ApplicationContextAwareProcessor(ConfigurableApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.embeddedValueResolver = new EmbeddedValueResolver(applicationContext.getBeanFactory());
+    }
+
+
+    @Override
+    @Nullable
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        // 只处理Aware子类，此处提前判断并短路不符合条件的bean。
+        // 个人觉得这个布尔条件略丑，为啥不用 bean instanceOf Aware ?
+        if (!(bean instanceof EnvironmentAware || bean instanceof EmbeddedValueResolverAware ||
+                bean instanceof ResourceLoaderAware || bean instanceof ApplicationEventPublisherAware ||
+                bean instanceof MessageSourceAware || bean instanceof ApplicationContextAware)){
+            return bean;
+        }
+
+        AccessControlContext acc = null;
+
+        if (System.getSecurityManager() != null) {
+            acc = this.applicationContext.getBeanFactory().getAccessControlContext();
+        }
+
+        if (acc != null) {
+            AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; {
+                invokeAwareInterfaces(bean);
+                return null;
+            }, acc);
+        }
+        else {
+            invokeAwareInterfaces(bean);
+        }
+
+        return bean;
+    }
+
+    private void invokeAwareInterfaces(Object bean) {
+        // 判断bean类型，并且调用其实现的子接口方法
+        if (bean instanceof EnvironmentAware) {
+            ((EnvironmentAware) bean).setEnvironment(this.applicationContext.getEnvironment());
+        }
+        if (bean instanceof EmbeddedValueResolverAware) {
+            ((EmbeddedValueResolverAware) bean).setEmbeddedValueResolver(this.embeddedValueResolver);
+        }
+        if (bean instanceof ResourceLoaderAware) {
+            ((ResourceLoaderAware) bean).setResourceLoader(this.applicationContext);
+        }
+        if (bean instanceof ApplicationEventPublisherAware) {
+            ((ApplicationEventPublisherAware) bean).setApplicationEventPublisher(this.applicationContext);
+        }
+        if (bean instanceof MessageSourceAware) {
+            ((MessageSourceAware) bean).setMessageSource(this.applicationContext);
+        }
+        if (bean instanceof ApplicationContextAware) {
+            ((ApplicationContextAware) bean).setApplicationContext(this.applicationContext);
+        }
+    }
+
+}
+</code></pre>
+<h2 id="ApplicationListener"><a href="#ApplicationListener" class="headerlink" title="ApplicationListener"></a>ApplicationListener</h2><h3 id="接口定义-4"><a href="#接口定义-4" class="headerlink" title="接口定义"></a>接口定义</h3><pre><code class="java">/**
+ * Interface to be implemented by application event listeners.
+ *
+ * &lt;p&gt;Based on the standard {@code java.util.EventListener} interface
+ * for the Observer design pattern.
+ *
+ * &lt;p&gt;As of Spring 3.0, an {@code ApplicationListener} can generically declare
+ * the event type that it is interested in. When registered with a Spring
+ * {@code ApplicationContext}, events will be filtered accordingly, with the
+ * listener getting invoked for matching event objects only.
+ *
+ * @author Rod Johnson
+ * @author Juergen Hoeller
+ * @param &lt;E&gt; the specific {@code ApplicationEvent} subclass to listen to
+ * @see org.springframework.context.ApplicationEvent
+ * @see org.springframework.context.event.ApplicationEventMulticaster
+ * @see org.springframework.context.event.EventListener
+ */
+@FunctionalInterface
+public interface ApplicationListener&lt;E extends ApplicationEvent&gt; extends EventListener {
+
+    /**
+     * Handle an application event.
+     * @param event the event to respond to
+     */
+    void onApplicationEvent(E event);
+
+}</code></pre>
 <h3 id="应用场景-4"><a href="#应用场景-4" class="headerlink" title="应用场景"></a>应用场景</h3><p><em>ApplicationListener</em> 主要用来监听应用程序上下文的事件，不同的实现子类注册自己感兴趣的事件。</p>
 <h3 id="实现原理-4"><a href="#实现原理-4" class="headerlink" title="实现原理"></a>实现原理</h3><p>使用样例：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf</span>4j</span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApplicationStartedListener</span> <span class="keyword">implements</span> <span class="title">ApplicationListener</span>&lt;<span class="title">ApplicationStartedEvent</span>&gt; </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onApplicationEvent</span><span class="params">(ApplicationStartedEvent event)</span> </span>&#123;</span><br><span class="line">        log.info(<span class="string">"application started. event=&#123;&#125;"</span>, event);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Slf4j
+@Component
+public class MyApplicationStartedListener implements ApplicationListener&lt;ApplicationStartedEvent&gt; {
+    @Override
+    public void onApplicationEvent(ApplicationStartedEvent event) {
+        log.info(&quot;application started. event={}&quot;, event);
+    }
+}
+</code></pre>
+<h2 id="InitializingBean"><a href="#InitializingBean" class="headerlink" title="InitializingBean"></a>InitializingBean</h2><h3 id="接口定义-5"><a href="#接口定义-5" class="headerlink" title="接口定义"></a>接口定义</h3><pre><code class="java">/**
+ * Interface to be implemented by beans that need to react once all their properties
+ * have been set by a {@link BeanFactory}: e.g. to perform custom initialization,
+ * or merely to check that all mandatory properties have been set.
+ *
+ * &lt;p&gt;An alternative to implementing {@code InitializingBean} is specifying a custom
+ * init method, for example in an XML bean definition. For a list of all bean
+ * lifecycle methods, see the {@link BeanFactory BeanFactory javadocs}.
+ *
+ * @author Rod Johnson
+ * @author Juergen Hoeller
+ * @see DisposableBean
+ * @see org.springframework.beans.factory.config.BeanDefinition#getPropertyValues()
+ * @see org.springframework.beans.factory.support.AbstractBeanDefinition#getInitMethodName()
+ */
+public interface InitializingBean {
 
+    /**
+     * Invoked by the containing {@code BeanFactory} after it has set all bean properties
+     * and satisfied {@link BeanFactoryAware}, {@code ApplicationContextAware} etc.
+     * &lt;p&gt;This method allows the bean instance to perform validation of its overall
+     * configuration and final initialization when all bean properties have been set.
+     * @throws Exception in the event of misconfiguration (such as failure to set an
+     * essential property) or if initialization fails for any other reason
+     */
+    void afterPropertiesSet() throws Exception;
 
-<h2 id="InitializingBean"><a href="#InitializingBean" class="headerlink" title="InitializingBean"></a>InitializingBean</h2><h3 id="接口定义-5"><a href="#接口定义-5" class="headerlink" title="接口定义"></a>接口定义</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Interface to be implemented by beans that need to react once all their properties</span></span><br><span class="line"><span class="comment"> * have been set by a &#123;<span class="doctag">@link</span> BeanFactory&#125;: e.g. to perform custom initialization,</span></span><br><span class="line"><span class="comment"> * or merely to check that all mandatory properties have been set.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;An alternative to implementing &#123;<span class="doctag">@code</span> InitializingBean&#125; is specifying a custom</span></span><br><span class="line"><span class="comment"> * init method, for example in an XML bean definition. For a list of all bean</span></span><br><span class="line"><span class="comment"> * lifecycle methods, see the &#123;<span class="doctag">@link</span> BeanFactory BeanFactory javadocs&#125;.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Rod Johnson</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Juergen Hoeller</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> DisposableBean</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> org.springframework.beans.factory.config.BeanDefinition#getPropertyValues()</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> org.springframework.beans.factory.support.AbstractBeanDefinition#getInitMethodName()</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">InitializingBean</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Invoked by the containing &#123;<span class="doctag">@code</span> BeanFactory&#125; after it has set all bean properties</span></span><br><span class="line"><span class="comment">	 * and satisfied &#123;<span class="doctag">@link</span> BeanFactoryAware&#125;, &#123;<span class="doctag">@code</span> ApplicationContextAware&#125; etc.</span></span><br><span class="line"><span class="comment">	 * &lt;p&gt;This method allows the bean instance to perform validation of its overall</span></span><br><span class="line"><span class="comment">	 * configuration and final initialization when all bean properties have been set.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> Exception in the event of misconfiguration (such as failure to set an</span></span><br><span class="line"><span class="comment">	 * essential property) or if initialization fails for any other reason</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">afterPropertiesSet</span><span class="params">()</span> <span class="keyword">throws</span> Exception</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+}
+</code></pre>
 <h3 id="应用场景-5"><a href="#应用场景-5" class="headerlink" title="应用场景"></a>应用场景</h3><p><em>InitializingBean</em> 用在Bean的属性注入完毕后，执行用户自定义的初始化逻辑。</p>
 <h3 id="实现原理-5"><a href="#实现原理-5" class="headerlink" title="实现原理"></a>实现原理</h3><p>调用逻辑可见 <em>org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory</em></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">	* Initialize the given bean instance, applying factory callbacks</span></span><br><span class="line"><span class="comment">	* as well as init methods and bean post processors.</span></span><br><span class="line"><span class="comment">	* &lt;p&gt;Called from &#123;<span class="doctag">@link</span> #createBean&#125; for traditionally defined beans,</span></span><br><span class="line"><span class="comment">	* and from &#123;<span class="doctag">@link</span> #initializeBean&#125; for existing bean instances.</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@param</span> beanName the bean name in the factory (for debugging purposes)</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@param</span> bean the new bean instance we may need to initialize</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@param</span> mbd the bean definition that the bean was created with</span></span><br><span class="line"><span class="comment">	* (can also be &#123;<span class="doctag">@code</span> null&#125;, if given an existing bean instance)</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@return</span> the initialized bean instance (potentially wrapped)</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> BeanNameAware</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> BeanClassLoaderAware</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> BeanFactoryAware</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> #applyBeanPostProcessorsBeforeInitialization</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> #invokeInitMethods</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> #applyBeanPostProcessorsAfterInitialization</span></span><br><span class="line"><span class="comment">	*/</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">initializeBean</span><span class="params">(String beanName, Object bean, @Nullable RootBeanDefinition mbd)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (System.getSecurityManager() != <span class="keyword">null</span>) &#123;</span><br><span class="line">    AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; &#123;</span><br><span class="line">      invokeAwareMethods(beanName, bean);</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;, getAccessControlContext());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    invokeAwareMethods(beanName, bean);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Object wrappedBean = bean;</span><br><span class="line">  <span class="keyword">if</span> (mbd == <span class="keyword">null</span> || !mbd.isSynthetic()) &#123;</span><br><span class="line">    wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 调用用户自定义初始化方法</span></span><br><span class="line">    invokeInitMethods(beanName, wrappedBean, mbd);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(</span><br><span class="line">        (mbd != <span class="keyword">null</span> ? mbd.getResourceDescription() : <span class="keyword">null</span>),</span><br><span class="line">        beanName, <span class="string">"Invocation of init method failed"</span>, ex);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (mbd == <span class="keyword">null</span> || !mbd.isSynthetic()) &#123;</span><br><span class="line">    wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> wrappedBean;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">	* Give a bean a chance to react now all its properties are set,</span></span><br><span class="line"><span class="comment">	* and a chance to know about its owning bean factory (this object).</span></span><br><span class="line"><span class="comment">	* This means checking whether the bean implements InitializingBean or defines</span></span><br><span class="line"><span class="comment">	* a custom init method, and invoking the necessary callback(s) if it does.</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@param</span> beanName the bean name in the factory (for debugging purposes)</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@param</span> bean the new bean instance we may need to initialize</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@param</span> mbd the merged bean definition that the bean was created with</span></span><br><span class="line"><span class="comment">	* (can also be &#123;<span class="doctag">@code</span> null&#125;, if given an existing bean instance)</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@throws</span> Throwable if thrown by init methods or by the invocation process</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@see</span> #invokeCustomInitMethod</span></span><br><span class="line"><span class="comment">	*/</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">invokeInitMethods</span><span class="params">(String beanName, Object bean, @Nullable RootBeanDefinition mbd)</span></span></span><br><span class="line"><span class="function">		<span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">  <span class="comment">// 执行InitializingBean扩展点，调用用户自定义逻辑</span></span><br><span class="line">  <span class="keyword">boolean</span> isInitializingBean = (bean <span class="keyword">instanceof</span> InitializingBean);</span><br><span class="line">  <span class="keyword">if</span> (isInitializingBean &amp;&amp; (mbd == <span class="keyword">null</span> || !mbd.isExternallyManagedInitMethod(<span class="string">"afterPropertiesSet"</span>))) &#123;</span><br><span class="line">    <span class="keyword">if</span> (logger.isTraceEnabled()) &#123;</span><br><span class="line">      logger.trace(<span class="string">"Invoking afterPropertiesSet() on bean with name '"</span> + beanName + <span class="string">"'"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (System.getSecurityManager() != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        AccessController.doPrivileged((PrivilegedExceptionAction&lt;Object&gt;) () -&gt; &#123;</span><br><span class="line">          ((InitializingBean) bean).afterPropertiesSet();</span><br><span class="line">          <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;, getAccessControlContext());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">catch</span> (PrivilegedActionException pae) &#123;</span><br><span class="line">        <span class="keyword">throw</span> pae.getException();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      ((InitializingBean) bean).afterPropertiesSet();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">    <span class="comment">// 执行用户自定义的初始化方法 init-method</span></span><br><span class="line">  <span class="keyword">if</span> (mbd != <span class="keyword">null</span> &amp;&amp; bean.getClass() != NullBean<span class="class">.<span class="keyword">class</span>) </span>&#123;</span><br><span class="line">    String initMethodName = mbd.getInitMethodName();</span><br><span class="line">    <span class="keyword">if</span> (StringUtils.hasLength(initMethodName) &amp;&amp;</span><br><span class="line">        !(isInitializingBean &amp;&amp; <span class="string">"afterPropertiesSet"</span>.equals(initMethodName)) &amp;&amp;</span><br><span class="line">        !mbd.isExternallyManagedInitMethod(initMethodName)) &#123;</span><br><span class="line">      invokeCustomInitMethod(beanName, bean, mbd);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">/**
+    * Initialize the given bean instance, applying factory callbacks
+    * as well as init methods and bean post processors.
+    * &lt;p&gt;Called from {@link #createBean} for traditionally defined beans,
+    * and from {@link #initializeBean} for existing bean instances.
+    * @param beanName the bean name in the factory (for debugging purposes)
+    * @param bean the new bean instance we may need to initialize
+    * @param mbd the bean definition that the bean was created with
+    * (can also be {@code null}, if given an existing bean instance)
+    * @return the initialized bean instance (potentially wrapped)
+    * @see BeanNameAware
+    * @see BeanClassLoaderAware
+    * @see BeanFactoryAware
+    * @see #applyBeanPostProcessorsBeforeInitialization
+    * @see #invokeInitMethods
+    * @see #applyBeanPostProcessorsAfterInitialization
+    */
+protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
+    if (System.getSecurityManager() != null) {
+        AccessController.doPrivileged((PrivilegedAction&lt;Object&gt;) () -&gt; {
+            invokeAwareMethods(beanName, bean);
+            return null;
+        }, getAccessControlContext());
+    }
+    else {
+        invokeAwareMethods(beanName, bean);
+    }
 
+    Object wrappedBean = bean;
+    if (mbd == null || !mbd.isSynthetic()) {
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+    }
 
+    try {
+        // 调用用户自定义初始化方法
+        invokeInitMethods(beanName, wrappedBean, mbd);
+    }
+    catch (Throwable ex) {
+        throw new BeanCreationException(
+                (mbd != null ? mbd.getResourceDescription() : null),
+                beanName, &quot;Invocation of init method failed&quot;, ex);
+    }
+    if (mbd == null || !mbd.isSynthetic()) {
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+    }
+
+    return wrappedBean;
+}
+
+/**
+    * Give a bean a chance to react now all its properties are set,
+    * and a chance to know about its owning bean factory (this object).
+    * This means checking whether the bean implements InitializingBean or defines
+    * a custom init method, and invoking the necessary callback(s) if it does.
+    * @param beanName the bean name in the factory (for debugging purposes)
+    * @param bean the new bean instance we may need to initialize
+    * @param mbd the merged bean definition that the bean was created with
+    * (can also be {@code null}, if given an existing bean instance)
+    * @throws Throwable if thrown by init methods or by the invocation process
+    * @see #invokeCustomInitMethod
+    */
+protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBeanDefinition mbd)
+        throws Throwable {
+    // 执行InitializingBean扩展点，调用用户自定义逻辑
+    boolean isInitializingBean = (bean instanceof InitializingBean);
+    if (isInitializingBean &amp;&amp; (mbd == null || !mbd.isExternallyManagedInitMethod(&quot;afterPropertiesSet&quot;))) {
+        if (logger.isTraceEnabled()) {
+            logger.trace(&quot;Invoking afterPropertiesSet() on bean with name &#39;&quot; + beanName + &quot;&#39;&quot;);
+        }
+        if (System.getSecurityManager() != null) {
+            try {
+                AccessController.doPrivileged((PrivilegedExceptionAction&lt;Object&gt;) () -&gt; {
+                    ((InitializingBean) bean).afterPropertiesSet();
+                    return null;
+                }, getAccessControlContext());
+            }
+            catch (PrivilegedActionException pae) {
+                throw pae.getException();
+            }
+        }
+        else {
+            ((InitializingBean) bean).afterPropertiesSet();
+        }
+    }
+    // 执行用户自定义的初始化方法 init-method
+    if (mbd != null &amp;&amp; bean.getClass() != NullBean.class) {
+        String initMethodName = mbd.getInitMethodName();
+        if (StringUtils.hasLength(initMethodName) &amp;&amp;
+                !(isInitializingBean &amp;&amp; &quot;afterPropertiesSet&quot;.equals(initMethodName)) &amp;&amp;
+                !mbd.isExternallyManagedInitMethod(initMethodName)) {
+            invokeCustomInitMethod(beanName, bean, mbd);
+        }
+    }
+}
+</code></pre>
 <h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">《再读Spring源码之二 FactoryBean》</a></p>
 
     </div>
@@ -421,12 +904,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -438,7 +921,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -539,10 +1022,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -622,17 +1105,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

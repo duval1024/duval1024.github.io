@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,14 +64,14 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="G1垃圾收集器深入">
 <meta property="og:url" content="https://blog.duval.top/2020/04/24/G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg">
 <meta property="article:published_time" content="2020-04-24T03:42:24.000Z">
 <meta property="article:modified_time" content="2020-04-24T08:37:07.512Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="垃圾回收器">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
@@ -79,7 +88,7 @@
   };
 </script>
 
-  <title>G1垃圾收集器深入 | Duval</title>
+  <title>G1垃圾收集器深入 | 杜瓦尔</title>
   
 
 
@@ -123,11 +132,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -219,12 +227,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -323,16 +331,32 @@
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png" alt="g1gc-tams.png"></p>
 <p>但如果在Next TAMS之前有一个白色对象A被一个灰色对象B作为字段而引用，在并发标记扫描到这个字段之前，被赋值为null，那么B–&gt;A的引用关系被切断，可能会导致白色对象A被漏标。</p>
 <p>G1为了解决这个问题，在引用关系修改之前，插入一层pre-write barrier。pre-write barrier会把每次引用关系变化时旧的引用值记录下来。这些引用值会被放置到satb mark queue中，在下一次的并发标记阶段，会依次处理satb mark queue中的对象，确保这部分对象在本轮GC是存活的。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> G1SATBCardTableModRefBS::enqueue(oop pre_val) &#123;</span><br><span class="line">  <span class="comment">// Nulls should have been already filtered.</span></span><br><span class="line">  assert(pre_val-&gt;is_oop(<span class="literal">true</span>), <span class="string">"Error"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!JavaThread::satb_mark_queue_set().is_active()) <span class="keyword">return</span>;</span><br><span class="line">  Thread* thr = Thread::current();</span><br><span class="line">  <span class="keyword">if</span> (thr-&gt;is_Java_thread()) &#123;</span><br><span class="line">    JavaThread* jt = (JavaThread*)thr;</span><br><span class="line">    jt-&gt;satb_mark_queue().enqueue(pre_val);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    MutexLockerEx x(Shared_SATB_Q_lock, Mutex::_no_safepoint_check_flag);</span><br><span class="line">    JavaThread::satb_mark_queue_set().shared_satb_queue()-&gt;enqueue(pre_val);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="c++">void G1SATBCardTableModRefBS::enqueue(oop pre_val) {
+  // Nulls should have been already filtered.
+  assert(pre_val-&gt;is_oop(true), &quot;Error&quot;);
 
+  if (!JavaThread::satb_mark_queue_set().is_active()) return;
+  Thread* thr = Thread::current();
+  if (thr-&gt;is_Java_thread()) {
+    JavaThread* jt = (JavaThread*)thr;
+    jt-&gt;satb_mark_queue().enqueue(pre_val);
+  } else {
+    MutexLockerEx x(Shared_SATB_Q_lock, Mutex::_no_safepoint_check_flag);
+    JavaThread::satb_mark_queue_set().shared_satb_queue()-&gt;enqueue(pre_val);
+  }
+}
+</code></pre>
 <p>但这很可能有对象在snapshot中是活的，但随着并发GC的进行它可能本来已经死了，但SATB还是会让它活过这次GC。这就导致所谓的浮动垃圾。</p>
 <h2 id="RSet"><a href="#RSet" class="headerlink" title="RSet"></a>RSet</h2><p> <strong>该章节摘录自<a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></strong></p>
 <p>全称是Remembered Set，是辅助GC过程的一种结构，典型的空间换时间工具，和Card Table有些类似。还有一种数据结构也是辅助GC的：Collection Set（CSet），它记录了GC要收集的Region集合，集合里的Region可以是任意年代的。在GC的时候，对于old-&gt;young和old-&gt;old的跨代对象引用，只要扫描对应的CSet中的RSet即可。 逻辑上说每个Region都有一个RSet，RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。而Card Table则是一种points-out（我引用了谁的对象）的结构，每个Card 覆盖一定范围的Heap（一般为512Bytes）。G1的RSet是在Card Table的基础上实现的：每个Region会记录下别的Region有指向自己的指针，并标记这些指针分别在哪些Card的范围内。 这个RSet其实是一个Hash Table，Key是别的Region的起始地址，Value是一个集合，里面的元素是Card Table的Index。</p>
 <p>下图表示了RSet、Card和Region的关系（<a href="http://www.infoq.com/articles/tuning-tips-G1-GC" target="_blank" rel="noopener">出处</a>）：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg" alt="Remembered Sets.jpg"></p>
 <p>上图中有三个Region，每个Region被分成了多个Card，在不同Region中的Card会相互引用，Region1中的Card中的对象引用了Region2中的Card中的对象，蓝色实线表示的就是points-out的关系，而在Region2的RSet中，记录了Region1的Card，即红色虚线表示的关系，这就是points-into。 而维系RSet中的引用关系靠post-write barrier和Concurrent refinement threads来维护，操作伪代码如下（<a href="http://hllvm.group.iteye.com/group/topic/44381" target="_blank" rel="noopener">出处</a>）：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">oop_field_store</span><span class="params">(oop* field, oop new_value)</span> </span>&#123;</span><br><span class="line">  pre_write_barrier(field);             <span class="comment">// pre-write barrier: for maintaining SATB invariant</span></span><br><span class="line">  *field = new_value;                   <span class="comment">// the actual store</span></span><br><span class="line">  post_write_barrier(field, new_value); <span class="comment">// post-write barrier: for tracking cross-region reference</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="c++">void oop_field_store(oop* field, oop new_value) {
+  pre_write_barrier(field);             // pre-write barrier: for maintaining SATB invariant
+  *field = new_value;                   // the actual store
+  post_write_barrier(field, new_value); // post-write barrier: for tracking cross-region reference
+}</code></pre>
 <p>post-write barrier记录了跨Region的引用更新，更新日志缓冲区则记录了那些包含更新引用的Cards。一旦缓冲区满了，Post-write barrier就停止服务了，会由Concurrent refinement threads处理这些缓冲区日志。 RSet究竟是怎么辅助GC的呢？在做YGC的时候，只需要选定young generation region的RSet作为根集，这些RSet记录了old-&gt;young的跨代引用，避免了扫描整个old generation。 而mixed gc的时候，old generation中记录了old-&gt;old的RSet，young-&gt;old的引用由扫描全部young generation region得到，这样也不用扫描全部old generation region。所以RSet的引入大大减少了GC的工作量。</p>
 <p><strong>学习资料</strong></p>
 <ul>
@@ -371,12 +395,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -388,7 +412,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -488,10 +512,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -571,17 +595,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

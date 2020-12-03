@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,7 +64,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Azkaban Learning">
 <meta property="og:url" content="https://blog.duval.top/2017/01/11/Azkaban%E5%AD%A6%E4%B9%A0/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="Azkaban关键字：Azkaban简介、大数据作业调度系统 这篇文章适合对azkaban有一定了解的人阅读。建议先粗读：AZ开发文档：http:&#x2F;&#x2F;azkaban.github.io&#x2F;azkaban&#x2F;docs&#x2F;latest&#x2F;#overview强子哥的源码分析：https:&#x2F;&#x2F;my.oschina.net&#x2F;qiangzigege&#x2F;blog&#x2F;653198(以下内容部分摘自上两个链接) azkaban">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
@@ -64,7 +73,7 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0%E5%9B%BE.png">
 <meta property="article:published_time" content="2017-01-11T03:54:03.000Z">
 <meta property="article:modified_time" content="2020-02-05T05:40:23.138Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="Azkaban">
 <meta property="article:tag" content="大数据组件">
 <meta name="twitter:card" content="summary">
@@ -82,7 +91,7 @@
   };
 </script>
 
-  <title>Azkaban Learning | Duval</title>
+  <title>Azkaban Learning | 杜瓦尔</title>
   
 
 
@@ -126,11 +135,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -222,12 +230,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -282,14 +290,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>18k</span>
+              <span>16k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>16 分钟</span>
+              <span>15 分钟</span>
             </span>
 
         </div>
@@ -332,32 +340,273 @@
 </ul>
 <h3 id="分发作业"><a href="#分发作业" class="headerlink" title="分发作业"></a>分发作业</h3><p>&emsp;ExecutorManager 主要承担这部分的功能，所有类型的作业（包括立即执行和调度执行）,都会通过submitExecutableFlow(ExecutableFlow exflow, String userId)这个方法进行提交。</p>
 <p>&emsp;在该方法中，我们可以看到：如果是多执行节点模式下，执行实例先放进分发队列中；如果是单节点模式下，立即调用dispatch方法进行分发。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (isMultiExecutorMode()) &#123;</span><br><span class="line">    <span class="comment">//Take MultiExecutor route</span></span><br><span class="line">    executorLoader.addActiveExecutableReference(reference);</span><br><span class="line">    queuedFlows.enqueue(exflow, reference);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// assign only local executor we have</span></span><br><span class="line">    Executor choosenExecutor = activeExecutors.iterator().next();</span><br><span class="line">    executorLoader.addActiveExecutableReference(reference);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        dispatch(reference, exflow, choosenExecutor);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">        executorLoader.removeActiveExecutableReference(reference.getExecId());</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">if (isMultiExecutorMode()) {
+    //Take MultiExecutor route
+    executorLoader.addActiveExecutableReference(reference);
+    queuedFlows.enqueue(exflow, reference);
+} else {
+    // assign only local executor we have
+    Executor choosenExecutor = activeExecutors.iterator().next();
+    executorLoader.addActiveExecutableReference(reference);
+    try {
+        dispatch(reference, exflow, choosenExecutor);
+    } catch (ExecutorManagerException e) {
+        executorLoader.removeActiveExecutableReference(reference.getExecId());
+            throw e;
+    }
+}</code></pre>
 <p>&emsp;在多执行节点模式下，执行实例被放进分发队列。队列会被线程 QueueProcessorThread 定时处理。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Method responsible for processing the non-dispatched flows */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">processQueuedFlows</span><span class="params">(<span class="keyword">long</span> activeExecutorsRefreshWindow,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="keyword">int</span> maxContinuousFlowProcessed)</span> <span class="keyword">throws</span> InterruptedException,</span></span><br><span class="line"><span class="function">  ExecutorManagerException </span>&#123;</span><br><span class="line">  <span class="keyword">long</span> lastExecutorRefreshTime = <span class="number">0</span>;</span><br><span class="line">  Pair&lt;ExecutionReference, ExecutableFlow&gt; runningCandidate;</span><br><span class="line">  <span class="keyword">int</span> currentContinuousFlowProcessed = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (isActive() &amp;&amp; (runningCandidate = queuedFlows.fetchHead()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">    ExecutionReference reference = runningCandidate.getFirst();</span><br><span class="line">    ExecutableFlow exflow = runningCandidate.getSecond();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> currentTime = System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// if we have dispatched more than maxContinuousFlowProcessed or</span></span><br><span class="line">    <span class="comment">// It has been more then activeExecutorsRefreshWindow millisec since we</span></span><br><span class="line">    <span class="comment">// refreshed</span></span><br><span class="line">    <span class="keyword">if</span> (currentTime - lastExecutorRefreshTime &gt; activeExecutorsRefreshWindow</span><br><span class="line">      || currentContinuousFlowProcessed &gt;= maxContinuousFlowProcessed) &#123;</span><br><span class="line">      <span class="comment">// Refresh executorInfo for all activeExecutors</span></span><br><span class="line">      refreshExecutors();</span><br><span class="line">      lastExecutorRefreshTime = currentTime;</span><br><span class="line">      currentContinuousFlowProcessed = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * &lt;pre&gt;</span></span><br><span class="line"><span class="comment">     *  <span class="doctag">TODO:</span> Work around till we improve Filters to have a notion of GlobalSystemState.</span></span><br><span class="line"><span class="comment">     *        Currently we try each queued flow once to infer a global busy state</span></span><br><span class="line"><span class="comment">     * Possible improvements:-</span></span><br><span class="line"><span class="comment">     *   1. Move system level filters in refreshExecutors and sleep if we have all executors busy after refresh</span></span><br><span class="line"><span class="comment">     *   2. Implement GlobalSystemState in selector or in a third place to manage system filters. Basically</span></span><br><span class="line"><span class="comment">     *      taking out all the filters which do not depend on the flow but are still being part of Selector.</span></span><br><span class="line"><span class="comment">     * Assumptions:-</span></span><br><span class="line"><span class="comment">     *   1. no one else except QueueProcessor is updating ExecutableFlow update time</span></span><br><span class="line"><span class="comment">     *   2. re-attempting a flow (which has been tried before) is considered as all executors are busy</span></span><br><span class="line"><span class="comment">     * &lt;/pre&gt;</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">if</span>(exflow.getUpdateTime() &gt; lastExecutorRefreshTime) &#123;</span><br><span class="line">      <span class="comment">// put back in the queue</span></span><br><span class="line">      queuedFlows.enqueue(exflow, reference);</span><br><span class="line">      <span class="keyword">long</span> sleepInterval =</span><br><span class="line">        activeExecutorsRefreshWindow</span><br><span class="line">          - (currentTime - lastExecutorRefreshTime);</span><br><span class="line">      <span class="comment">// wait till next executor refresh</span></span><br><span class="line">      sleep(sleepInterval);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      exflow.setUpdateTime(currentTime);</span><br><span class="line">      <span class="comment">// process flow with current snapshot of activeExecutors</span></span><br><span class="line">      selectExecutorAndDispatchFlow(reference, exflow, <span class="keyword">new</span> HashSet&lt;Executor&gt;(activeExecutors));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// do not count failed flow processsing (flows still in queue)</span></span><br><span class="line">    <span class="keyword">if</span>(queuedFlows.getFlow(exflow.getExecutionId()) == <span class="keyword">null</span>) &#123;</span><br><span class="line">      currentContinuousFlowProcessed++;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">    /* Method responsible for processing the non-dispatched flows */
+    private void processQueuedFlows(long activeExecutorsRefreshWindow,
+      int maxContinuousFlowProcessed) throws InterruptedException,
+      ExecutorManagerException {
+      long lastExecutorRefreshTime = 0;
+      Pair&lt;ExecutionReference, ExecutableFlow&gt; runningCandidate;
+      int currentContinuousFlowProcessed = 0;
 
+      while (isActive() &amp;&amp; (runningCandidate = queuedFlows.fetchHead()) != null) {
+        ExecutionReference reference = runningCandidate.getFirst();
+        ExecutableFlow exflow = runningCandidate.getSecond();
+
+        long currentTime = System.currentTimeMillis();
+
+        // if we have dispatched more than maxContinuousFlowProcessed or
+        // It has been more then activeExecutorsRefreshWindow millisec since we
+        // refreshed
+        if (currentTime - lastExecutorRefreshTime &gt; activeExecutorsRefreshWindow
+          || currentContinuousFlowProcessed &gt;= maxContinuousFlowProcessed) {
+          // Refresh executorInfo for all activeExecutors
+          refreshExecutors();
+          lastExecutorRefreshTime = currentTime;
+          currentContinuousFlowProcessed = 0;
+        }
+
+        /**
+         * &lt;pre&gt;
+         *  TODO: Work around till we improve Filters to have a notion of GlobalSystemState.
+         *        Currently we try each queued flow once to infer a global busy state
+         * Possible improvements:-
+         *   1. Move system level filters in refreshExecutors and sleep if we have all executors busy after refresh
+         *   2. Implement GlobalSystemState in selector or in a third place to manage system filters. Basically
+         *      taking out all the filters which do not depend on the flow but are still being part of Selector.
+         * Assumptions:-
+         *   1. no one else except QueueProcessor is updating ExecutableFlow update time
+         *   2. re-attempting a flow (which has been tried before) is considered as all executors are busy
+         * &lt;/pre&gt;
+         */
+        if(exflow.getUpdateTime() &gt; lastExecutorRefreshTime) {
+          // put back in the queue
+          queuedFlows.enqueue(exflow, reference);
+          long sleepInterval =
+            activeExecutorsRefreshWindow
+              - (currentTime - lastExecutorRefreshTime);
+          // wait till next executor refresh
+          sleep(sleepInterval);
+        } else {
+          exflow.setUpdateTime(currentTime);
+          // process flow with current snapshot of activeExecutors
+          selectExecutorAndDispatchFlow(reference, exflow, new HashSet&lt;Executor&gt;(activeExecutors));
+        }
+
+        // do not count failed flow processsing (flows still in queue)
+        if(queuedFlows.getFlow(exflow.getExecutionId()) == null) {
+          currentContinuousFlowProcessed++;
+        }
+      }
+    }</code></pre>
 <p>&emsp;&emsp;selectExecutorAndDispatchFlow 方法先是选择执行节点（选择节点的实现比较有意思），选好节点后最终也是调用了dispatch进行作业分发。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* process flow with a snapshot of available Executors */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">selectExecutorAndDispatchFlow</span><span class="params">(ExecutionReference reference,</span></span></span><br><span class="line"><span class="function"><span class="params">      ExecutableFlow exflow, Set&lt;Executor&gt; availableExecutors)</span></span></span><br><span class="line"><span class="function">      <span class="keyword">throws</span> ExecutorManagerException </span>&#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (exflow) &#123;</span><br><span class="line">        Executor selectedExecutor = selectExecutor(exflow, availableExecutors);</span><br><span class="line">        <span class="keyword">if</span> (selectedExecutor != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            dispatch(reference, exflow, selectedExecutor);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">            logger.warn(String.format(</span><br><span class="line">              <span class="string">"Executor %s responded with exception for exec: %d"</span>,</span><br><span class="line">              selectedExecutor, exflow.getExecutionId()), e);</span><br><span class="line">            handleDispatchExceptionCase(reference, exflow, selectedExecutor,</span><br><span class="line">              availableExecutors);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          handleNoExecutorSelectedCase(reference, exflow);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">/* process flow with a snapshot of available Executors */
+    private void selectExecutorAndDispatchFlow(ExecutionReference reference,
+      ExecutableFlow exflow, Set&lt;Executor&gt; availableExecutors)
+      throws ExecutorManagerException {
+      synchronized (exflow) {
+        Executor selectedExecutor = selectExecutor(exflow, availableExecutors);
+        if (selectedExecutor != null) {
+          try {
+            dispatch(reference, exflow, selectedExecutor);
+          } catch (ExecutorManagerException e) {
+            logger.warn(String.format(
+              &quot;Executor %s responded with exception for exec: %d&quot;,
+              selectedExecutor, exflow.getExecutionId()), e);
+            handleDispatchExceptionCase(reference, exflow, selectedExecutor,
+              availableExecutors);
+          }
+        } else {
+          handleNoExecutorSelectedCase(reference, exflow);
+        }
+      }
+    }</code></pre>
 <p>&emsp;&emsp;因为Web 和Exec 之间是通过mysql进行数据共享的，所以dispatch进行作业分发的逻辑非常简单，就是简单地通过HTTP请求传递execId等信息，其余所需要的数据都通过数据库读写完成。</p>
 <h3 id="调度作业"><a href="#调度作业" class="headerlink" title="调度作业"></a>调度作业</h3><p>&emsp;&emsp;调度作业是调度系统的最重要的功能之一，也是Azkaban里相对复杂的一个模块。调度是通过ScheduleManager对外暴露，对应着的结构是Schedule；对内是通过TriggerManager来实现，对应着的结构是Trigger。</p>
 <p>&emsp;&emsp;所有的调度信息都通过ScheduleManager.scheduleFlow传入,可以看到传入参数包含了项目id、项目名字、流名字、第一次调度时间戳、时区、调度周期、下一次执行时间、提交时间、提交人。对于一个调度来说，最关键的信息无非是第一次调度时间和调度周期。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Schedule <span class="title">scheduleFlow</span><span class="params">(<span class="keyword">final</span> <span class="keyword">int</span> scheduleId, <span class="keyword">final</span> <span class="keyword">int</span> projectId,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> String projectName, <span class="keyword">final</span> String flowName, <span class="keyword">final</span> String status,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> <span class="keyword">long</span> firstSchedTime, <span class="keyword">final</span> DateTimeZone timezone,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> ReadablePeriod period, <span class="keyword">final</span> <span class="keyword">long</span> lastModifyTime,</span></span></span><br><span class="line"><span class="function"><span class="params">      <span class="keyword">final</span> <span class="keyword">long</span> nextExecTime, <span class="keyword">final</span> <span class="keyword">long</span> submitTime, <span class="keyword">final</span> String submitUser)</span></span></span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">public Schedule scheduleFlow(final int scheduleId, final int projectId,
+      final String projectName, final String flowName, final String status,
+      final long firstSchedTime, final DateTimeZone timezone,
+      final ReadablePeriod period, final long lastModifyTime,
+      final long nextExecTime, final long submitTime, final String submitUser)</code></pre>
 <p>&emsp;&emsp;从scheduleFlow 往下可以看到调用了TriggerBasedScheduleLoader.insertSchedule。这个方法里边先是将Schedule转换成了Trigger，然后将Trigger放到了TriggerManager里边。scheduleToTrigger方法写的非常简洁巧妙，读者自行研究，此处不作细致分析。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertSchedule</span><span class="params">(Schedule s)</span> <span class="keyword">throws</span> ScheduleManagerException </span>&#123;</span><br><span class="line">   Trigger t = scheduleToTrigger(s);</span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">     triggerManager.insertTrigger(t, t.getSubmitUser());</span><br><span class="line">     s.setScheduleId(t.getTriggerId());</span><br><span class="line">   &#125; <span class="keyword">catch</span> (TriggerManagerException e) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ScheduleManagerException(<span class="string">"Failed to insert new schedule!"</span>, e);</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java"> @Override
+  public void insertSchedule(Schedule s) throws ScheduleManagerException {
+    Trigger t = scheduleToTrigger(s);
+    try {
+      triggerManager.insertTrigger(t, t.getSubmitUser());
+      s.setScheduleId(t.getTriggerId());
+    } catch (TriggerManagerException e) {
+      throw new ScheduleManagerException(&quot;Failed to insert new schedule!&quot;, e);
+    }
+  }</code></pre>
 <p>&emsp;&emsp; 我们在继续看看Trigger被塞到TriggerManager做了些啥。从下边可以看到，先是调用triggerLoader写进数据库，然后就放到了一个线程runnerThread中去。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertTrigger</span><span class="params">(Trigger t)</span> <span class="keyword">throws</span> TriggerManagerException </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (syncObj) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        triggerLoader.addTrigger(t);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (TriggerLoaderException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> TriggerManagerException(e);</span><br><span class="line">      &#125;</span><br><span class="line">      runnerThread.addTrigger(t);</span><br><span class="line">      triggerIdMap.put(t.getTriggerId(), t);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">public void insertTrigger(Trigger t) throws TriggerManagerException {
+    synchronized (syncObj) {
+      try {
+        triggerLoader.addTrigger(t);
+      } catch (TriggerLoaderException e) {
+        throw new TriggerManagerException(e);
+      }
+      runnerThread.addTrigger(t);
+      triggerIdMap.put(t.getTriggerId(), t);
+    }
+  }</code></pre>
 <p>&emsp;&emsp; 接下来就显而易见了，这个线程TriggerScannerThread runnerThread 定期检查Trigger是否应该触发（onTriggerTrigger）或者终止（onTriggerExpire）。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">checkAllTriggers</span><span class="params">()</span> <span class="keyword">throws</span> TriggerManagerException </span>&#123;</span><br><span class="line">  <span class="keyword">long</span> now = System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// sweep through the rest of them</span></span><br><span class="line">  <span class="keyword">for</span> (Trigger t : triggers) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      scannerStage = <span class="string">"Checking for trigger "</span> + t.getTriggerId();</span><br><span class="line"></span><br><span class="line">      <span class="keyword">boolean</span> shouldSkip = <span class="keyword">true</span>;</span><br><span class="line">      <span class="keyword">if</span> (shouldSkip &amp;&amp; t.getInfo() != <span class="keyword">null</span> &amp;&amp; t.getInfo().containsKey(<span class="string">"monitored.finished.execution"</span>)) &#123;</span><br><span class="line">        <span class="keyword">int</span> execId = Integer.valueOf((String) t.getInfo().get(<span class="string">"monitored.finished.execution"</span>));</span><br><span class="line">        <span class="keyword">if</span> (justFinishedFlows.containsKey(execId)) &#123;</span><br><span class="line">          logger.info(<span class="string">"Monitored execution has finished. Checking trigger earlier "</span> + t.getTriggerId());</span><br><span class="line">          shouldSkip = <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (shouldSkip &amp;&amp; t.getNextCheckTime() &gt; now) &#123;</span><br><span class="line">        shouldSkip = <span class="keyword">false</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (shouldSkip) &#123;</span><br><span class="line">        logger.info(<span class="string">"Skipping trigger"</span> + t.getTriggerId() + <span class="string">" until "</span> + t.getNextCheckTime());</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">        logger.info(<span class="string">"Checking trigger "</span> + t.getTriggerId());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (t.getStatus().equals(TriggerStatus.READY)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (t.triggerConditionMet()) &#123;</span><br><span class="line">          onTriggerTrigger(t);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (t.expireConditionMet()) &#123;</span><br><span class="line">          onTriggerExpire(t);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (t.getStatus().equals(TriggerStatus.EXPIRED) &amp;&amp; t.getSource().equals(<span class="string">"azkaban"</span>)) &#123;</span><br><span class="line">        removeTrigger(t);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        t.updateNextCheckTime();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable th) &#123;</span><br><span class="line">      <span class="comment">//skip this trigger, moving on to the next one</span></span><br><span class="line">      logger.error(<span class="string">"Failed to process trigger with id : "</span> + t.getTriggerId(), th);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">    private void checkAllTriggers() throws TriggerManagerException {
+      long now = System.currentTimeMillis();
 
+      // sweep through the rest of them
+      for (Trigger t : triggers) {
+        try {
+          scannerStage = &quot;Checking for trigger &quot; + t.getTriggerId();
+
+          boolean shouldSkip = true;
+          if (shouldSkip &amp;&amp; t.getInfo() != null &amp;&amp; t.getInfo().containsKey(&quot;monitored.finished.execution&quot;)) {
+            int execId = Integer.valueOf((String) t.getInfo().get(&quot;monitored.finished.execution&quot;));
+            if (justFinishedFlows.containsKey(execId)) {
+              logger.info(&quot;Monitored execution has finished. Checking trigger earlier &quot; + t.getTriggerId());
+              shouldSkip = false;
+            }
+          }
+          if (shouldSkip &amp;&amp; t.getNextCheckTime() &gt; now) {
+            shouldSkip = false;
+          }
+
+          if (shouldSkip) {
+            logger.info(&quot;Skipping trigger&quot; + t.getTriggerId() + &quot; until &quot; + t.getNextCheckTime());
+          }
+
+          if (logger.isDebugEnabled()) {
+            logger.info(&quot;Checking trigger &quot; + t.getTriggerId());
+          }
+          if (t.getStatus().equals(TriggerStatus.READY)) {
+            if (t.triggerConditionMet()) {
+              onTriggerTrigger(t);
+            } else if (t.expireConditionMet()) {
+              onTriggerExpire(t);
+            }
+          }
+          if (t.getStatus().equals(TriggerStatus.EXPIRED) &amp;&amp; t.getSource().equals(&quot;azkaban&quot;)) {
+            removeTrigger(t);
+          } else {
+            t.updateNextCheckTime();
+          }
+        } catch (Throwable th) {
+          //skip this trigger, moving on to the next one
+          logger.error(&quot;Failed to process trigger with id : &quot; + t.getTriggerId(), th);
+        }
+      }
+    }</code></pre>
 <p>&emsp;&emsp; Trigger触发的时候就会调用自己的action.doAction()，调度任务的Trigger的action一般都是ExecuteFlowAction，其doAction方法如下。方法主要做了两个事情，第一个是构建执行实例ExecutableFlow，第二个是如果该调度设置了报警规则，则构建SlaTrigger。</p>
 <p>&emsp;&emsp; 构建执行实例完成后，可以看到调用了executorManager.submitExecutableFlow(exflow, submitUser) 进行作业分发，这样子，就跟上文提到的作业分发殊途同归。下边不再分析。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doAction</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (projectManager == <span class="keyword">null</span> || executorManager == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">"ExecuteFlowAction not properly initialized!"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Project project = projectManager.getProject(projectId);</span><br><span class="line">  <span class="keyword">if</span> (project == <span class="keyword">null</span>) &#123;</span><br><span class="line">    logger.error(<span class="string">"Project to execute "</span> + projectId + <span class="string">" does not exist!"</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Error finding the project to execute "</span></span><br><span class="line">        + projectId);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Flow flow = project.getFlow(flowName);</span><br><span class="line">  <span class="keyword">if</span> (flow == <span class="keyword">null</span>) &#123;</span><br><span class="line">    logger.error(<span class="string">"Flow "</span> + flowName + <span class="string">" cannot be found in project "</span></span><br><span class="line">        + project.getName());</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Error finding the flow to execute "</span></span><br><span class="line">        + flowName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ExecutableFlow exflow = <span class="keyword">new</span> ExecutableFlow(project, flow);</span><br><span class="line">  exflow.setSubmitUser(submitUser);</span><br><span class="line">  exflow.addAllProxyUsers(project.getProxyUsers());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (executionOptions == <span class="keyword">null</span>) &#123;</span><br><span class="line">    executionOptions = <span class="keyword">new</span> ExecutionOptions();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!executionOptions.isFailureEmailsOverridden()) &#123;</span><br><span class="line">    executionOptions.setFailureEmails(flow.getFailureEmails());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!executionOptions.isSuccessEmailsOverridden()) &#123;</span><br><span class="line">    executionOptions.setSuccessEmails(flow.getSuccessEmails());</span><br><span class="line">  &#125;</span><br><span class="line">  exflow.setExecutionOptions(executionOptions);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    executorManager.submitExecutableFlow(exflow, submitUser);</span><br><span class="line">    logger.info(<span class="string">"Invoked flow "</span> + project.getName() + <span class="string">"."</span> + flowName);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(e);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// deal with sla</span></span><br><span class="line">  <span class="keyword">if</span> (slaOptions != <span class="keyword">null</span> &amp;&amp; slaOptions.size() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">int</span> execId = exflow.getExecutionId();</span><br><span class="line">    <span class="keyword">for</span> (SlaOption sla : slaOptions) &#123;</span><br><span class="line">      logger.info(<span class="string">"Adding sla trigger "</span> + sla.toString() + <span class="string">" to execution "</span></span><br><span class="line">          + execId);</span><br><span class="line">      SlaChecker slaFailChecker =</span><br><span class="line">          <span class="keyword">new</span> SlaChecker(<span class="string">"slaFailChecker"</span>, sla, execId);</span><br><span class="line">      Map&lt;String, ConditionChecker&gt; slaCheckers =</span><br><span class="line">          <span class="keyword">new</span> HashMap&lt;String, ConditionChecker&gt;();</span><br><span class="line">      slaCheckers.put(slaFailChecker.getId(), slaFailChecker);</span><br><span class="line">      Condition triggerCond =</span><br><span class="line">          <span class="keyword">new</span> Condition(slaCheckers, slaFailChecker.getId()</span><br><span class="line">              + <span class="string">".isSlaFailed()"</span>);</span><br><span class="line">      <span class="comment">// if whole flow finish before violate sla, just expire</span></span><br><span class="line">      SlaChecker slaPassChecker =</span><br><span class="line">          <span class="keyword">new</span> SlaChecker(<span class="string">"slaPassChecker"</span>, sla, execId);</span><br><span class="line">      Map&lt;String, ConditionChecker&gt; expireCheckers =</span><br><span class="line">          <span class="keyword">new</span> HashMap&lt;String, ConditionChecker&gt;();</span><br><span class="line">      expireCheckers.put(slaPassChecker.getId(), slaPassChecker);</span><br><span class="line">      Condition expireCond =</span><br><span class="line">          <span class="keyword">new</span> Condition(expireCheckers, slaPassChecker.getId()</span><br><span class="line">              + <span class="string">".isSlaPassed()"</span>);</span><br><span class="line">      List&lt;TriggerAction&gt; actions = <span class="keyword">new</span> ArrayList&lt;TriggerAction&gt;();</span><br><span class="line">      List&lt;String&gt; slaActions = sla.getActions();</span><br><span class="line">      <span class="keyword">for</span> (String act : slaActions) &#123;</span><br><span class="line">        <span class="keyword">if</span> (act.equals(SlaOption.ACTION_ALERT)) &#123;</span><br><span class="line">          SlaAlertAction slaAlert =</span><br><span class="line">              <span class="keyword">new</span> SlaAlertAction(<span class="string">"slaAlert"</span>, sla, execId);</span><br><span class="line">          actions.add(slaAlert);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (act.equals(SlaOption.ACTION_CANCEL_FLOW)) &#123;</span><br><span class="line">          KillExecutionAction killAct =</span><br><span class="line">              <span class="keyword">new</span> KillExecutionAction(<span class="string">"killExecution"</span>, execId);</span><br><span class="line">          actions.add(killAct);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      Trigger slaTrigger =</span><br><span class="line">          <span class="keyword">new</span> Trigger(<span class="string">"azkaban_sla"</span>, <span class="string">"azkaban"</span>, triggerCond, expireCond,</span><br><span class="line">              actions);</span><br><span class="line">      slaTrigger.getInfo().put(<span class="string">"monitored.finished.execution"</span>,</span><br><span class="line">          String.valueOf(execId));</span><br><span class="line">      slaTrigger.setResetOnTrigger(<span class="keyword">false</span>);</span><br><span class="line">      slaTrigger.setResetOnExpire(<span class="keyword">false</span>);</span><br><span class="line">      logger.info(<span class="string">"Ready to put in the sla trigger"</span>);</span><br><span class="line">      triggerManager.insertTrigger(slaTrigger);</span><br><span class="line">      logger.info(<span class="string">"Sla inserted."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  @Override
+  public void doAction() throws Exception {
+    if (projectManager == null || executorManager == null) {
+      throw new Exception(&quot;ExecuteFlowAction not properly initialized!&quot;);
+    }
 
+    Project project = projectManager.getProject(projectId);
+    if (project == null) {
+      logger.error(&quot;Project to execute &quot; + projectId + &quot; does not exist!&quot;);
+      throw new RuntimeException(&quot;Error finding the project to execute &quot;
+          + projectId);
+    }
+
+    Flow flow = project.getFlow(flowName);
+    if (flow == null) {
+      logger.error(&quot;Flow &quot; + flowName + &quot; cannot be found in project &quot;
+          + project.getName());
+      throw new RuntimeException(&quot;Error finding the flow to execute &quot;
+          + flowName);
+    }
+
+    ExecutableFlow exflow = new ExecutableFlow(project, flow);
+    exflow.setSubmitUser(submitUser);
+    exflow.addAllProxyUsers(project.getProxyUsers());
+
+    if (executionOptions == null) {
+      executionOptions = new ExecutionOptions();
+    }
+    if (!executionOptions.isFailureEmailsOverridden()) {
+      executionOptions.setFailureEmails(flow.getFailureEmails());
+    }
+    if (!executionOptions.isSuccessEmailsOverridden()) {
+      executionOptions.setSuccessEmails(flow.getSuccessEmails());
+    }
+    exflow.setExecutionOptions(executionOptions);
+
+    try {
+      executorManager.submitExecutableFlow(exflow, submitUser);
+      logger.info(&quot;Invoked flow &quot; + project.getName() + &quot;.&quot; + flowName);
+    } catch (ExecutorManagerException e) {
+      throw new RuntimeException(e);
+    }
+
+    // deal with sla
+    if (slaOptions != null &amp;&amp; slaOptions.size() &gt; 0) {
+      int execId = exflow.getExecutionId();
+      for (SlaOption sla : slaOptions) {
+        logger.info(&quot;Adding sla trigger &quot; + sla.toString() + &quot; to execution &quot;
+            + execId);
+        SlaChecker slaFailChecker =
+            new SlaChecker(&quot;slaFailChecker&quot;, sla, execId);
+        Map&lt;String, ConditionChecker&gt; slaCheckers =
+            new HashMap&lt;String, ConditionChecker&gt;();
+        slaCheckers.put(slaFailChecker.getId(), slaFailChecker);
+        Condition triggerCond =
+            new Condition(slaCheckers, slaFailChecker.getId()
+                + &quot;.isSlaFailed()&quot;);
+        // if whole flow finish before violate sla, just expire
+        SlaChecker slaPassChecker =
+            new SlaChecker(&quot;slaPassChecker&quot;, sla, execId);
+        Map&lt;String, ConditionChecker&gt; expireCheckers =
+            new HashMap&lt;String, ConditionChecker&gt;();
+        expireCheckers.put(slaPassChecker.getId(), slaPassChecker);
+        Condition expireCond =
+            new Condition(expireCheckers, slaPassChecker.getId()
+                + &quot;.isSlaPassed()&quot;);
+        List&lt;TriggerAction&gt; actions = new ArrayList&lt;TriggerAction&gt;();
+        List&lt;String&gt; slaActions = sla.getActions();
+        for (String act : slaActions) {
+          if (act.equals(SlaOption.ACTION_ALERT)) {
+            SlaAlertAction slaAlert =
+                new SlaAlertAction(&quot;slaAlert&quot;, sla, execId);
+            actions.add(slaAlert);
+          } else if (act.equals(SlaOption.ACTION_CANCEL_FLOW)) {
+            KillExecutionAction killAct =
+                new KillExecutionAction(&quot;killExecution&quot;, execId);
+            actions.add(killAct);
+          }
+        }
+        Trigger slaTrigger =
+            new Trigger(&quot;azkaban_sla&quot;, &quot;azkaban&quot;, triggerCond, expireCond,
+                actions);
+        slaTrigger.getInfo().put(&quot;monitored.finished.execution&quot;,
+            String.valueOf(execId));
+        slaTrigger.setResetOnTrigger(false);
+        slaTrigger.setResetOnExpire(false);
+        logger.info(&quot;Ready to put in the sla trigger&quot;);
+        triggerManager.insertTrigger(slaTrigger);
+        logger.info(&quot;Sla inserted.&quot;);
+      }
+    }
+  }</code></pre>
 <h3 id="WebServer总结"><a href="#WebServer总结" class="headerlink" title="WebServer总结"></a>WebServer总结</h3><p>&emsp;&emsp; 下边用一张图简单总结</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E4%BD%9C%E4%B8%9A%E5%88%86%E5%8F%91%E8%B0%83%E5%BA%A6%E6%B5%81%E7%A8%8B%E5%9B%BE.png" alt="作业分发调度流程图.png"></p>
 <h2 id="ExecServer"><a href="#ExecServer" class="headerlink" title="ExecServer"></a>ExecServer</h2><h3 id="暴露Restful-API"><a href="#暴露Restful-API" class="headerlink" title="暴露Restful API"></a>暴露Restful API</h3><p>&emsp;&emsp;Azkaban3.0后就开始支持多执行节点部署。单个执行节点比较简单，对web暴露的API也比较少，主要是：</p>
@@ -365,22 +614,188 @@
 <li><strong>ExecutorServlet</strong> 主要提供执行、取消、暂停、日志查询等接口。</li>
 </ul>
 <h3 id="执行作业"><a href="#执行作业" class="headerlink" title="执行作业"></a>执行作业</h3><p>&emsp;&emsp;这里简单看下执行节点执行一个作业的流程是怎样的。我们在ExecutorServlet中看到所有的执行作业请求都经过handleAjaxExecute方法，这个方法简单地将执行id传递给FlowRunnerManager：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">handleAjaxExecute</span><span class="params">(HttpServletRequest req,</span></span></span><br><span class="line"><span class="function"><span class="params">      Map&lt;String, Object&gt; respMap, <span class="keyword">int</span> execId)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      flowRunnerManager.submitFlow(execId);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ExecutorManagerException e) &#123;</span><br><span class="line">      e.printStackTrace();</span><br><span class="line">      logger.error(e);</span><br><span class="line">      respMap.put(RESPONSE_ERROR, e.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">private void handleAjaxExecute(HttpServletRequest req,
+      Map&lt;String, Object&gt; respMap, int execId) throws ServletException {
+    try {
+      flowRunnerManager.submitFlow(execId);
+    } catch (ExecutorManagerException e) {
+      e.printStackTrace();
+      logger.error(e);
+      respMap.put(RESPONSE_ERROR, e.getMessage());
+    }
+  }</code></pre>
 <p>&emsp;&emsp;FlowRunnerManager 通过submitFlow方法提交工作流去执行。先是构建执行实例ExecutableFlow，然后准备执行目录setupFlow(flow)，然后生成FlowRunner，然后提交到线程池去运行executorService.submit(runner)。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">submitFlow</span><span class="params">(<span class="keyword">int</span> execId)</span> <span class="keyword">throws</span> ExecutorManagerException </span>&#123;</span><br><span class="line">   <span class="comment">// Load file and submit</span></span><br><span class="line">   <span class="keyword">if</span> (runningFlows.containsKey(execId)) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(<span class="string">"Execution "</span> + execId</span><br><span class="line">         + <span class="string">" is already running."</span>);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ExecutableFlow flow = <span class="keyword">null</span>;</span><br><span class="line">   flow = executorLoader.fetchExecutableFlow(execId);</span><br><span class="line">   <span class="keyword">if</span> (flow == <span class="keyword">null</span>) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(<span class="string">"Error loading flow with exec "</span></span><br><span class="line">         + execId);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Sets up the project files and execution directory.</span></span><br><span class="line">   setupFlow(flow);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Setup flow runner</span></span><br><span class="line">   FlowWatcher watcher = <span class="keyword">null</span>;</span><br><span class="line">   ExecutionOptions options = flow.getExecutionOptions();</span><br><span class="line">   <span class="keyword">if</span> (options.getPipelineExecutionId() != <span class="keyword">null</span>) &#123;</span><br><span class="line">     Integer pipelineExecId = options.getPipelineExecutionId();</span><br><span class="line">     FlowRunner runner = runningFlows.get(pipelineExecId);</span><br><span class="line"></span><br><span class="line">     <span class="keyword">if</span> (runner != <span class="keyword">null</span>) &#123;</span><br><span class="line">       watcher = <span class="keyword">new</span> LocalFlowWatcher(runner);</span><br><span class="line">     &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">       watcher = <span class="keyword">new</span> RemoteFlowWatcher(pipelineExecId, executorLoader);</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">int</span> numJobThreads = numJobThreadPerFlow;</span><br><span class="line">   <span class="keyword">if</span> (options.getFlowParameters().containsKey(FLOW_NUM_JOB_THREADS)) &#123;</span><br><span class="line">     <span class="keyword">try</span> &#123;</span><br><span class="line">       <span class="keyword">int</span> numJobs =</span><br><span class="line">           Integer.valueOf(options.getFlowParameters().get(</span><br><span class="line">               FLOW_NUM_JOB_THREADS));</span><br><span class="line">       <span class="keyword">if</span> (numJobs &gt; <span class="number">0</span> &amp;&amp; (numJobs &lt;= numJobThreads || ProjectWhitelist</span><br><span class="line">               .isProjectWhitelisted(flow.getProjectId(),</span><br><span class="line">                   WhitelistType.NumJobPerFlow))) &#123;</span><br><span class="line">         numJobThreads = numJobs;</span><br><span class="line">       &#125;</span><br><span class="line">     &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">       <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(</span><br><span class="line">           <span class="string">"Failed to set the number of job threads "</span></span><br><span class="line">               + options.getFlowParameters().get(FLOW_NUM_JOB_THREADS)</span><br><span class="line">               + <span class="string">" for flow "</span> + execId, e);</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   FlowRunner runner =</span><br><span class="line">       <span class="keyword">new</span> FlowRunner(flow, executorLoader, projectLoader, jobtypeManager);</span><br><span class="line">   runner.setFlowWatcher(watcher)</span><br><span class="line">       .setJobLogSettings(jobLogChunkSize, jobLogNumFiles)</span><br><span class="line">       .setValidateProxyUser(validateProxyUser)</span><br><span class="line">       .setNumJobThreads(numJobThreads).addListener(<span class="keyword">this</span>);</span><br><span class="line"></span><br><span class="line">   configureFlowLevelMetrics(runner);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Check again.</span></span><br><span class="line">   <span class="keyword">if</span> (runningFlows.containsKey(execId)) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(<span class="string">"Execution "</span> + execId</span><br><span class="line">         + <span class="string">" is already running."</span>);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Finally, queue the sucker.</span></span><br><span class="line">   runningFlows.put(execId, runner);</span><br><span class="line"></span><br><span class="line">   <span class="keyword">try</span> &#123;</span><br><span class="line">     <span class="comment">// The executorService already has a queue.</span></span><br><span class="line">     <span class="comment">// The submit method below actually returns an instance of FutureTask,</span></span><br><span class="line">     <span class="comment">// which implements interface RunnableFuture, which extends both</span></span><br><span class="line">     <span class="comment">// Runnable and Future interfaces</span></span><br><span class="line">     Future&lt;?&gt; future = executorService.submit(runner);</span><br><span class="line">     <span class="comment">// keep track of this future</span></span><br><span class="line">     submittedFlows.put(future, runner.getExecutionId());</span><br><span class="line">     <span class="comment">// update the last submitted time.</span></span><br><span class="line">     <span class="keyword">this</span>.lastFlowSubmittedDate = System.currentTimeMillis();</span><br><span class="line">   &#125; <span class="keyword">catch</span> (RejectedExecutionException re) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> ExecutorManagerException(</span><br><span class="line">         <span class="string">"Azkaban server can't execute any more flows. "</span></span><br><span class="line">             + <span class="string">"The number of running flows has reached the system configured limit."</span></span><br><span class="line">             + <span class="string">"Please notify Azkaban administrators"</span>);</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java"> public void submitFlow(int execId) throws ExecutorManagerException {
+    // Load file and submit
+    if (runningFlows.containsKey(execId)) {
+      throw new ExecutorManagerException(&quot;Execution &quot; + execId
+          + &quot; is already running.&quot;);
+    }
+
+    ExecutableFlow flow = null;
+    flow = executorLoader.fetchExecutableFlow(execId);
+    if (flow == null) {
+      throw new ExecutorManagerException(&quot;Error loading flow with exec &quot;
+          + execId);
+    }
+
+    // Sets up the project files and execution directory.
+    setupFlow(flow);
+
+    // Setup flow runner
+    FlowWatcher watcher = null;
+    ExecutionOptions options = flow.getExecutionOptions();
+    if (options.getPipelineExecutionId() != null) {
+      Integer pipelineExecId = options.getPipelineExecutionId();
+      FlowRunner runner = runningFlows.get(pipelineExecId);
+
+      if (runner != null) {
+        watcher = new LocalFlowWatcher(runner);
+      } else {
+        watcher = new RemoteFlowWatcher(pipelineExecId, executorLoader);
+      }
+    }
+
+    int numJobThreads = numJobThreadPerFlow;
+    if (options.getFlowParameters().containsKey(FLOW_NUM_JOB_THREADS)) {
+      try {
+        int numJobs =
+            Integer.valueOf(options.getFlowParameters().get(
+                FLOW_NUM_JOB_THREADS));
+        if (numJobs &gt; 0 &amp;&amp; (numJobs &lt;= numJobThreads || ProjectWhitelist
+                .isProjectWhitelisted(flow.getProjectId(),
+                    WhitelistType.NumJobPerFlow))) {
+          numJobThreads = numJobs;
+        }
+      } catch (Exception e) {
+        throw new ExecutorManagerException(
+            &quot;Failed to set the number of job threads &quot;
+                + options.getFlowParameters().get(FLOW_NUM_JOB_THREADS)
+                + &quot; for flow &quot; + execId, e);
+      }
+    }
+
+    FlowRunner runner =
+        new FlowRunner(flow, executorLoader, projectLoader, jobtypeManager);
+    runner.setFlowWatcher(watcher)
+        .setJobLogSettings(jobLogChunkSize, jobLogNumFiles)
+        .setValidateProxyUser(validateProxyUser)
+        .setNumJobThreads(numJobThreads).addListener(this);
+
+    configureFlowLevelMetrics(runner);
+
+    // Check again.
+    if (runningFlows.containsKey(execId)) {
+      throw new ExecutorManagerException(&quot;Execution &quot; + execId
+          + &quot; is already running.&quot;);
+    }
+
+    // Finally, queue the sucker.
+    runningFlows.put(execId, runner);
+
+    try {
+      // The executorService already has a queue.
+      // The submit method below actually returns an instance of FutureTask,
+      // which implements interface RunnableFuture, which extends both
+      // Runnable and Future interfaces
+      Future&lt;?&gt; future = executorService.submit(runner);
+      // keep track of this future
+      submittedFlows.put(future, runner.getExecutionId());
+      // update the last submitted time.
+      this.lastFlowSubmittedDate = System.currentTimeMillis();
+    } catch (RejectedExecutionException re) {
+      throw new ExecutorManagerException(
+          &quot;Azkaban server can&#39;t execute any more flows. &quot;
+              + &quot;The number of running flows has reached the system configured limit.&quot;
+              + &quot;Please notify Azkaban administrators&quot;);
+    }
+  }</code></pre>
 <p>&emsp;&emsp; FlowRunner本身也继承与Runnable，其run方法里边调用了 runFlow方法，方法内容如下。方法里按照树的层次结构逐层访问DAG图的每一个job，逐个去提交执行。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">runFlow</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    logger.info(<span class="string">"Starting flows"</span>);</span><br><span class="line">    runReadyJob(<span class="keyword">this</span>.flow);</span><br><span class="line">    updateFlow();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (!flowFinished) &#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (mainSyncObj) &#123;</span><br><span class="line">        <span class="keyword">if</span> (flowPaused) &#123;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            mainSyncObj.wait(CHECK_WAIT_MS);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">          &#125;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="keyword">if</span> (retryFailedJobs) &#123;</span><br><span class="line">            retryAllFailures();</span><br><span class="line">          &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!progressGraph()) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              mainSyncObj.wait(CHECK_WAIT_MS);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    logger.info(<span class="string">"Finishing up flow. Awaiting Termination"</span>);</span><br><span class="line">    executorService.shutdown();</span><br><span class="line"></span><br><span class="line">    updateFlow();</span><br><span class="line">    logger.info(<span class="string">"Finished Flow"</span>);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">private void runFlow() throws Exception {
+    logger.info(&quot;Starting flows&quot;);
+    runReadyJob(this.flow);
+    updateFlow();
 
+    while (!flowFinished) {
+      synchronized (mainSyncObj) {
+        if (flowPaused) {
+          try {
+            mainSyncObj.wait(CHECK_WAIT_MS);
+          } catch (InterruptedException e) {
+          }
+
+          continue;
+        } else {
+          if (retryFailedJobs) {
+            retryAllFailures();
+          } else if (!progressGraph()) {
+            try {
+              mainSyncObj.wait(CHECK_WAIT_MS);
+            } catch (InterruptedException e) {
+            }
+          }
+        }
+      }
+    }
+
+    logger.info(&quot;Finishing up flow. Awaiting Termination&quot;);
+    executorService.shutdown();
+
+    updateFlow();
+    logger.info(&quot;Finished Flow&quot;);
+  }</code></pre>
 <p>&emsp;&emsp;  对于单个job，最后构造一个JobRunner去执行之。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">runExecutableNode</span><span class="params">(ExecutableNode node)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="comment">// Collect output props from the job's dependencies.</span></span><br><span class="line">    prepareJobProperties(node);</span><br><span class="line"></span><br><span class="line">    node.setStatus(Status.QUEUED);</span><br><span class="line">    JobRunner runner = createJobRunner(node);</span><br><span class="line">    logger.info(<span class="string">"Submitting job '"</span> + node.getNestedId() + <span class="string">"' to run."</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      executorService.submit(runner);</span><br><span class="line">      activeJobRunners.add(runner);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RejectedExecutionException e) &#123;</span><br><span class="line">      logger.error(e);</span><br><span class="line">    &#125;</span><br><span class="line">    ;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">private</span> JobRunner <span class="title">createJobRunner</span><span class="params">(ExecutableNode node)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Load job file.</span></span><br><span class="line">    File path = <span class="keyword">new</span> File(execDir, node.getJobSource());</span><br><span class="line"></span><br><span class="line">    JobRunner jobRunner =</span><br><span class="line">        <span class="keyword">new</span> JobRunner(node, path.getParentFile(), executorLoader,</span><br><span class="line">            jobtypeManager);</span><br><span class="line">    <span class="keyword">if</span> (watcher != <span class="keyword">null</span>) &#123;</span><br><span class="line">      jobRunner.setPipeline(watcher, pipelineLevel);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (validateUserProxy) &#123;</span><br><span class="line">      jobRunner.setValidatedProxyUsers(proxyUsers);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    jobRunner.setDelayStart(node.getDelayedExecution());</span><br><span class="line">    jobRunner.setLogSettings(logger, jobLogFileSize, jobLogNumFiles);</span><br><span class="line">    jobRunner.addListener(listener);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (JobCallbackManager.isInitialized()) &#123;</span><br><span class="line">      jobRunner.addListener(JobCallbackManager.getInstance());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    configureJobLevelMetrics(jobRunner);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> jobRunner;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">private void runExecutableNode(ExecutableNode node) throws IOException {
+    // Collect output props from the job&#39;s dependencies.
+    prepareJobProperties(node);
 
+    node.setStatus(Status.QUEUED);
+    JobRunner runner = createJobRunner(node);
+    logger.info(&quot;Submitting job &#39;&quot; + node.getNestedId() + &quot;&#39; to run.&quot;);
+    try {
+      executorService.submit(runner);
+      activeJobRunners.add(runner);
+    } catch (RejectedExecutionException e) {
+      logger.error(e);
+    }
+    ;
+  }
 
+ private JobRunner createJobRunner(ExecutableNode node) {
+    // Load job file.
+    File path = new File(execDir, node.getJobSource());
+
+    JobRunner jobRunner =
+        new JobRunner(node, path.getParentFile(), executorLoader,
+            jobtypeManager);
+    if (watcher != null) {
+      jobRunner.setPipeline(watcher, pipelineLevel);
+    }
+    if (validateUserProxy) {
+      jobRunner.setValidatedProxyUsers(proxyUsers);
+    }
+
+    jobRunner.setDelayStart(node.getDelayedExecution());
+    jobRunner.setLogSettings(logger, jobLogFileSize, jobLogNumFiles);
+    jobRunner.addListener(listener);
+
+    if (JobCallbackManager.isInitialized()) {
+      jobRunner.addListener(JobCallbackManager.getInstance());
+    }
+
+    configureJobLevelMetrics(jobRunner);
+
+    return jobRunner;
+  }</code></pre>
 <p>&emsp;&emsp;每个jobRunner在执行的时候，都去插件模块里边寻找对应的插件来进行job的类型加载。每种job类型都有对应的run方法。最后就是调用run方法去执行job。各种不同类型的job可以参考azkaban默认的job类型以及 azkaban-plugin工程里边实现的一些hadoop相关作业类型。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">       job = jobtypeManager.buildJobExecutor(<span class="keyword">this</span>.jobId, props, logger);</span><br><span class="line">     &#125; <span class="keyword">catch</span> (JobTypeManagerException e) &#123;</span><br><span class="line">       logger.error(<span class="string">"Failed to build job type"</span>, e);</span><br><span class="line">       <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java"> try {
+        job = jobtypeManager.buildJobExecutor(this.jobId, props, logger);
+      } catch (JobTypeManagerException e) {
+        logger.error(&quot;Failed to build job type&quot;, e);
+        return false;
+      }</code></pre>
 <h2 id="Azkaban-Plugin"><a href="#Azkaban-Plugin" class="headerlink" title="Azkaban Plugin"></a>Azkaban Plugin</h2><p>&emsp;&emsp;azkaban的插件机制使得可以非常方便的增加插件类型，从而支持运行更多的作业类型。azkaban的hadoop插件可以从以下仓库中找到：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/azkaban/azkaban-plugins.git</span><br></pre></td></tr></table></figure>
-
+<pre><code class="bash">git clone https://github.com/azkaban/azkaban-plugins.git</code></pre>
 <h3 id="插件的实现"><a href="#插件的实现" class="headerlink" title="插件的实现"></a>插件的实现</h3><p>&emsp;&emsp; 其中插件的类继承关系图如下。每种插件作业都会单独起一个进程去执行。其中ProcessJob就是负责起进程的一个类；JavaProcessJob继承自它，特化为Java进程；其他的hadoop插件又各自继承自JavaProcessJob。如果要自己实现插件类型，只要继承JavaProcessJob类，在继承子类里边调用插件的Wrapper类就可以了。具体细节可以看代码实现。</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/azkaban%E6%8F%92%E4%BB%B6%E5%AE%9E%E7%8E%B0%E5%9B%BE.png" alt="azkaban插件实现图"></p>
 
@@ -410,12 +825,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -427,7 +842,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -525,10 +940,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -608,17 +1023,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

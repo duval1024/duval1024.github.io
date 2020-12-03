@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,13 +64,13 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入了解Drools">
 <meta property="og:url" content="https://blog.duval.top/2017/10/23/%E6%B7%B1%E5%85%A5%E4%BA%86%E8%A7%A3Drools/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="深入了解Drools简单介绍  笔者正在做风控系统，风控系统里边存在非常多的规则（比如：age &lt; 16 || age &gt; 50  -&gt; REJECT ）。最便捷的实现就是用 if-else 来写，但是随着规则的增加以及需求的变动，代码将变得越来越难阅读和变动。这时候就要引入Drools等规则引擎了。Drools就是为了解决业务代码和业务规则分离的引擎。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2651681-6e98a80b556fbf6f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 <meta property="article:published_time" content="2017-10-23T08:26:49.000Z">
 <meta property="article:modified_time" content="2020-02-05T05:40:23.154Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="Drools">
 <meta property="article:tag" content="规则引擎">
 <meta name="twitter:card" content="summary">
@@ -79,7 +88,7 @@
   };
 </script>
 
-  <title>深入了解Drools | Duval</title>
+  <title>深入了解Drools | 杜瓦尔</title>
   
 
 
@@ -123,11 +132,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -219,12 +227,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -324,26 +332,75 @@
 </ul>
 </li>
 </ul>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">kmodule</span> <span class="attr">xmlns</span>=<span class="string">"http://jboss.org/kie/6.0.0/kmodule"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">kbase</span> <span class="attr">name</span>=<span class="string">"rules"</span> <span class="attr">packages</span>=<span class="string">"rules"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">ksession</span> <span class="attr">name</span>=<span class="string">"myAgeSession"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">kbase</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">kmodule</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<pre><code class="xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;kmodule xmlns=&quot;http://jboss.org/kie/6.0.0/kmodule&quot;&gt;
+    &lt;kbase name=&quot;rules&quot; packages=&quot;rules&quot;&gt;
+        &lt;ksession name=&quot;myAgeSession&quot;/&gt;
+    &lt;/kbase&gt;
+&lt;/kmodule&gt;</code></pre>
 <ul>
 <li><ul>
 <li>com.hello.Person</li>
 </ul>
 </li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.hello;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created by Duval Yang</span></span><br><span class="line"><span class="comment"> * CurrentTime : 2017-10-23 14:45.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> Integer age ;    </span><br><span class="line">    <span class="keyword">private</span> String name ;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Person</span><span class="params">(String name ,Integer age)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.age = age;</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="comment">//省略setter  getter</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">package com.hello;
 
+/**
+ * Created by Duval Yang
+ * CurrentTime : 2017-10-23 14:45.
+ */
+public class Person {
+
+    private Integer age ;    
+    private String name ;
+
+    public Person(String name ,Integer age){
+        this.age = age;
+        this.name = name;
+    }
+  //省略setter  getter
+
+}</code></pre>
 <ul>
 <li><ul>
 <li>age.drl</li>
 </ul>
 </li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.hello.Person               <span class="comment">// 导入类</span></span><br><span class="line"></span><br><span class="line">dialect  <span class="string">"mvel"</span></span><br><span class="line"></span><br><span class="line">rule <span class="string">"age"</span>                                      <span class="comment">// 规则名，唯一</span></span><br><span class="line">    when</span><br><span class="line">        $person : Person(age&lt;<span class="number">16</span> || age&gt;<span class="number">50</span>)     <span class="comment">//规则的条件部分</span></span><br><span class="line">    then</span><br><span class="line">        System.out.println(<span class="string">"这个人的年龄不符合要求！"</span>);   </span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<pre><code class="java">import com.hello.Person               // 导入类
 
+dialect  &quot;mvel&quot;
+
+rule &quot;age&quot;                                      // 规则名，唯一
+    when
+        $person : Person(age&lt;16 || age&gt;50)     //规则的条件部分
+    then
+        System.out.println(&quot;这个人的年龄不符合要求！&quot;);   
+end
+</code></pre>
 <p>OK .就这么点代码，记住将各种资源文件设为resources（右键可以设置你懂的，不然运行会报各种空指针）。现在用junit 测试下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created by Duval Yang</span></span><br><span class="line"><span class="comment"> * CurrentTime : 2017-10-23 14:52.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PersonTest</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> KieContainer container = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">private</span> KieSession statefulKieSession = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@org</span>.junit.Test</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        KieServices kieServices = KieServices.Factory.get();</span><br><span class="line">        container = kieServices.getKieClasspathContainer();</span><br><span class="line">        statefulKieSession = container.newKieSession(<span class="string">"myAgeSession"</span>);</span><br><span class="line">        Person person = <span class="keyword">new</span> Person(<span class="string">"duval yang"</span>,<span class="number">12</span>);</span><br><span class="line">        statefulKieSession.insert(person);</span><br><span class="line">        statefulKieSession.fireAllRules();</span><br><span class="line">        statefulKieSession.dispose();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">/**
+ * Created by Duval Yang
+ * CurrentTime : 2017-10-23 14:52.
+ */
+public class PersonTest {
+    private static KieContainer container = null;
+    private KieSession statefulKieSession = null;
 
+    @org.junit.Test
+    public void test() {
+        KieServices kieServices = KieServices.Factory.get();
+        container = kieServices.getKieClasspathContainer();
+        statefulKieSession = container.newKieSession(&quot;myAgeSession&quot;);
+        Person person = new Person(&quot;duval yang&quot;,12);
+        statefulKieSession.insert(person);
+        statefulKieSession.fireAllRules();
+        statefulKieSession.dispose();
+    }
+}
+
+</code></pre>
 <p>好的，Hello Drools 完成了，总结下：<br>一个完整的drools项目需要：标准的maven项目、kmodule.xml、drl文件、Java代码中切入点。</p>
 <h3 id="Drools开发必知"><a href="#Drools开发必知" class="headerlink" title="Drools开发必知"></a>Drools开发必知</h3><p>很多琐碎的东西，我就不重复造轮子了.</p>
 <ul>
@@ -352,22 +409,27 @@
 <li><p>Stateless &amp;&amp; Stateful<br>drools 的session分为有状态和无状态两种。网上的解释很多，我就讲讲我的理解：stateful 可以通过insert等方法插入fact，并且取得一个句柄，通过这个句柄可以多次更新fact从而触发规则。如：</p>
 </li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FactHandle handle = statefulKieSession.insert(account);</span><br><span class="line">account.setBalance(<span class="number">111.0</span>);</span><br><span class="line">statefulKieSession.update(handle,account);</span><br></pre></td></tr></table></figure>
+<pre><code class="java">        FactHandle handle = statefulKieSession.insert(account);
+        account.setBalance(111.0);
+        statefulKieSession.update(handle,account);</code></pre>
 <p>stateless 类似于一个函数调用，通过execute方法传入fact，去匹配规则，执行特定的逻辑获得结果。例如：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">session.execute(Arrays.asList(<span class="keyword">new</span> Object[]&#123;routeResult,featureManager.getFreeFeatures(),accessManager,<span class="keyword">this</span>&#125;));</span><br><span class="line">又或者，执行完获得结果：</span><br><span class="line">List&lt;Command&gt; cmds = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">cmds.add( CommandFactory.newInsert(routeResult,<span class="string">"routeResult"</span>));        cmds.add(CommandFactory.newInsert(featureManager.getFreeFeatures(),<span class="string">"freeFeature"</span>));</span><br><span class="line">cmds.add(CommandFactory.newInsert(accessManager,<span class="string">"accessManager"</span>));</span><br><span class="line">cmds.add(CommandFactory.newInsert(<span class="keyword">this</span>,<span class="string">"router"</span>));</span><br><span class="line">ExecutionResults results = statelessKieSession.execute( CommandFactory.newBatchExecution( cmds ) );</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">session.execute(Arrays.asList(new Object[]{routeResult,featureManager.getFreeFeatures(),accessManager,this}));
+又或者，执行完获得结果：
+List&lt;Command&gt; cmds = new ArrayList&lt;&gt;();
+cmds.add( CommandFactory.newInsert(routeResult,&quot;routeResult&quot;));        cmds.add(CommandFactory.newInsert(featureManager.getFreeFeatures(),&quot;freeFeature&quot;));
+cmds.add(CommandFactory.newInsert(accessManager,&quot;accessManager&quot;));
+cmds.add(CommandFactory.newInsert(this,&quot;router&quot;));
+ExecutionResults results = statelessKieSession.execute( CommandFactory.newBatchExecution( cmds ) );</code></pre>
 <h3 id="Drools参数"><a href="#Drools参数" class="headerlink" title="Drools参数"></a>Drools参数</h3><ul>
 <li>salience  定义规则的优先级，数字越大优先级越高，默认0。如salience 88.1</li>
 <li>no-loop Drools 的RHS 改变了LHS 的条件，会导致这条规则重新被匹配去执行。为了避免drools规则的<strong>自身死循环</strong>，可以加这个参数。使用如: no-loop true</li>
 <li>agenda-group STRING定义一个组，当这个组被setFocus的时候，会将整个组压入栈中。执行的时候从栈中取。使用如：agenda-group “Route-AgeRange”。除了可以在java代码中做这个动作，还可以在RHS中做，如：</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kcontext.getKieRuntime().getAgenda().getAgendaGroup(<span class="string">"Route-AgeRange"</span>).setFocus();</span><br></pre></td></tr></table></figure>
+<pre><code class="java">kcontext.getKieRuntime().getAgenda().getAgendaGroup(&quot;Route-AgeRange&quot;).setFocus();</code></pre>
 <ul>
 <li>lock-on-active <strong>一个组里的多条规则都可以设置这个标志，当某条规则修改了fact，不会引起其他规则重新触发。需要跟group配合使用。</strong>（网上很多人都对这个属性理解有误）详情仔细研读官方说明：</li>
 </ul>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Whenever a ruleflow-group becomes active or an agenda-group receives the focus, any rule within that group that has lock-on-active set to true will not be activated any more; irrespective of the origin of the update, the activation of a matching rule is discarded. This is a stronger version of no-loop, because the change could now be caused not only by the rule itself. It’s ideal for calculation rules where you have a number of rules that modify a fact and you don’t want any rule re-matching and firing again. Only when the ruleflow-group is no longer active or the agenda-group loses the focus those rules with lock-on-active set to true become eligible again for their activations to be placed onto the agenda.</span><br></pre></td></tr></table></figure>
-
-<ul>
+<pre><code>Whenever a ruleflow-group becomes active or an agenda-group receives the focus, any rule within that group that has lock-on-active set to true will not be activated any more; irrespective of the origin of the update, the activation of a matching rule is discarded. This is a stronger version of no-loop, because the change could now be caused not only by the rule itself. It’s ideal for calculation rules where you have a number of rules that modify a fact and you don’t want any rule re-matching and firing again. Only when the ruleflow-group is no longer active or the agenda-group loses the focus those rules with lock-on-active set to true become eligible again for their activations to be placed onto the agenda.</code></pre><ul>
 <li><p>宏函数 insert、update、retract 都可以对fact进行操作，这些动作有可能导致rule的重新匹配</p>
 </li>
 <li><p>import static 导入某个java类的方法</p>
@@ -385,10 +447,10 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2017/11/06/Drools-Workbench-7-4-1-使用/" rel="bookmark">Drools Workbench7.4.1使用</a></div>
+      <div class="popular-posts-title"><a href="/2017/11/03/Drools-Workbench-7-4-1-部署/" rel="bookmark">Drools Workbench 7.4.1 部署</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2017/11/03/Drools-Workbench-7-4-1-部署/" rel="bookmark">Drools Workbench 7.4.1 部署</a></div>
+      <div class="popular-posts-title"><a href="/2017/11/06/Drools-Workbench-7-4-1-使用/" rel="bookmark">Drools Workbench7.4.1使用</a></div>
     </li>
   </ul>
 
@@ -405,12 +467,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -422,7 +484,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -523,10 +585,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -606,17 +668,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

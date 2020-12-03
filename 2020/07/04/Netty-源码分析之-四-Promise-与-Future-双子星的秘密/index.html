@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,13 +64,13 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Netty 源码分析之 四 Promise 与 Future: 双子星的秘密">
 <meta property="og:url" content="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="永顺大牛写的系列教程《源码之下无秘密 ── 做最好的 Netty 源码分析教程》是目前我读过最好的netty源码分析文章。但不知道什么原因，作者在写到第三章的时候停更了。因此，我想尝试凭着个人的理解，续写后边几个章节。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%9B%9B%20Promise%20%E4%B8%8E%20Future%3A%20%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86%2FFuture%E5%92%8CPromise%E7%B1%BB%E5%9B%BE.png">
 <meta property="article:published_time" content="2020-07-04T08:10:56.000Z">
 <meta property="article:modified_time" content="2020-07-17T02:47:40.374Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="源码分析">
 <meta property="article:tag" content="Netty">
 <meta name="twitter:card" content="summary">
@@ -79,7 +88,7 @@
   };
 </script>
 
-  <title>Netty 源码分析之 四 Promise 与 Future: 双子星的秘密 | Duval</title>
+  <title>Netty 源码分析之 四 Promise 与 Future: 双子星的秘密 | 杜瓦尔</title>
   
 
 
@@ -123,11 +132,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -219,12 +227,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -279,14 +287,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>11k</span>
+              <span>10k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
+              <span>9 分钟</span>
             </span>
 
         </div>
@@ -320,65 +328,352 @@
 <p><em>本文使用的netty版本为4.1.33</em></p>
 <h2 id="Future和Promise的关系"><a href="#Future和Promise的关系" class="headerlink" title="Future和Promise的关系"></a>Future<V>和Promise<V>的关系</h2><p>Netty内部的io.netty.util.concurrent.Future<V> 继承自java.util.concurrent.Future<V>，而Promise<V>是前者的一个特殊实现。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%9B%9B%20Promise%20%E4%B8%8E%20Future%3A%20%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86%2FFuture%E5%92%8CPromise%E7%B1%BB%E5%9B%BE.png" alt="Future和Promise类图.png"></p>
 <h2 id="Java原生Future"><a href="#Java原生Future" class="headerlink" title="Java原生Future"></a>Java原生Future<V></h2><p>Java并发编程包下提供了Future<V>接口。Future在异步编程中表示该异步操作的结果，通过Future<V>的内部方法可以实现状态检查、取消执行、获取执行结果等操作。内部的方法如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 尝试取消执行</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">cancel</span><span class="params">(<span class="keyword">boolean</span> mayInterruptIfRunning)</span></span>;</span><br><span class="line"><span class="comment">// 是否已经被取消执行</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">isCancelled</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 是否已经执行完毕</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">isDone</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 阻塞获取执行结果</span></span><br><span class="line"><span class="function">V <span class="title">get</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException, ExecutionException</span>;</span><br><span class="line"><span class="comment">// 阻塞获取执行结果或超时后返回</span></span><br><span class="line"><span class="function">V <span class="title">get</span><span class="params">(<span class="keyword">long</span> timeout, TimeUnit unit)</span> <span class="keyword">throws</span> InterruptedException, ExecutionException, TimeoutException</span>;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">    // 尝试取消执行
+    boolean cancel(boolean mayInterruptIfRunning);
+    // 是否已经被取消执行
+    boolean isCancelled();
+    // 是否已经执行完毕
+    boolean isDone();
+    // 阻塞获取执行结果
+    V get() throws InterruptedException, ExecutionException;
+    // 阻塞获取执行结果或超时后返回
+    V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;</code></pre>
 <h2 id="Netty对Future的扩展"><a href="#Netty对Future的扩展" class="headerlink" title="Netty对Future的扩展"></a>Netty对Future<V>的扩展</h2><p>原生的Future<V>功能比较有限，Netty扩展了Future<V>并增加了以下方法：</p>
 <ul>
 <li><p>增加了更加丰富的状态判断方法</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 判断是否执行成功</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">isSuccess</span><span class="params">()</span></span>;</span><br><span class="line"><span class="comment">// 判断是否可以取消执行</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">isCancellable</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  // 判断是否执行成功
+  boolean isSuccess();
+  // 判断是否可以取消执行
+  boolean isCancellable();</code></pre>
 </li>
 <li><p>支持获取导致I/O操作异常</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Throwable <span class="title">cause</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  Throwable cause();</code></pre>
 </li>
 <li><p>增加了监听回调有关方法，支持future完成后执行用户指定的回调方法</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 增加回调方法</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">addListener</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt; listener)</span></span>;</span><br><span class="line"><span class="comment">// 增加多个回调方法</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">addListeners</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt;... listeners)</span></span>;</span><br><span class="line"><span class="comment">// 删除回调方法</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">removeListener</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt; listener)</span></span>;</span><br><span class="line"><span class="comment">// 删除多个回调方法</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">removeListeners</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt;... listeners)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  // 增加回调方法
+  Future&lt;V&gt; addListener(GenericFutureListener&lt;? extends Future&lt;? super V&gt;&gt; listener);
+  // 增加多个回调方法
+  Future&lt;V&gt; addListeners(GenericFutureListener&lt;? extends Future&lt;? super V&gt;&gt;... listeners);
+  // 删除回调方法
+  Future&lt;V&gt; removeListener(GenericFutureListener&lt;? extends Future&lt;? super V&gt;&gt; listener);
+  // 删除多个回调方法
+  Future&lt;V&gt; removeListeners(GenericFutureListener&lt;? extends Future&lt;? super V&gt;&gt;... listeners);</code></pre>
 </li>
 <li><p>增加了更丰富的阻塞等待结果返回的两类方法。其中一类是sync方法，阻塞等待结果且如果执行失败后向外抛出导致失败的异常；另外一类是await方法，仅阻塞等待结果返回，不向外抛出异常。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 阻塞等待，且如果失败抛出异常</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">sync</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException</span>;</span><br><span class="line"><span class="comment">// 同上，区别是不可中断阻塞等待过程</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">syncUninterruptibly</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 阻塞等待</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">await</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException</span>;</span><br><span class="line"><span class="comment">// 同上，区别是不可中断阻塞等待过程</span></span><br><span class="line"><span class="function">Future&lt;V&gt; <span class="title">awaitUninterruptibly</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  // 阻塞等待，且如果失败抛出异常
+  Future&lt;V&gt; sync() throws InterruptedException;
+  // 同上，区别是不可中断阻塞等待过程
+  Future&lt;V&gt; syncUninterruptibly();
 
+  // 阻塞等待
+  Future&lt;V&gt; await() throws InterruptedException;
+  // 同上，区别是不可中断阻塞等待过程
+  Future&lt;V&gt; awaitUninterruptibly();</code></pre>
 </li>
 </ul>
 <h2 id="Promise"><a href="#Promise" class="headerlink" title="Promise"></a>Promise<V></h2><p>Promise<V>接口继续继承了Future<V>，并增加若干个设置状态并回调的方法：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 设置成功状态并回调</span></span><br><span class="line"><span class="function">Promise&lt;V&gt; <span class="title">setSuccess</span><span class="params">(V result)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">trySuccess</span><span class="params">(V result)</span></span>;</span><br><span class="line"><span class="comment">// 设置失败状态并回调</span></span><br><span class="line"><span class="function">Promise&lt;V&gt; <span class="title">setFailure</span><span class="params">(Throwable cause)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">tryFailure</span><span class="params">(Throwable cause)</span></span>;</span><br><span class="line"><span class="comment">// 设置为不可取消状态</span></span><br><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">setUncancellable</span><span class="params">()</span></span>;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">    // 设置成功状态并回调
+    Promise&lt;V&gt; setSuccess(V result);
+    boolean trySuccess(V result);
+    // 设置失败状态并回调
+    Promise&lt;V&gt; setFailure(Throwable cause);
+    boolean tryFailure(Throwable cause);
+    // 设置为不可取消状态
+    boolean setUncancellable();</code></pre>
 <p>可见，Promise<V>作为一个特殊的Future<V>，只是增加了一些状态设置方法。所以它常用于传入I/O业务代码中，用于I/O结束后设置成功（或失败）状态，并回调方法。</p>
 <h2 id="通过Promise设置I-O执行结果"><a href="#通过Promise设置I-O执行结果" class="headerlink" title="通过Promise设置I/O执行结果"></a>通过Promise设置I/O执行结果</h2><p>以客户端连接的注册过程为例，调用链路如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">io.netty.bootstrap.Bootstrap.connect()</span><br><span class="line">--&gt; io.netty.bootstrap.Bootstrap.doResolveAndConnect()</span><br><span class="line">----&gt;io.netty.bootstrap.AbstractBootstrap.initAndRegister()</span><br><span class="line">------&gt;io.netty.channel.MultithreadEventLoopGroup.register()</span><br><span class="line">--------&gt;io.netty.channel.SingleThreadEventLoop.register()</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">io.netty.bootstrap.Bootstrap.connect()
+--&gt; io.netty.bootstrap.Bootstrap.doResolveAndConnect()
+----&gt;io.netty.bootstrap.AbstractBootstrap.initAndRegister()
+------&gt;io.netty.channel.MultithreadEventLoopGroup.register()
+--------&gt;io.netty.channel.SingleThreadEventLoop.register()</code></pre>
 <p>一直跟踪到SingleThreadEventLoop中，会看到这段代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelFuture <span class="title">register</span><span class="params">(Channel channel)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> register(<span class="keyword">new</span> DefaultChannelPromise(channel, <span class="keyword">this</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">    @Override
+    public ChannelFuture register(Channel channel) {
+        return register(new DefaultChannelPromise(channel, this));
+    }</code></pre>
 <p>此处新建了一个DefaultChannelPromise，构造函数传入了当前的channel以及当前所在的线程this。从第一节的类图我们知道，DefaultChannelPromise同时实现了Future和Promise，具有上述提到的所有方法。</p>
 <p>然后继续将该promise传递进另外一个register方法中：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ChannelFuture <span class="title">register</span><span class="params">(<span class="keyword">final</span> ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">    ObjectUtil.checkNotNull(promise, <span class="string">"promise"</span>);</span><br><span class="line">    promise.channel().unsafe().register(<span class="keyword">this</span>, promise);</span><br><span class="line">    <span class="keyword">return</span> promise;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">    @Override
+    public ChannelFuture register(final ChannelPromise promise) {
+        ObjectUtil.checkNotNull(promise, &quot;promise&quot;);
+        promise.channel().unsafe().register(this, promise);
+        return promise;
+    }</code></pre>
 <p>在该register方法中，继续将promise传递到Unsafe的register方法中，而立即返回了以ChannelFuture的形式返回了该promise。显然这里是一个异步回调处理：上层的业务可以拿到返回的ChannelFuture阻塞等待结果或者设置回调方法，而继续往下传的Promise可以用于设置执行状态并且回调设置的方法。</p>
 <p>我们继续往下debug可以看到：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// io.netty.channel.AbstractChannel.AbstractUnsafe.java</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line">       <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">register</span><span class="params">(EventLoop eventLoop, <span class="keyword">final</span> ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">           <span class="keyword">if</span> (eventLoop == <span class="keyword">null</span>) &#123;</span><br><span class="line">               <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException(<span class="string">"eventLoop"</span>);</span><br><span class="line">           &#125;</span><br><span class="line">           <span class="keyword">if</span> (isRegistered()) &#123;</span><br><span class="line">               <span class="comment">// 如果已经注册过，则置为失败</span></span><br><span class="line">               promise.setFailure(<span class="keyword">new</span> IllegalStateException(<span class="string">"registered to an event loop already"</span>));</span><br><span class="line">               <span class="keyword">return</span>;</span><br><span class="line">           &#125;</span><br><span class="line">           <span class="keyword">if</span> (!isCompatible(eventLoop)) &#123;</span><br><span class="line">               <span class="comment">// 如果线程类型不兼容，则置为失败</span></span><br><span class="line">               promise.setFailure(</span><br><span class="line">                       <span class="keyword">new</span> IllegalStateException(<span class="string">"incompatible event loop type: "</span> + eventLoop.getClass().getName()));</span><br><span class="line">               <span class="keyword">return</span>;</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           AbstractChannel.<span class="keyword">this</span>.eventLoop = eventLoop;</span><br><span class="line"></span><br><span class="line">           <span class="keyword">if</span> (eventLoop.inEventLoop()) &#123;</span><br><span class="line">               register0(promise);</span><br><span class="line">           &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">               <span class="keyword">try</span> &#123;</span><br><span class="line">                   eventLoop.execute(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">                       <span class="meta">@Override</span></span><br><span class="line">                       <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                           register0(promise);</span><br><span class="line">                       &#125;</span><br><span class="line">                   &#125;);</span><br><span class="line">               &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                   logger.warn(</span><br><span class="line">                           <span class="string">"Force-closing a channel whose registration task was not accepted by an event loop: &#123;&#125;"</span>,</span><br><span class="line">                           AbstractChannel.<span class="keyword">this</span>, t);</span><br><span class="line">                   closeForcibly();</span><br><span class="line">                   closeFuture.setClosed();</span><br><span class="line">                   <span class="comment">// 出现异常情况置promise为失败</span></span><br><span class="line">                   safeSetFailure(promise, t);</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">       <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">register0</span><span class="params">(ChannelPromise promise)</span> </span>&#123;</span><br><span class="line">           <span class="keyword">try</span> &#123;</span><br><span class="line">               <span class="comment">// 注册之前，先将promise置为不可取消转态</span></span><br><span class="line">               <span class="keyword">if</span> (!promise.setUncancellable() || !ensureOpen(promise)) &#123;</span><br><span class="line">                   <span class="keyword">return</span>;</span><br><span class="line">               &#125;</span><br><span class="line">               <span class="keyword">boolean</span> firstRegistration = neverRegistered;</span><br><span class="line">               doRegister();</span><br><span class="line">               neverRegistered = <span class="keyword">false</span>;</span><br><span class="line">               registered = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">               pipeline.invokeHandlerAddedIfNeeded();</span><br><span class="line">               <span class="comment">// promise置为成功</span></span><br><span class="line">               safeSetSuccess(promise);</span><br><span class="line">               pipeline.fireChannelRegistered();</span><br><span class="line">            </span><br><span class="line">               <span class="keyword">if</span> (isActive()) &#123;</span><br><span class="line">                   <span class="keyword">if</span> (firstRegistration) &#123;</span><br><span class="line">                       pipeline.fireChannelActive();</span><br><span class="line">                   &#125; <span class="keyword">else</span> <span class="keyword">if</span> (config().isAutoRead()) &#123;</span><br><span class="line">                       beginRead();</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;</span><br><span class="line">           &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">               <span class="comment">// Close the channel directly to avoid FD leak.</span></span><br><span class="line">               closeForcibly();</span><br><span class="line">               closeFuture.setClosed();</span><br><span class="line">               <span class="comment">// 出现异常情况置promise为失败</span></span><br><span class="line">               safeSetFailure(promise, t);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java"> // io.netty.channel.AbstractChannel.AbstractUnsafe.java
+ @Override
+        public final void register(EventLoop eventLoop, final ChannelPromise promise) {
+            if (eventLoop == null) {
+                throw new NullPointerException(&quot;eventLoop&quot;);
+            }
+            if (isRegistered()) {
+                // 如果已经注册过，则置为失败
+                promise.setFailure(new IllegalStateException(&quot;registered to an event loop already&quot;));
+                return;
+            }
+            if (!isCompatible(eventLoop)) {
+                // 如果线程类型不兼容，则置为失败
+                promise.setFailure(
+                        new IllegalStateException(&quot;incompatible event loop type: &quot; + eventLoop.getClass().getName()));
+                return;
+            }
 
+            AbstractChannel.this.eventLoop = eventLoop;
+
+            if (eventLoop.inEventLoop()) {
+                register0(promise);
+            } else {
+                try {
+                    eventLoop.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            register0(promise);
+                        }
+                    });
+                } catch (Throwable t) {
+                    logger.warn(
+                            &quot;Force-closing a channel whose registration task was not accepted by an event loop: {}&quot;,
+                            AbstractChannel.this, t);
+                    closeForcibly();
+                    closeFuture.setClosed();
+                    // 出现异常情况置promise为失败
+                    safeSetFailure(promise, t);
+                }
+            }
+        }
+
+        private void register0(ChannelPromise promise) {
+            try {
+                // 注册之前，先将promise置为不可取消转态
+                if (!promise.setUncancellable() || !ensureOpen(promise)) {
+                    return;
+                }
+                boolean firstRegistration = neverRegistered;
+                doRegister();
+                neverRegistered = false;
+                registered = true;
+
+                pipeline.invokeHandlerAddedIfNeeded();
+                // promise置为成功
+                safeSetSuccess(promise);
+                pipeline.fireChannelRegistered();
+
+                if (isActive()) {
+                    if (firstRegistration) {
+                        pipeline.fireChannelActive();
+                    } else if (config().isAutoRead()) {
+                        beginRead();
+                    }
+                }
+            } catch (Throwable t) {
+                // Close the channel directly to avoid FD leak.
+                closeForcibly();
+                closeFuture.setClosed();
+                // 出现异常情况置promise为失败
+                safeSetFailure(promise, t);
+            }
+        }</code></pre>
 <p>可见，底层的I/O操作成功与否都可以通过Promise设置状态，并使得外层的ChannelFuture可以感知得到I/O操作的结果。</p>
 <h2 id="通过ChannelFuture获取I-O执行结果"><a href="#通过ChannelFuture获取I-O执行结果" class="headerlink" title="通过ChannelFuture获取I/O执行结果"></a>通过ChannelFuture获取I/O执行结果</h2><p>我们再来看看被返回的ChannelFuture的用途：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// io.netty.bootstrap.AbstractBootstrap.java</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">final</span> ChannelFuture <span class="title">initAndRegister</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//...</span></span><br><span class="line">        ChannelFuture regFuture = config().group().register(channel);</span><br><span class="line">        <span class="comment">// 如果异常不为null，则意味着底层的I/O已经失败，并且promise设置了失败异常</span></span><br><span class="line">        <span class="keyword">if</span> (regFuture.cause() != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (channel.isRegistered()) &#123;</span><br><span class="line">                channel.close();</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                channel.unsafe().closeForcibly();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> regFuture;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>这里通过检查失败异常栈是否为空，可以提前检查到I/O是否失败。继续回溯，还可以看到：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// io.netty.bootstrap.AbstractBootstrap.java</span></span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">private</span> ChannelFuture <span class="title">doBind</span><span class="params">(<span class="keyword">final</span> SocketAddress localAddress)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> ChannelFuture regFuture = initAndRegister();</span><br><span class="line">    <span class="keyword">final</span> Channel channel = regFuture.channel();</span><br><span class="line">    <span class="keyword">if</span> (regFuture.cause() != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> regFuture;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (regFuture.isDone()) &#123;</span><br><span class="line">        <span class="comment">// 如果注册已经成功</span></span><br><span class="line">        ChannelPromise promise = channel.newPromise();</span><br><span class="line">        doBind0(regFuture, channel, localAddress, promise);</span><br><span class="line">        <span class="keyword">return</span> promise;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">       <span class="comment">// 如果注册尚未完成</span></span><br><span class="line">       <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">// io.netty.bootstrap.AbstractBootstrap.java
 
+    final ChannelFuture initAndRegister() {
+        //...
+        ChannelFuture regFuture = config().group().register(channel);
+        // 如果异常不为null，则意味着底层的I/O已经失败，并且promise设置了失败异常
+        if (regFuture.cause() != null) {
+            if (channel.isRegistered()) {
+                channel.close();
+            } else {
+                channel.unsafe().closeForcibly();
+            }
+        }
+        return regFuture;
+    }</code></pre>
+<p>这里通过检查失败异常栈是否为空，可以提前检查到I/O是否失败。继续回溯，还可以看到：</p>
+<pre><code class="java">// io.netty.bootstrap.AbstractBootstrap.java
+
+ private ChannelFuture doBind(final SocketAddress localAddress) {
+    final ChannelFuture regFuture = initAndRegister();
+    final Channel channel = regFuture.channel();
+    if (regFuture.cause() != null) {
+        return regFuture;
+    }
+
+    if (regFuture.isDone()) {
+        // 如果注册已经成功
+        ChannelPromise promise = channel.newPromise();
+        doBind0(regFuture, channel, localAddress, promise);
+        return promise;
+    } else {
+       // 如果注册尚未完成
+       // ...
+    }
+}</code></pre>
 <p>此处，通过ChannelFuture#isDone()方法可以知道底层的注册是否完成，如果完成，则继续进行bind操作。</p>
 <p>但是因为注册是个异步操作，如果此时注册可能还没完成，那就会进入如下逻辑：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// io.netty.bootstrap.AbstractBootstrap.java</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//...</span></span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// Registration future is almost always fulfilled already, but just in case it's not.</span></span><br><span class="line">    <span class="keyword">final</span> PendingRegistrationPromise promise = <span class="keyword">new</span> PendingRegistrationPromise(channel);</span><br><span class="line">    regFuture.addListener(<span class="keyword">new</span> ChannelFutureListener() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">operationComplete</span><span class="params">(ChannelFuture future)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">            Throwable cause = future.cause();</span><br><span class="line">            <span class="keyword">if</span> (cause != <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">// Registration on the EventLoop failed so fail the ChannelPromise directly to not cause an</span></span><br><span class="line">                <span class="comment">// IllegalStateException once we try to access the EventLoop of the Channel.</span></span><br><span class="line">                promise.setFailure(cause);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// Registration was successful, so set the correct executor to use.</span></span><br><span class="line">                <span class="comment">// See https://github.com/netty/netty/issues/2586</span></span><br><span class="line">                promise.registered();</span><br><span class="line"></span><br><span class="line">                doBind0(regFuture, channel, localAddress, promise);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">return</span> promise;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">// io.netty.bootstrap.AbstractBootstrap.java
+
+//...
+else {
+    // Registration future is almost always fulfilled already, but just in case it&#39;s not.
+    final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
+    regFuture.addListener(new ChannelFutureListener() {
+        @Override
+        public void operationComplete(ChannelFuture future) throws Exception {
+            Throwable cause = future.cause();
+            if (cause != null) {
+                // Registration on the EventLoop failed so fail the ChannelPromise directly to not cause an
+                // IllegalStateException once we try to access the EventLoop of the Channel.
+                promise.setFailure(cause);
+            } else {
+                // Registration was successful, so set the correct executor to use.
+                // See https://github.com/netty/netty/issues/2586
+                promise.registered();
+
+                doBind0(regFuture, channel, localAddress, promise);
+            }
+        }
+    });
+    return promise;
+}
+</code></pre>
 <p>这里新建了一个新的PendingRegistrationPromise，并为原来的ChannelFuture对象添加了一个回调方法，并在回调中更改PendingRegistrationPromise的状态，而且PendingRegistrationPromise会继续被传递到上层。当底层的Promise状态被设置并且回调，就会进入该回调方法。从而将I/O状态继续向外传递。</p>
 <h2 id="DefaultChannelPromise的结果传递实现原理"><a href="#DefaultChannelPromise的结果传递实现原理" class="headerlink" title="DefaultChannelPromise的结果传递实现原理"></a>DefaultChannelPromise的结果传递实现原理</h2><p>我们已经了解清楚了Promise和Future的异步模型。再来看看底层是如何实现的。以最常用的DefaultChannelPromise为例，内部非常简单，我们主要看它的父类DefaultPromise：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// result字段的原子更新器</span></span><br><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"rawtypes"</span>)</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> AtomicReferenceFieldUpdater&lt;DefaultPromise, Object&gt; RESULT_UPDATER =</span><br><span class="line">        AtomicReferenceFieldUpdater.newUpdater(DefaultPromise.class, Object.class, "result");</span><br><span class="line"><span class="comment">// 缓存执行结果的字段</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> Object result;</span><br><span class="line"><span class="comment">// promise所在的线程</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> EventExecutor executor;</span><br><span class="line"><span class="comment">// 一个或者多个回调方法</span></span><br><span class="line"><span class="keyword">private</span> Object listeners;</span><br><span class="line"><span class="comment">// 阻塞线程数量计数器  </span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">short</span> waiters;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">    // result字段的原子更新器
+    @SuppressWarnings(&quot;rawtypes&quot;)
+    private static final AtomicReferenceFieldUpdater&lt;DefaultPromise, Object&gt; RESULT_UPDATER =
+            AtomicReferenceFieldUpdater.newUpdater(DefaultPromise.class, Object.class, &quot;result&quot;);
+    // 缓存执行结果的字段
+    private volatile Object result;
+    // promise所在的线程
+    private final EventExecutor executor;
+    // 一个或者多个回调方法
+    private Object listeners;
+    // 阻塞线程数量计数器  
+    private short waiters;
+</code></pre>
 <h3 id="设置状态"><a href="#设置状态" class="headerlink" title="设置状态"></a>设置状态</h3><p>以设置成功状态为例（setSuccess）：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Promise&lt;V&gt; <span class="title">setSuccess</span><span class="params">(V result)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (setSuccess0(result)) &#123;</span><br><span class="line">        <span class="comment">// 调用回调方法</span></span><br><span class="line">        notifyListeners();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"complete already: "</span> + <span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">setSuccess0</span><span class="params">(V result)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> setValue0(result == <span class="keyword">null</span> ? SUCCESS : result);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">setValue0</span><span class="params">(Object objResult)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 原子修改result字段为objResult</span></span><br><span class="line">    <span class="keyword">if</span> (RESULT_UPDATER.compareAndSet(<span class="keyword">this</span>, <span class="keyword">null</span>, objResult) ||</span><br><span class="line">        RESULT_UPDATER.compareAndSet(<span class="keyword">this</span>, UNCANCELLABLE, objResult)) &#123;</span><br><span class="line">        checkNotifyWaiters();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">checkNotifyWaiters</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (waiters &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 如果有其他线程在等待该promise的结果，则唤醒他们</span></span><br><span class="line">        notifyAll();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">
+    @Override
+    public Promise&lt;V&gt; setSuccess(V result) {
+        if (setSuccess0(result)) {
+            // 调用回调方法
+            notifyListeners();
+            return this;
+        }
+        throw new IllegalStateException(&quot;complete already: &quot; + this);
+    }
+
+    private boolean setSuccess0(V result) {
+        return setValue0(result == null ? SUCCESS : result);
+    }
+
+    private boolean setValue0(Object objResult) {
+        // 原子修改result字段为objResult
+        if (RESULT_UPDATER.compareAndSet(this, null, objResult) ||
+            RESULT_UPDATER.compareAndSet(this, UNCANCELLABLE, objResult)) {
+            checkNotifyWaiters();
+            return true;
+        }
+        return false;
+    }
+
+    private synchronized void checkNotifyWaiters() {
+        if (waiters &gt; 0) {
+            // 如果有其他线程在等待该promise的结果，则唤醒他们
+            notifyAll();
+        }
+    }</code></pre>
 <p>设置promise的状态其实就是原子地修改result字段为传入的执行结果。值得注意的是，result字段带有volatile关键字来确保多线程之间的可见性。另外，设置完毕状态后，会尝试唤醒所有在阻塞等待该promise返回结果的线程。</p>
 <p>其他设置状态方法不再赘言，基本上大同小异。</p>
 <h3 id="阻塞线程以等待执行结果"><a href="#阻塞线程以等待执行结果" class="headerlink" title="阻塞线程以等待执行结果"></a>阻塞线程以等待执行结果</h3><p>上文提到其他线程会阻塞等待该promise返回结果，具体实现以sync方法为例：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Promise&lt;V&gt; <span class="title">sync</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    <span class="comment">// 阻塞等待</span></span><br><span class="line">    await();</span><br><span class="line">    <span class="comment">// 如果有异常则抛出</span></span><br><span class="line">    rethrowIfFailed();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Promise&lt;V&gt; <span class="title">await</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (isDone()) &#123;</span><br><span class="line">        <span class="comment">// 如果已经完成，直接返回</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 可以被中断</span></span><br><span class="line">    <span class="keyword">if</span> (Thread.interrupted()) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> InterruptedException(toString());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//检查死循环</span></span><br><span class="line">    checkDeadLock();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        <span class="keyword">while</span> (!isDone()) &#123;</span><br><span class="line">            <span class="comment">// 递增计数器（用于记录有多少个线程在等待该promise返回结果）</span></span><br><span class="line">            incWaiters();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="comment">// 阻塞等待结果</span></span><br><span class="line">                wait();</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                <span class="comment">// 递减计数器</span></span><br><span class="line">                decWaiters();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">    @Override
+    public Promise&lt;V&gt; sync() throws InterruptedException {
+        // 阻塞等待
+        await();
+        // 如果有异常则抛出
+        rethrowIfFailed();
+        return this;
+    }
 
+    @Override
+    public Promise&lt;V&gt; await() throws InterruptedException {
+        if (isDone()) {
+            // 如果已经完成，直接返回
+            return this;
+        }
+        // 可以被中断
+        if (Thread.interrupted()) {
+            throw new InterruptedException(toString());
+        }
+        //检查死循环
+        checkDeadLock();
+
+        synchronized (this) {
+            while (!isDone()) {
+                // 递增计数器（用于记录有多少个线程在等待该promise返回结果）
+                incWaiters();
+                try {
+                    // 阻塞等待结果
+                    wait();
+                } finally {
+                    // 递减计数器
+                    decWaiters();
+                }
+            }
+        }
+        return this;
+    }</code></pre>
 <p>所有调用sync方法的线程，都会被阻塞，直到promise被设置为成功或者失败。这也解释了为何Netty客户端或者服务端启动的时候一般都会调用sync方法，本质上都是阻塞当前线程而异步地等待I/O结果返回，如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Bootstrap bootstrap = <span class="keyword">new</span> Bootstrap();</span><br><span class="line">ChannelFuture future = bootstrap.group(<span class="keyword">new</span> NioEventLoopGroup(<span class="number">10</span>))</span><br><span class="line">        .channel(NioSocketChannel<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">        .<span class="title">handler</span>(<span class="title">new</span> <span class="title">ChannelInitializer</span>&lt;<span class="title">SocketChannel</span>&gt;() </span>&#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">initChannel</span><span class="params">(SocketChannel ch)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                <span class="comment">// 管道中添加基于换行符分割字符串的解析器</span></span><br><span class="line">                ch.pipeline().addLast(<span class="keyword">new</span> LineBasedFrameDecoder(<span class="number">1024</span>));</span><br><span class="line">                <span class="comment">// 管道中添加字符串编码解码器</span></span><br><span class="line">                ch.pipeline().addLast(<span class="keyword">new</span> StringDecoder(Charset.forName(<span class="string">"UTF-8"</span>)));</span><br><span class="line">                ch.pipeline().addLast(<span class="keyword">new</span> StringEncoder(Charset.forName(<span class="string">"UTF-8"</span>)));</span><br><span class="line">                <span class="comment">// 管道中添加服务端处理逻辑</span></span><br><span class="line">                ch.pipeline().addLast(<span class="keyword">new</span> MyClientEchoHandler());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).connect(<span class="string">"127.0.0.1"</span>, <span class="number">9898</span>).sync();</span><br><span class="line"></span><br><span class="line">future.channel().closeFuture().sync();</span><br></pre></td></tr></table></figure>
+<pre><code class="java">    Bootstrap bootstrap = new Bootstrap();
+    ChannelFuture future = bootstrap.group(new NioEventLoopGroup(10))
+            .channel(NioSocketChannel.class)
+            .handler(new ChannelInitializer&lt;SocketChannel&gt;() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    // 管道中添加基于换行符分割字符串的解析器
+                    ch.pipeline().addLast(new LineBasedFrameDecoder(1024));
+                    // 管道中添加字符串编码解码器
+                    ch.pipeline().addLast(new StringDecoder(Charset.forName(&quot;UTF-8&quot;)));
+                    ch.pipeline().addLast(new StringEncoder(Charset.forName(&quot;UTF-8&quot;)));
+                    // 管道中添加服务端处理逻辑
+                    ch.pipeline().addLast(new MyClientEchoHandler());
+                }
+            }).connect(&quot;127.0.0.1&quot;, 9898).sync();
 
-<h3 id="回调机制"><a href="#回调机制" class="headerlink" title="回调机制"></a>回调机制</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Promise&lt;V&gt; <span class="title">addListener</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt; listener)</span> </span>&#123;</span><br><span class="line">    checkNotNull(listener, <span class="string">"listener"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        <span class="comment">// 添加回调方法</span></span><br><span class="line">        addListener0(listener);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (isDone()) &#123;</span><br><span class="line">        <span class="comment">// 如果I/O操作已经结束，直接触发回调</span></span><br><span class="line">        notifyListeners();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">addListener0</span><span class="params">(GenericFutureListener&lt;? extends Future&lt;? <span class="keyword">super</span> V&gt;&gt; listener)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (listeners == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="comment">// 只有一个回调方法直接赋值</span></span><br><span class="line">        listeners = listener;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (listeners <span class="keyword">instanceof</span> DefaultFutureListeners) &#123;</span><br><span class="line">        <span class="comment">// 将回调方法添加到DefaultFutureListeners内部维护的listeners数组中</span></span><br><span class="line">        ((DefaultFutureListeners) listeners).add(listener);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 如果有多个回调方法，新建一个DefaultFutureListeners以保存更多的回调方法</span></span><br><span class="line">        listeners = <span class="keyword">new</span> DefaultFutureListeners((GenericFutureListener&lt;?&gt;) listeners, listener);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    future.channel().closeFuture().sync();</code></pre>
+<h3 id="回调机制"><a href="#回调机制" class="headerlink" title="回调机制"></a>回调机制</h3><pre><code class="java">    @Override
+    public Promise&lt;V&gt; addListener(GenericFutureListener&lt;? extends Future&lt;? super V&gt;&gt; listener) {
+        checkNotNull(listener, &quot;listener&quot;);
+
+        synchronized (this) {
+            // 添加回调方法
+            addListener0(listener);
+        }
+
+        if (isDone()) {
+            // 如果I/O操作已经结束，直接触发回调
+            notifyListeners();
+        }
+
+        return this;
+    }
+
+    private void addListener0(GenericFutureListener&lt;? extends Future&lt;? super V&gt;&gt; listener) {
+        if (listeners == null) {
+            // 只有一个回调方法直接赋值
+            listeners = listener;
+        } else if (listeners instanceof DefaultFutureListeners) {
+            // 将回调方法添加到DefaultFutureListeners内部维护的listeners数组中
+            ((DefaultFutureListeners) listeners).add(listener);
+        } else {
+            // 如果有多个回调方法，新建一个DefaultFutureListeners以保存更多的回调方法
+            listeners = new DefaultFutureListeners((GenericFutureListener&lt;?&gt;) listeners, listener);
+        }
+    }</code></pre>
 <p>从上边可以看到，添加回调方法完成之后，会立即检查promise是否已经完成；如果promise已经完成，则马上调用回调方法。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Netty的Promise和Future机制是基于Java并发包下的Future<V>开发的。其中Future支持阻塞等待、添加回调方法、判断执行状态等，而Promise主要是支持状态设置相关方法。当底层I/O操作通过Promise改变执行状态，我们可以通过同步等待的Future立即得到结果。</p>
 <p>因此，就像永顺大牛标题所言，在Netty的异步模型里，Promise和Future就像是双子星一般紧密相连。但我觉得这两者更像是量子纠缠里的两个电子，因为改变其中一个方的状态，另外一方能够马上感知。</p>
@@ -399,13 +694,13 @@
       <div class="popular-posts-title"><a href="/2020/07/15/Netty-源码分析之-六-流水线处理器-Handler/" rel="bookmark">Netty 源码分析之 六 流水线处理器: Handler</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/11/18/Apollo源码详解——防御性编程/" rel="bookmark">Apollo源码学习——防御性编程</a></div>
-    </li>
-    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2017/09/21/Azkaban-源码分析和插件实现/" rel="bookmark">Azkaban 源码分析和插件实现</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/11/26/Spring-Security-学习之使用篇/" rel="bookmark">Spring Security 学习之使用篇</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/12/01/Spring-Security-学习之原理篇/" rel="bookmark">Spring Security 学习之原理篇</a></div>
     </li>
   </ul>
 
@@ -422,12 +717,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -439,7 +734,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -540,10 +835,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -623,17 +918,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

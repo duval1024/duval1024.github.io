@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,12 +64,12 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="mysql的limit优化和流式查询">
 <meta property="og:url" content="https://blog.duval.top/2017/03/30/MySQL%E7%9A%84limit%E4%BC%98%E5%8C%96%E5%92%8C%E6%B5%81%E5%BC%8F%E6%9F%A5%E8%AF%A2/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="遇到一个需求是需要将整个表的数据逐行读取出来进行处理。 使用 limit一开始实现是使用limit来做，每个循环结束后将offset+&#x3D; 100，如下：">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2017-03-30T13:24:00.000Z">
 <meta property="article:modified_time" content="2020-10-08T02:21:41.842Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="数据库">
 <meta property="article:tag" content="mysql">
 <meta name="twitter:card" content="summary">
@@ -77,7 +86,7 @@
   };
 </script>
 
-  <title>mysql的limit优化和流式查询 | Duval</title>
+  <title>mysql的limit优化和流式查询 | 杜瓦尔</title>
   
 
 
@@ -121,11 +130,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -217,12 +225,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -277,7 +285,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.3k</span>
+              <span>3.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -300,15 +308,36 @@
 <h2 id="使用-limit"><a href="#使用-limit" class="headerlink" title="使用 limit"></a>使用 limit</h2><p>一开始实现是使用limit来做，每个循环结束后将offset+= 100，如下：</p>
 <a id="more"></a>
 
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PreparedStatement pStatement = dm.prepareStatement("<span class="keyword">SELECT</span> start_time,input_params <span class="keyword">FROM</span> execution_jobs <span class="keyword">limit</span> ? , ? <span class="string">";</span></span><br><span class="line"><span class="string">pStatement.setInt(offset, 100);</span></span><br><span class="line"><span class="string">ResultSet rs = pStatement.executeQuery();</span></span><br></pre></td></tr></table></figure>
-
+<pre><code class="sql">PreparedStatement pStatement = dm.prepareStatement(&quot;SELECT start_time,input_params FROM execution_jobs limit ? , ? &quot;;
+pStatement.setInt(offset, 100);
+ResultSet rs = pStatement.executeQuery();</code></pre>
 <p>这个方法在offset变得越来越大之后，查询会非常缓慢。因为 select * from XXX  limit 10000,10; 相当于扫描了满足条件的前10000行之后，丢掉，然后再读取10行。所以性能会非常差。</p>
 <p>针对limit 查询性能慢的优化办法有很多。下面详细介绍：</p>
 <ul>
 <li><strong>子查询法</strong><br> 先找出第一条数据，然后大于等于这条数据的id就是要获取的数据<br> 缺点：数据必须是连续的，可以说不能有where条件，where条件会筛选数据，导致数据失去连续性</li>
 </ul>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; set profiling=1;                             # 开启profile</span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; pager grep !~-                              #关闭stdout</span><br><span class="line">PAGER <span class="keyword">set</span> <span class="keyword">to</span> <span class="string">'grep !~-'</span></span><br><span class="line">mysql&gt; <span class="keyword">select</span> exec_id ,project_id <span class="keyword">from</span> execution_jobs <span class="keyword">limit</span> <span class="number">100000</span>,<span class="number">100</span>;</span><br><span class="line">100 rows in <span class="keyword">set</span> (<span class="number">2.65</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> exec_id ,project_id <span class="keyword">from</span> execution_jobs <span class="keyword">where</span> exec_id &gt;= (<span class="keyword">select</span> exec_id <span class="keyword">from</span> execution_jobs  <span class="keyword">limit</span> <span class="number">100000</span>,<span class="number">1</span>) <span class="keyword">limit</span> <span class="number">100</span>;</span><br><span class="line">100 rows in <span class="keyword">set</span> (<span class="number">0.52</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; nopager                                   <span class="comment">#打开stdout</span></span><br><span class="line">PAGER <span class="keyword">set</span> <span class="keyword">to</span> stdout</span><br><span class="line">mysql&gt; <span class="keyword">show</span> <span class="keyword">profiles</span>;                          <span class="comment">#查看耗时</span></span><br><span class="line">+<span class="comment">----------+------------+---------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+</span></span><br><span class="line">| Query_ID | Duration   | Logical_reads | Physical_reads | Query                                                                                                                          |</span><br><span class="line">+<span class="comment">----------+------------+---------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+</span></span><br><span class="line">|        1 | 2.67572900 |         13337 |            410 | <span class="keyword">select</span> exec_id ,project_id <span class="keyword">from</span> execution_jobs <span class="keyword">limit</span> <span class="number">100000</span>,<span class="number">100</span>                                                                |</span><br><span class="line">|        <span class="number">2</span> | <span class="number">0.53610725</span> |         <span class="number">13026</span> |            <span class="number">264</span> | <span class="keyword">select</span> exec_id ,project_id <span class="keyword">from</span> execution_jobs <span class="keyword">where</span> exec_id &gt;= (<span class="keyword">select</span> exec_id <span class="keyword">from</span> execution_jobs  <span class="keyword">limit</span> <span class="number">100000</span>,<span class="number">1</span>) <span class="keyword">limit</span> <span class="number">100</span> |                                                                                                       |</span><br><span class="line">+<span class="comment">----------+------------+---------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+</span></span><br><span class="line"><span class="number">3</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br></pre></td></tr></table></figure>
+<pre><code class="sql">mysql&gt; set profiling=1;                             # 开启profile
+Query OK, 0 rows affected (0.00 sec)
 
+mysql&gt; pager grep !~-                              #关闭stdout
+PAGER set to &#39;grep !~-&#39;
+mysql&gt; select exec_id ,project_id from execution_jobs limit 100000,100;
+100 rows in set (2.65 sec)
+
+mysql&gt; select exec_id ,project_id from execution_jobs where exec_id &gt;= (select exec_id from execution_jobs  limit 100000,1) limit 100;
+100 rows in set (0.52 sec)
+
+mysql&gt; nopager                                   #打开stdout
+PAGER set to stdout
+mysql&gt; show profiles;                          #查看耗时
++----------+------------+---------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Query_ID | Duration   | Logical_reads | Physical_reads | Query                                                                                                                          |
++----------+------------+---------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+|        1 | 2.67572900 |         13337 |            410 | select exec_id ,project_id from execution_jobs limit 100000,100                                                                |
+|        2 | 0.53610725 |         13026 |            264 | select exec_id ,project_id from execution_jobs where exec_id &gt;= (select exec_id from execution_jobs  limit 100000,1) limit 100 |                                                                                                       |
++----------+------------+---------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+3 rows in set (0.01 sec)
+</code></pre>
 <ul>
 <li><p><strong>倒排表优化法</strong></p>
 <p>   倒排表法类似建立索引，用一张表来维护页数，然后通过高效的连接得到数据<br>  缺点：只适合数据数固定的情况，数据不能删除，维护页表困难</p>
@@ -320,11 +349,34 @@
 </ul>
 <h2 id="使用Mysql的流式查询"><a href="#使用Mysql的流式查询" class="headerlink" title="使用Mysql的流式查询"></a>使用Mysql的流式查询</h2><p>用上边的各种办法优化limit固然可行，但使用mysql的流查询是更加优越的实现这个需求的办法。</p>
 <p>默认情况下，JDBC去操作mysql的时候，select语句都是将所有的结果缓存到内存中，但是采用流式查询的话，可以设置一个抓取数值，每次只读取一小部分数据。实现办法是：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">PreparedStatement pStatement = dm.prepareStatement(<span class="string">"SELECT exec_id,project_id  FROM execution_jobs"</span>, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);</span><br><span class="line">pStatement.setFetchSize(Integer.MIN_VALUE);   </span><br><span class="line">ResultSet rs = pStatement.executeQuery();</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (rs.next()) &#123;</span><br><span class="line"><span class="comment">// do something</span></span><br><span class="line">｝</span><br></pre></td></tr></table></figure>
+<pre><code class="java">PreparedStatement pStatement = dm.prepareStatement(&quot;SELECT exec_id,project_id  FROM execution_jobs&quot;, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+pStatement.setFetchSize(Integer.MIN_VALUE);   
+ResultSet rs = pStatement.executeQuery();
 
+while (rs.next()) {
+// do something
+｝
+</code></pre>
 <p>这里 pStatement.setFetchSize(Integer.MIN_VALUE) 会让人困惑。还是直接看JDBC的源码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * We only stream result sets when they are forward-only, read-only, and the</span></span><br><span class="line"><span class="comment"> * fetch size has been set to Integer.MIN_VALUE</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if this result set should be streamed row at-a-time, rather</span></span><br><span class="line"><span class="comment"> * than read all at once.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">createStreamingResultSet</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">synchronized</span>(checkClosed().getConnectionMutex()) &#123;</span><br><span class="line">            <span class="keyword">return</span> ((<span class="keyword">this</span>.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY)</span><br><span class="line">                 &amp;&amp; (<span class="keyword">this</span>.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) &amp;&amp; (<span class="keyword">this</span>.fetchSize == Integer.MIN_VALUE));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (SQLException e) &#123;</span><br><span class="line">        <span class="comment">// we can't break the interface, having this be no-op in case of error is ok</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">/**
+ * We only stream result sets when they are forward-only, read-only, and the
+ * fetch size has been set to Integer.MIN_VALUE
+ *
+ * @return true if this result set should be streamed row at-a-time, rather
+ * than read all at once.
+ */
+protected boolean createStreamingResultSet() {
+    try {
+        synchronized(checkClosed().getConnectionMutex()) {
+            return ((this.resultSetType == java.sql.ResultSet.TYPE_FORWARD_ONLY)
+                 &amp;&amp; (this.resultSetConcurrency == java.sql.ResultSet.CONCUR_READ_ONLY) &amp;&amp; (this.fetchSize == Integer.MIN_VALUE));
+        }
+    } catch (SQLException e) {
+        // we can&#39;t break the interface, having this be no-op in case of error is ok
 
+        return false;
+    }
+}</code></pre>
 <p>从源码我们可以看到，<strong>只有forward-only, read-only, fetchsize为Integer.MIN_VALUE 三者同时成立</strong>，才会开启流查询方式。可以参考这里的回答：<br><a href="http://stackoverflow.com/questions/20899977/what-and-when-should-i-specify-setfetchsize" target="_blank" rel="noopener">http://stackoverflow.com/questions/20899977/what-and-when-should-i-specify-setfetchsize</a></p>
 
     </div>
@@ -353,12 +405,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -370,7 +422,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -471,10 +523,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -554,17 +606,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

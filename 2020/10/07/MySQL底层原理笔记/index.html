@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,16 +64,14 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="MySQL底层原理笔记">
 <meta property="og:url" content="https://blog.duval.top/2020/10/07/MySQL%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86%E7%AC%94%E8%AE%B0/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="工作中常常用到MySQL，但对MySQL底层原理不够熟悉。知其然，知其所以然。所以决定深入学习MySQL底层知识，并产出一些备忘笔记。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png">
 <meta property="article:published_time" content="2020-10-07T14:31:32.000Z">
 <meta property="article:modified_time" content="2020-11-04T09:53:56.165Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="MySQL">
 <meta property="article:tag" content="数据库">
 <meta name="twitter:card" content="summary">
@@ -82,7 +89,7 @@
   };
 </script>
 
-  <title>MySQL底层原理笔记 | Duval</title>
+  <title>MySQL底层原理笔记 | 杜瓦尔</title>
   
 
 
@@ -126,11 +133,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -222,12 +228,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -282,7 +288,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>9.7k</span>
+              <span>10k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -310,144 +316,125 @@
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg" alt="MySQL架构图.jpg"></p>
 <h3 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h3><p>连接器就像是MySQL的“门神”，它负责跟客户端建立连接、获取权限、维持和管理连接。</p>
 <ul>
-<li>查看连接情况<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show processlist;</span><br><span class="line">+<span class="comment">------+------+-----------+------+---------+-------+----------+------------------+</span></span><br><span class="line">| Id   | User | Host      | db   | Command | Time  | State    | Info             |</span><br><span class="line">+<span class="comment">------+------+-----------+------+---------+-------+----------+------------------+</span></span><br><span class="line">| 1530 | root | localhost | NULL | Sleep   | 44800 |          | NULL             |</span><br><span class="line">| 1531 | root | localhost | qds  | Query   |     0 | starting | <span class="keyword">show</span> <span class="keyword">processlist</span> |</span><br><span class="line">+<span class="comment">------+------+-----------+------+---------+-------+----------+------------------+</span></span><br><span class="line"><span class="number">2</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.03</span> sec)</span><br></pre></td></tr></table></figure></li>
-<li>连接空闲超时会自动断开，可以通过wait_timeout参数控制，默认8小时；</li>
-<li>客户端不应频繁新建连接，尽量使用长连接；</li>
-<li>连接应该定时断开或者执行mysql_reset_connection重新初始化连接资源，避免占用过多内存。</li>
+<li>查看连接情况<br>```sql<br>mysql&gt; show processlist;</li>
 </ul>
-<h3 id="解析器"><a href="#解析器" class="headerlink" title="解析器"></a>解析器</h3><p>解析器有两个功能：</p>
-<ul>
-<li><strong>词法分析</strong>：将SQL语句数据库表列建立关联；</li>
-<li><strong>语法分析</strong>：检测SQL语句是否符合MySQL语法规则。</li>
-</ul>
-<h3 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h3><p>优化器负责从不同的执行计划中选出效率最高的方案，包括决定表的连接顺序、选择哪个索引等等。此外还会涉及查询重写。</p>
-<h3 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h3><p>执行器主要是负责检查表权限，并且调用存储引擎的接口完成执行计划，写binlog日志等。</p>
-<h3 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h3><p>对于SELECT语句，在解析查询之前，服务器会先检查查询缓存。如果能在缓存中找到对应的查询，服务器可以直接返回缓存的结果，而不必进行解析、优化和执行等过程。</p>
-<p>注意，频繁更新的表的查询缓存会频繁失效，不建议开启查询缓存。MySQL 8.0 版本后不再支持查询缓存。</p>
-<h2 id="日志系统"><a href="#日志系统" class="headerlink" title="日志系统"></a>日志系统</h2><p>日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。</p>
-<p>后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。</p>
-<p>因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。</p>
-<h3 id="binlog（归档日志）"><a href="#binlog（归档日志）" class="headerlink" title="binlog（归档日志）"></a>binlog（归档日志）</h3><ul>
-<li>binlog是MySQL server层的逻辑日志，可以被所有存储引擎使用；</li>
-<li>binlog日志常用于数据备份和恢复；</li>
-<li>binlog可以是ROW 或 STATEMENT两种格式。ROW格式下binlog日志记录的是行数据变化前和变化后的内容；而STATEMENT格式下，binlog日志记录的是执行的SQL语句；</li>
-<li>仅凭binlog日志是不能确保MySQL crash-safe的；</li>
-<li>binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；</li>
-<li>重要主库推荐配置 <em>sync_binlog=1</em> ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；</li>
-</ul>
-<h3 id="redo-log（重做日志）"><a href="#redo-log（重做日志）" class="headerlink" title="redo log（重做日志）"></a>redo log（重做日志）</h3><ul>
-<li><p>WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；</p>
-</li>
-<li><p>redo log是InnoDB引擎特有的物理日志；</p>
-</li>
-<li><p>redo log记录的是某个数据页做了什么修改；</p>
-</li>
-<li><p>凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；</p>
-</li>
-<li><p>redo log日志是固定大小的循环写，超过文件大小会擦除老日志；</p>
-</li>
-<li><p>重要主库推荐配置 <em>innodb_flush_log_at_trx_commit=1</em> ，可以使得每次提交事务都会将buffer刷到磁盘，保证服务器崩溃的时候不会丢失数据；</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png" alt="redo log循环写.png"></p>
-</li>
-</ul>
-<h3 id="两阶段提交"><a href="#两阶段提交" class="headerlink" title="两阶段提交"></a>两阶段提交</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png" alt="两阶段提交.png"></p>
-<p>两阶段提交过程：</p>
-<ul>
-<li>1.新数据更新到内存；</li>
-<li>2.新数据写入redo log，并处于prepare状态；</li>
-<li>3.写入binlog；</li>
-<li>4.提交事务，使redo log 更新为commit状态。</li>
-</ul>
-<p>crash-safe保障原理：</p>
-<ul>
-<li>如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；</li>
-<li>如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；</li>
-<li>如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；</li>
-<li>如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。</li>
-</ul>
-<p>binlog和redo log的联系：</p>
-<blockquote>
-<p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
-</blockquote>
-<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><ul>
-<li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
-<li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
-</ul>
-<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><h3 id="ACID概念"><a href="#ACID概念" class="headerlink" title="ACID概念"></a>ACID概念</h3><p>ACID（Atomicity、Consistency、Isolation、Durability，即原子性、一致性、隔离性、持久性）</p>
-<h3 id="隔离性和隔离级别"><a href="#隔离性和隔离级别" class="headerlink" title="隔离性和隔离级别"></a>隔离性和隔离级别</h3><p>SQL标准里定义了四种事务隔离级别：</p>
-<ul>
-<li><strong>读未提交</strong>：一个事务还没提交时，它做的变更就能被别的事务看到；</li>
-<li><strong>读提交</strong>：一个事务提交之后，它做的变更才会被其他事务看到；</li>
-<li><strong>可重复读</strong>：一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的；</li>
-<li><strong>串行化</strong>：对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。</li>
-</ul>
-<p>四种隔离级别区别：</p>
-<table>
-<thead>
-<tr>
-<th>隔离级别</th>
-<th>脏读可能性</th>
-<th>不可重复读可能性</th>
-<th>幻读可能性</th>
-<th>加锁读</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>读未提交</td>
-<td>Y</td>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-</tr>
-<tr>
-<td>读提交</td>
-<td>N</td>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-</tr>
-<tr>
-<td>可重复读</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-<td>N</td>
-</tr>
-<tr>
-<td>串行化</td>
-<td>N</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-</tr>
-</tbody></table>
-<h3 id="MySQL中的事务"><a href="#MySQL中的事务" class="headerlink" title="MySQL中的事务"></a>MySQL中的事务</h3><p>MySQL提供了两种事务型存储引擎：InnoDB和NDB Cluster，而MyISAM并不支持事务。</p>
-<h4 id="MVCC与事务隔离实现"><a href="#MVCC与事务隔离实现" class="headerlink" title="MVCC与事务隔离实现"></a>MVCC与事务隔离实现</h4><p>四种隔离级别的在InnoDB实现：</p>
-<ul>
-<li><strong>读未提交</strong>：直接返回记录上的最新值，没有视图概念；</li>
-<li><strong>读提交</strong>：在每个SQL语句开始执行的时候创建视图；</li>
-<li><strong>可重复读</strong>：在事务启动时创建视图，整个事务存在期间都用这个视图；（注意，InnoDB利用MVCC已经在可重复读隔离级别下避免了幻读问题！！注意和上边的表格内容区分清楚！！！）</li>
-<li><strong>串行化</strong>：隔离级别下直接用加锁的方式来避免并行访问。</li>
-<li><blockquote>
-<p>这个所谓的视图其实是通过多版本并发控制（MVCC）来实现。（详情见《高性能MySQL》第三版 1.4 多版本并发控制）</p>
-</blockquote>
-</li>
-</ul>
-<h4 id="事务的启动"><a href="#事务的启动" class="headerlink" title="事务的启动"></a>事务的启动</h4><p>事务启动方式：</p>
-<ul>
-<li>1.显式启动事务语句， begin 或 start transaction。配套的提交语句是 commit，回滚语句是 rollback。</li>
-<li>2.set autocommit=0，这个命令会将这个线程的自动提交关掉（注意，仅影响当前线程。）。这意味着如果你只执行一个 select 语句，这个事务就启动了，而且并不会自动提交。这个事务持续存在直到你主动执行 commit 或 rollback 语句，或者断开连接。一般建议总是使用 set autocommit=1, 然后通过显式语句的方式来启动事务。</li>
-</ul>
-<p>长事务会导致数据库空间，并且占用所资源，生产中应该尽量避免长事务。查询长事务方法：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 查询超过60秒的事务</span><br><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> information_schema.innodb_trx <span class="keyword">where</span> TIME_TO_SEC(<span class="keyword">timediff</span>(<span class="keyword">now</span>(),trx_started))&gt;<span class="number">60</span></span><br></pre></td></tr></table></figure>
+<p>+——+——+———–+——+———+——-+———-+——————+<br>| Id   | User | Host      | db   | Command | Time  | State    | Info             |<br>+——+——+———–+——+———+——-+———-+——————+<br>| 1530 | root | localhost | NULL | Sleep   | 44800 |          | NULL             |<br>| 1531 | root | localhost | qds  | Query   |     0 | starting | show processlist |<br>+——+——+———–+——+———+——-+———-+——————+<br>2 rows in set (0.03 sec)</p>
+<pre><code>- 连接空闲超时会自动断开，可以通过wait_timeout参数控制，默认8小时；
+- 客户端不应频繁新建连接，尽量使用长连接；
+- 连接应该定时断开或者执行mysql_reset_connection重新初始化连接资源，避免占用过多内存。
 
-<h4 id="查看修改事务隔离级别"><a href="#查看修改事务隔离级别" class="headerlink" title="查看修改事务隔离级别"></a>查看修改事务隔离级别</h4><p>MySQL默认的事务隔离级别是可重复读（REPEATABLE READ）。</p>
+### 解析器
+解析器有两个功能：
+- **词法分析**：将SQL语句数据库表列建立关联；
+- **语法分析**：检测SQL语句是否符合MySQL语法规则。
+
+### 优化器
+优化器负责从不同的执行计划中选出效率最高的方案，包括决定表的连接顺序、选择哪个索引等等。此外还会涉及查询重写。
+
+
+### 执行器
+执行器主要是负责检查表权限，并且调用存储引擎的接口完成执行计划，写binlog日志等。
+
+### 查询缓存
+对于SELECT语句，在解析查询之前，服务器会先检查查询缓存。如果能在缓存中找到对应的查询，服务器可以直接返回缓存的结果，而不必进行解析、优化和执行等过程。
+
+注意，频繁更新的表的查询缓存会频繁失效，不建议开启查询缓存。MySQL 8.0 版本后不再支持查询缓存。
+
+
+## 日志系统
+日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。
+
+后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。
+
+因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。
+
+### binlog（归档日志）
+- binlog是MySQL server层的逻辑日志，可以被所有存储引擎使用；
+- binlog日志常用于数据备份和恢复；
+- binlog可以是ROW 或 STATEMENT两种格式。ROW格式下binlog日志记录的是行数据变化前和变化后的内容；而STATEMENT格式下，binlog日志记录的是执行的SQL语句；
+- 仅凭binlog日志是不能确保MySQL crash-safe的；
+- binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；
+- 重要主库推荐配置 *sync_binlog=1* ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；
+
+### redo log（重做日志）
+- WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；
+- redo log是InnoDB引擎特有的物理日志；
+- redo log记录的是某个数据页做了什么修改；
+- 凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；
+- redo log日志是固定大小的循环写，超过文件大小会擦除老日志；
+- 重要主库推荐配置 *innodb_flush_log_at_trx_commit=1* ，可以使得每次提交事务都会将buffer刷到磁盘，保证服务器崩溃的时候不会丢失数据；
+
+  ![redo log循环写.png](https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png)
+
+### 两阶段提交
+![两阶段提交.png](https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png)
+
+两阶段提交过程：
+- 1.新数据更新到内存；
+- 2.新数据写入redo log，并处于prepare状态；
+- 3.写入binlog；
+- 4.提交事务，使redo log 更新为commit状态。
+
+crash-safe保障原理：
+- 如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；
+- 如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；
+- 如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；
+- 如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。
+
+binlog和redo log的联系：
+
+&gt; 它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。
+
+### 延伸阅读
+- [分布式理论(三) - 2PC协议](https://juejin.im/post/6844903621495095309)
+- [05 | 分布式事务：如何保证多个系统间的数据是一致的？](https://time.geekbang.org/column/article/207508)
+
+## 事务
+
+### ACID概念
+ACID（Atomicity、Consistency、Isolation、Durability，即原子性、一致性、隔离性、持久性）
+### 隔离性和隔离级别
+SQL标准里定义了四种事务隔离级别：
+- **读未提交**：一个事务还没提交时，它做的变更就能被别的事务看到；
+- **读提交**：一个事务提交之后，它做的变更才会被其他事务看到；
+- **可重复读**：一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的；
+- **串行化**：对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。
+
+四种隔离级别区别：
+
+|隔离级别|脏读可能性|不可重复读可能性|幻读可能性|加锁读|
+| -- | -- | -- | -- | -- |
+|读未提交|Y|Y|Y|N|
+|读提交|N|Y|Y|N|
+|可重复读|N|N|Y|N|
+|串行化|N|N|N|Y|
+
+### MySQL中的事务
+MySQL提供了两种事务型存储引擎：InnoDB和NDB Cluster，而MyISAM并不支持事务。
+
+#### MVCC与事务隔离实现
+四种隔离级别的在InnoDB实现：
+- **读未提交**：直接返回记录上的最新值，没有视图概念；
+- **读提交**：在每个SQL语句开始执行的时候创建视图；
+- **可重复读**：在事务启动时创建视图，整个事务存在期间都用这个视图；（注意，InnoDB利用MVCC已经在可重复读隔离级别下避免了幻读问题！！注意和上边的表格内容区分清楚！！！）
+- **串行化**：隔离级别下直接用加锁的方式来避免并行访问。
+- 
+&gt; 这个所谓的视图其实是通过多版本并发控制（MVCC）来实现。（详情见《高性能MySQL》第三版 1.4 多版本并发控制）
+
+#### 事务的启动
+
+事务启动方式：
+- 1.显式启动事务语句， begin 或 start transaction。配套的提交语句是 commit，回滚语句是 rollback。
+- 2.set autocommit=0，这个命令会将这个线程的自动提交关掉（注意，仅影响当前线程。）。这意味着如果你只执行一个 select 语句，这个事务就启动了，而且并不会自动提交。这个事务持续存在直到你主动执行 commit 或 rollback 语句，或者断开连接。一般建议总是使用 set autocommit=1, 然后通过显式语句的方式来启动事务。
+
+长事务会导致数据库空间，并且占用所资源，生产中应该尽量避免长事务。查询长事务方法：
+```sql
+// 查询超过60秒的事务
+select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx_started))&gt;60</code></pre><h4 id="查看修改事务隔离级别"><a href="#查看修改事务隔离级别" class="headerlink" title="查看修改事务隔离级别"></a>查看修改事务隔离级别</h4><p>MySQL默认的事务隔离级别是可重复读（REPEATABLE READ）。</p>
 <p>可以通过sql查看MySQL事务隔离级别：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> <span class="keyword">variables</span> <span class="keyword">like</span> <span class="string">"%isolation%"</span>;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="sql">show variables like &quot;%isolation%&quot;;</code></pre>
 <p>MySQL提供了SET TRANSACTION语句，该语句可以改变单个会话或全局的事务隔离级别。语法格式如下：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> [<span class="keyword">SESSION</span> | <span class="keyword">GLOBAL</span>] <span class="keyword">TRANSACTION</span> <span class="keyword">ISOLATION</span> <span class="keyword">LEVEL</span> &#123;<span class="keyword">READ</span> UNCOMMITTED | <span class="keyword">READ</span> COMMITTED | REPEATABLE <span class="keyword">READ</span> | <span class="keyword">SERIALIZABLE</span>&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="sql">SET [SESSION | GLOBAL] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE}</code></pre>
 <p>其中，SESSION 和 GLOBAL 关键字用来指定修改的事务隔离级别的范围：</p>
 <ul>
 <li>SESSION：表示修改的事务隔离级别将应用于当前 session（当前 cmd 窗口）内的所有事务；</li>
@@ -459,7 +446,7 @@
 <li>更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”（current read）。具体见：<a href="https://time.geekbang.org/column/article/70562" target="_blank" rel="noopener">08 | 事务到底是隔离的还是不隔离的？
 </a></li>
 </ul>
-<h3 id="延伸阅读-1"><a href="#延伸阅读-1" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><p>-<a href="https://juejin.im/post/6874330052461330446" target="_blank" rel="noopener">理解MySQL的锁机制和事务原理</a></p>
+<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><p>-<a href="https://juejin.im/post/6874330052461330446" target="_blank" rel="noopener">理解MySQL的锁机制和事务原理</a></p>
 <h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="常见索引模型"><a href="#常见索引模型" class="headerlink" title="常见索引模型"></a>常见索引模型</h3><table>
 <thead>
 <tr>
@@ -576,9 +563,11 @@
 </blockquote>
 </li>
 <li><p>2.如果针对InnoDB表进行索引重建，对二级索引执行：</p>
-  <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">alter</span> <span class="keyword">table</span> T <span class="keyword">drop</span> <span class="keyword">index</span> k;</span><br><span class="line"><span class="keyword">alter</span> <span class="keyword">table</span> T <span class="keyword">add</span> <span class="keyword">index</span>(k);</span><br></pre></td></tr></table></figure>
+<pre><code class="sql">  alter table T drop index k;
+  alter table T add index(k);</code></pre>
 <p>  以及对主键索引执行：</p>
-  <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">alter</span> <span class="keyword">table</span> T <span class="keyword">drop</span> primary <span class="keyword">key</span>;</span><br><span class="line"><span class="keyword">alter</span> <span class="keyword">table</span> T <span class="keyword">add</span> primary <span class="keyword">key</span>(<span class="keyword">id</span>);</span><br></pre></td></tr></table></figure>
+<pre><code class="sql">  alter table T drop primary key;
+  alter table T add primary key(id);</code></pre>
 <p>  这两者有啥异同，或者存在什么问题？</p>
 <blockquote>
 <ul>
@@ -591,7 +580,8 @@
 </ul>
 <ul>
 <li><p>3.字段k上有二级索引，现有如下两个功能相同的SQL语句，哪个更优：</p>
-  <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> T <span class="keyword">where</span> k <span class="keyword">in</span>(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>)</span><br><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> T <span class="keyword">where</span> k <span class="keyword">between</span> <span class="number">1</span> <span class="keyword">and</span> <span class="number">5</span></span><br></pre></td></tr></table></figure>
+<pre><code class="sql">  select * from T where k in(1,2,3,4,5)
+  select * from T where k between 1 and 5</code></pre>
 <blockquote>
 <p>SQL1需要搜索5次，并回表5次；SQL2只需要搜索1次，并回表5次。SQL充分利用了B+树叶子节点顺序排序的特点，可以加速范围查询。</p>
 </blockquote>
@@ -614,7 +604,11 @@
 <li>MySQL在认为空闲的时段，会自行刷脏页；</li>
 <li>MySQL关闭前会刷脏页；<br>刷脏页的策略调优：</li>
 <li>磁盘能力。能力越大，脏页刷的越快。参数：innodb_io_capacity；</li>
-<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：   <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">set</span> <span class="keyword">global</span> show_compatibility_56=<span class="keyword">on</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @a <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_dirty'</span>;</span><br><span class="line"><span class="keyword">select</span> VARIABLE_VALUE <span class="keyword">into</span> @b <span class="keyword">from</span> global_status <span class="keyword">where</span> VARIABLE_NAME = <span class="string">'Innodb_buffer_pool_pages_total'</span>;</span><br><span class="line"><span class="keyword">select</span> @a/@b;</span><br></pre></td></tr></table></figure></li>
+<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：<pre><code class="sql">  set global show_compatibility_56=on;
+ select VARIABLE_VALUE into @a from global_status where VARIABLE_NAME = &#39;Innodb_buffer_pool_pages_dirty&#39;;
+ select VARIABLE_VALUE into @b from global_status where VARIABLE_NAME = &#39;Innodb_buffer_pool_pages_total&#39;;
+ select @a/@b;</code></pre>
+</li>
 <li>刷相邻脏页。机械磁盘建议打开（1），SSD磁盘可以关闭（0）。参数：innodb_flush_neighbors</li>
 </ul>
 </blockquote>
@@ -675,12 +669,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -692,7 +686,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -787,16 +781,16 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL基本架构"><span class="nav-number">1.</span> <span class="nav-text">MySQL基本架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#连接器"><span class="nav-number">1.1.</span> <span class="nav-text">连接器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解析器"><span class="nav-number">1.2.</span> <span class="nav-text">解析器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优化器"><span class="nav-number">1.3.</span> <span class="nav-text">优化器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#执行器"><span class="nav-number">1.4.</span> <span class="nav-text">执行器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询缓存"><span class="nav-number">1.5.</span> <span class="nav-text">查询缓存</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日志系统"><span class="nav-number">2.</span> <span class="nav-text">日志系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#binlog（归档日志）"><span class="nav-number">2.1.</span> <span class="nav-text">binlog（归档日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redo-log（重做日志）"><span class="nav-number">2.2.</span> <span class="nav-text">redo log（重做日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#两阶段提交"><span class="nav-number">2.3.</span> <span class="nav-text">两阶段提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读"><span class="nav-number">2.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">3.</span> <span class="nav-text">事务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ACID概念"><span class="nav-number">3.1.</span> <span class="nav-text">ACID概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#隔离性和隔离级别"><span class="nav-number">3.2.</span> <span class="nav-text">隔离性和隔离级别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL中的事务"><span class="nav-number">3.3.</span> <span class="nav-text">MySQL中的事务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#MVCC与事务隔离实现"><span class="nav-number">3.3.1.</span> <span class="nav-text">MVCC与事务隔离实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#事务的启动"><span class="nav-number">3.3.2.</span> <span class="nav-text">事务的启动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看修改事务隔离级别"><span class="nav-number">3.3.3.</span> <span class="nav-text">查看修改事务隔离级别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他注意"><span class="nav-number">3.3.4.</span> <span class="nav-text">其他注意</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读-1"><span class="nav-number">3.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引"><span class="nav-number">4.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#常见索引模型"><span class="nav-number">4.1.</span> <span class="nav-text">常见索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB索引模型"><span class="nav-number">4.2.</span> <span class="nav-text">InnoDB索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL误判索引解决办法"><span class="nav-number">4.3.</span> <span class="nav-text">MySQL误判索引解决办法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁"><span class="nav-number">5.</span> <span class="nav-text">锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局锁"><span class="nav-number">5.1.</span> <span class="nav-text">全局锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表锁"><span class="nav-number">5.2.</span> <span class="nav-text">表锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#行锁"><span class="nav-number">5.3.</span> <span class="nav-text">行锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加锁原则"><span class="nav-number">5.4.</span> <span class="nav-text">加锁原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#意向排他锁"><span class="nav-number">5.5.</span> <span class="nav-text">意向排他锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#死锁检测策略"><span class="nav-number">5.6.</span> <span class="nav-text">死锁检测策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题汇总"><span class="nav-number">6.</span> <span class="nav-text">问题汇总</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL基本架构"><span class="nav-number">1.</span> <span class="nav-text">MySQL基本架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#连接器"><span class="nav-number">1.1.</span> <span class="nav-text">连接器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#查看修改事务隔离级别"><span class="nav-number">1.1.1.</span> <span class="nav-text">查看修改事务隔离级别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#其他注意"><span class="nav-number">1.1.2.</span> <span class="nav-text">其他注意</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读"><span class="nav-number">1.2.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引"><span class="nav-number">2.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#常见索引模型"><span class="nav-number">2.1.</span> <span class="nav-text">常见索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB索引模型"><span class="nav-number">2.2.</span> <span class="nav-text">InnoDB索引模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MySQL误判索引解决办法"><span class="nav-number">2.3.</span> <span class="nav-text">MySQL误判索引解决办法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#锁"><span class="nav-number">3.</span> <span class="nav-text">锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局锁"><span class="nav-number">3.1.</span> <span class="nav-text">全局锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表锁"><span class="nav-number">3.2.</span> <span class="nav-text">表锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#行锁"><span class="nav-number">3.3.</span> <span class="nav-text">行锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#加锁原则"><span class="nav-number">3.4.</span> <span class="nav-text">加锁原则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#意向排他锁"><span class="nav-number">3.5.</span> <span class="nav-text">意向排他锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#死锁检测策略"><span class="nav-number">3.6.</span> <span class="nav-text">死锁检测策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#问题汇总"><span class="nav-number">4.</span> <span class="nav-text">问题汇总</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -876,17 +870,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

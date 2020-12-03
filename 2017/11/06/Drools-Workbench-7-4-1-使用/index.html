@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,7 +64,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Drools Workbench7.4.1使用">
 <meta property="og:url" content="https://blog.duval.top/2017/11/06/Drools-Workbench-7-4-1-%E4%BD%BF%E7%94%A8/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="上一篇文章已经介绍如何部署 Drools Workbench7.4.1。这篇文章让我们学习如何利用Drools Workbench7.4.1去新建一个drools规则项目，编写规则和kmodule.xml，然后编译部署发布到maven仓库，再用我们的java代码去远程获取maven仓库中的drools jar包。Let&#96;s go!">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2651681-551e2bf5c22ef9c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
@@ -72,7 +81,7 @@
 <meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2651681-4e51905c59bc539b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
 <meta property="article:published_time" content="2017-11-06T07:57:43.000Z">
 <meta property="article:modified_time" content="2020-07-17T02:48:38.491Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="Drools">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2651681-551e2bf5c22ef9c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
@@ -89,7 +98,7 @@
   };
 </script>
 
-  <title>Drools Workbench7.4.1使用 | Duval</title>
+  <title>Drools Workbench7.4.1使用 | 杜瓦尔</title>
   
 
 
@@ -133,11 +142,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -229,12 +237,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -289,14 +297,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
+              <span>2.6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>3 分钟</span>
+              <span>2 分钟</span>
             </span>
 
         </div>
@@ -315,13 +323,47 @@
 <h2 id="创建Project"><a href="#创建Project" class="headerlink" title="创建Project"></a>创建Project</h2><p> 创建项目，名为MyFristProj。</p>
 <h2 id="新建数据对象"><a href="#新建数据对象" class="headerlink" title="新建数据对象"></a>新建数据对象</h2><p> 新建一个POJO对象，这里是Account</p>
 <p><img src="http://upload-images.jianshu.io/upload_images/2651681-7a22ea2ca60f76f2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Account</span> <span class="keyword">implements</span> <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> serialVersionUID = <span class="number">1L</span>;</span><br><span class="line">    <span class="keyword">private</span> Long accountNum;</span><br><span class="line">    <span class="keyword">private</span> Double balance;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Account</span><span class="params">()</span></span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Account</span><span class="params">(Long accountNum,Double balance)</span></span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.accountNum = accountNum;</span><br><span class="line">        <span class="keyword">this</span>.balance = balance;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> Long <span class="title">getAccountNum</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> accountNum;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setAccountNum</span><span class="params">(Long accountNum)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.accountNum = accountNum;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> Double <span class="title">getBalance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> balance;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setBalance</span><span class="params">(Double balance)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.balance = balance;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"Account --&gt; "</span>+<span class="string">"["</span>+<span class="keyword">this</span>.accountNum+<span class="string">":"</span>+<span class="keyword">this</span>.balance+<span class="string">"]"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">public class Account implements java.io.Serializable {
+    static final long serialVersionUID = 1L;
+    private Long accountNum;
+    private Double balance;
+    public Account(){
+    }
+    public Account(Long accountNum,Double balance){
+        this.accountNum = accountNum;
+        this.balance = balance;
+    }
+    public Long getAccountNum() {
+        return accountNum;
+    }
+    public void setAccountNum(Long accountNum) {
+        this.accountNum = accountNum;
+    }
+    public Double getBalance() {
+        return balance;
+    }
+    public void setBalance(Double balance) {
+        this.balance = balance;
+    }
+    @Override
+    public String toString() {
+        return &quot;Account --&gt; &quot;+&quot;[&quot;+this.accountNum+&quot;:&quot;+this.balance+&quot;]&quot;;
+    }
+}</code></pre>
 <h2 id="新建DRL文件"><a href="#新建DRL文件" class="headerlink" title="新建DRL文件"></a>新建DRL文件</h2><p><img src="http://upload-images.jianshu.io/upload_images/2651681-487218d2646bd1d6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.test;</span><br><span class="line"></span><br><span class="line"><span class="function">function Long <span class="title">plusOne</span><span class="params">(Long num)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> num+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line">rule <span class="string">"My First Rule to check account"</span></span><br><span class="line">    no-loop</span><br><span class="line">    when</span><br><span class="line">        $acc : Account()</span><br><span class="line">    then</span><br><span class="line">        $acc.setAccountNum(plusOne($acc.getAccountNum()));</span><br><span class="line"></span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<pre><code class="java">package com.test;
 
+function Long plusOne(Long num){
+    return num+1;
+}
+rule &quot;My First Rule to check account&quot;
+    no-loop
+    when
+        $acc : Account()
+    then
+        $acc.setAccountNum(plusOne($acc.getAccountNum()));
 
-
+end</code></pre>
 <h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><p><strong>好了，一个drools规则项目开发完了，下边开始例如自带的测试功能测试一下。</strong></p>
 <h3 id="新建测试场景"><a href="#新建测试场景" class="headerlink" title="新建测试场景"></a>新建测试场景</h3><p><img src="http://upload-images.jianshu.io/upload_images/2651681-0845ea22c6812331.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
 <h3 id="插入Fact"><a href="#插入Fact" class="headerlink" title="插入Fact"></a>插入Fact</h3><p><img src="http://upload-images.jianshu.io/upload_images/2651681-395156bedd5680ee.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
@@ -337,8 +379,38 @@
 <h2 id="编译发布到maven仓库"><a href="#编译发布到maven仓库" class="headerlink" title="编译发布到maven仓库"></a>编译发布到maven仓库</h2><p><img src="http://upload-images.jianshu.io/upload_images/2651681-4e6e4a7d574d629f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
 <p>发布完成后，你可以在目录 ~/.m2/repository/com/test/MyFirstProj/1.0.0下看到编译出来的jar包，可以下载下来解压观察。</p>
 <h2 id="Java代码远程调用"><a href="#Java代码远程调用" class="headerlink" title="Java代码远程调用"></a>Java代码远程调用</h2><p>jar包已经在远程服务器上编译部署了，现在我希望本地的一个服务，能够远程使用这个jar包，这样子就可以做到业务和规则的完全分离解耦。直接上代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Created by Duval Yang</span></span><br><span class="line"><span class="comment"> * CurrentTime : 2017-11-06 11:20.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String [] args)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        String url = <span class="string">"http://xxx.xxx.xxx.xxx:8084/kie-drools-wb/maven2/com/test/myfirstproj/1.0.0/MyFirstProj-1.0.0.jar"</span>;<span class="comment">//自行填你ip端口以及路径</span></span><br><span class="line">        KieServices ks = KieServices.Factory.get();</span><br><span class="line">        KieRepository kr = ks.getRepository();</span><br><span class="line">        UrlResource urlResource = (UrlResource) ks.getResources().newUrlResource(url);</span><br><span class="line">        urlResource.setUsername(<span class="string">"tomcat"</span>);</span><br><span class="line">        urlResource.setPassword(<span class="string">"tomcat"</span>);</span><br><span class="line">        urlResource.setBasicAuthentication(<span class="string">"enabled"</span>);</span><br><span class="line">        InputStream is = urlResource.getInputStream();</span><br><span class="line">        KieModule kModule = kr.addKieModule(ks.getResources().newInputStreamResource(is));</span><br><span class="line">        KieContainer kContainer = ks.newKieContainer(kModule.getReleaseId());</span><br><span class="line">        <span class="comment">//StatelessKieSession kSession = kContainer.newStatelessKieSession("defaultStatelessKieSession");</span></span><br><span class="line">        KieSession session = kContainer.newKieSession();</span><br><span class="line">        Account acc = <span class="keyword">new</span> Account();</span><br><span class="line">        acc.setAccountNum(<span class="number">100L</span>);</span><br><span class="line">        session.insert(acc);</span><br><span class="line">        session.fireAllRules();</span><br><span class="line">        session.dispose();</span><br><span class="line">        <span class="comment">//kSession.execute(acc);</span></span><br><span class="line">        <span class="keyword">if</span>(acc.getAccountNum() == <span class="number">101L</span>)&#123;</span><br><span class="line">            System.out.println(<span class="string">"succeed"</span>);</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            System.out.println(<span class="string">"failed"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">/**
+ * Created by Duval Yang
+ * CurrentTime : 2017-11-06 11:20.
+ */
+public class Test {
+    public static void main(String [] args) throws IOException {
+        String url = &quot;http://xxx.xxx.xxx.xxx:8084/kie-drools-wb/maven2/com/test/myfirstproj/1.0.0/MyFirstProj-1.0.0.jar&quot;;//自行填你ip端口以及路径
+        KieServices ks = KieServices.Factory.get();
+        KieRepository kr = ks.getRepository();
+        UrlResource urlResource = (UrlResource) ks.getResources().newUrlResource(url);
+        urlResource.setUsername(&quot;tomcat&quot;);
+        urlResource.setPassword(&quot;tomcat&quot;);
+        urlResource.setBasicAuthentication(&quot;enabled&quot;);
+        InputStream is = urlResource.getInputStream();
+        KieModule kModule = kr.addKieModule(ks.getResources().newInputStreamResource(is));
+        KieContainer kContainer = ks.newKieContainer(kModule.getReleaseId());
+        //StatelessKieSession kSession = kContainer.newStatelessKieSession(&quot;defaultStatelessKieSession&quot;);
+        KieSession session = kContainer.newKieSession();
+        Account acc = new Account();
+        acc.setAccountNum(100L);
+        session.insert(acc);
+        session.fireAllRules();
+        session.dispose();
+        //kSession.execute(acc);
+        if(acc.getAccountNum() == 101L){
+            System.out.println(&quot;succeed&quot;);
+        }else{
+            System.out.println(&quot;failed&quot;);
+        }
+    }
+}
+</code></pre>
 <h2 id="自定义kmodule-xml"><a href="#自定义kmodule-xml" class="headerlink" title="自定义kmodule.xml"></a>自定义kmodule.xml</h2><p>上边的例子使用的是默认的空的kmodule.xml， 你解压jar包也可以看到，完全空的。生产时候，一般都要自定义kbase ksession，所以这里简单说下修改的入口在哪里。如图</p>
 <p><img src="http://upload-images.jianshu.io/upload_images/2651681-4e51905c59bc539b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
 <p>非常简单，只是入口难找。</p>
@@ -373,12 +445,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -390,7 +462,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -490,10 +562,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -573,17 +645,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

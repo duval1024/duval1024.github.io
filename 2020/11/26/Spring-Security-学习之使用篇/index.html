@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,13 +64,13 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring Security 学习之使用篇">
 <meta property="og:url" content="https://blog.duval.top/2020/11/26/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E4%BD%BF%E7%94%A8%E7%AF%87/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="服务端开发中常会接触到安全框架，而在Java生态中最常见的莫过于 Apache_Shiro 和 Spring Security。本系列文章主要探讨Spring Security框架的常见使用范例，并且深入了解其背后的实现原理。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2FJdbcUserDetailsManager.png">
 <meta property="article:published_time" content="2020-11-26T14:12:36.000Z">
 <meta property="article:modified_time" content="2020-12-03T09:04:51.719Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="源码分析">
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
@@ -79,7 +88,7 @@
   };
 </script>
 
-  <title>Spring Security 学习之使用篇 | Duval</title>
+  <title>Spring Security 学习之使用篇 | 杜瓦尔</title>
   
 
 
@@ -123,11 +132,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -219,12 +227,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -279,14 +287,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>15k</span>
+              <span>14k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>14 分钟</span>
+              <span>13 分钟</span>
             </span>
 
         </div>
@@ -303,12 +311,58 @@
 
 <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Spring Security 框架提供身份认证（authentication）、授权（authorization）以及防范常见攻击等三大功能。在身份认证上，Spring Security只是提供框架，具体的认证模型大多由第三方提供。本文主要介绍企业后台管理系统中最常见的基于表单的身份认证以及LDAP身份认证。</p>
 <h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>通过Spring Boot 可以<a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#getting-maven-boot" target="_blank" rel="noopener">快速集成Spring Security</a>：</p>
-<figure class="highlight xml"><figcaption><span>pom.xml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-security<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
+<pre><code class="xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
 <p>本文所用Spring Boot版本为2.3.2.RELEASE</p>
 <h2 id="配置HttpSecurity"><a href="#配置HttpSecurity" class="headerlink" title="配置HttpSecurity"></a>配置HttpSecurity</h2><p>后台管理系统中常常需要自定义登录页、自定义异常跳转页面、跨域访问控制、跨站请求控制、Remember-Me(”记住我“）等等。这些都可以通过HttpSecurity来配置实现，常见的配置样例如下所示：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GeneralSecurityConfiguration</span> <span class="keyword">extends</span> <span class="title">WebSecurityConfigurerAdapter</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String[] BY_PASS_URLS = &#123;<span class="string">"/styles/**"</span>, <span class="string">"/views/**"</span>, <span class="string">"/img/**"</span>, <span class="string">"/i18n/**"</span>, <span class="string">"/health"</span>&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">configure</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    <span class="comment">// 关闭跨站伪造攻击检查</span></span><br><span class="line">        http.csrf().disable();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置X-Frame-Options: SAMEORIGIN</span></span><br><span class="line">        http.headers().frameOptions().sameOrigin();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 部分访问路径进行权限控制</span></span><br><span class="line">        http.authorizeRequests()</span><br><span class="line">                .antMatchers(BY_PASS_URLS).permitAll()</span><br><span class="line">                .antMatchers(<span class="string">"/**"</span>).authenticated();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 自定义登录页面</span></span><br><span class="line">        http.formLogin()</span><br><span class="line">                .loginPage(<span class="string">"/login"</span>)</span><br><span class="line">                .defaultSuccessUrl(<span class="string">"/index"</span>, <span class="keyword">true</span>)</span><br><span class="line">                .permitAll()</span><br><span class="line">                .failureUrl(<span class="string">"/login"</span>).and();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 自定义登出页面</span></span><br><span class="line">        http.logout()</span><br><span class="line">                .logoutUrl(<span class="string">"/logout"</span>)</span><br><span class="line">                .invalidateHttpSession(<span class="keyword">true</span>)</span><br><span class="line">                .clearAuthentication(<span class="keyword">true</span>)</span><br><span class="line">                .logoutSuccessUrl(<span class="string">"/login"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 自定义异常跳转页面</span></span><br><span class="line">        http.exceptionHandling()</span><br><span class="line">                .authenticationEntryPoint(<span class="keyword">new</span> LoginUrlAuthenticationEntryPoint(<span class="string">"/login"</span>))</span><br><span class="line">                .and()</span><br><span class="line">                .exceptionHandling().accessDeniedHandler(<span class="keyword">new</span> AccessDeniedHandlerImpl());</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 配置remember-me</span></span><br><span class="line">        rememberMe(http);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">rememberMe</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        http.rememberMe().rememberMeServices(<span class="keyword">new</span> NullRememberMeServices());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">public class GeneralSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    private static final String[] BY_PASS_URLS = {&quot;/styles/**&quot;, &quot;/views/**&quot;, &quot;/img/**&quot;, &quot;/i18n/**&quot;, &quot;/health&quot;};
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        // 关闭跨站伪造攻击检查
+        http.csrf().disable();
+
+        // 设置X-Frame-Options: SAMEORIGIN
+        http.headers().frameOptions().sameOrigin();
+
+        // 部分访问路径进行权限控制
+        http.authorizeRequests()
+                .antMatchers(BY_PASS_URLS).permitAll()
+                .antMatchers(&quot;/**&quot;).authenticated();
+
+        // 自定义登录页面
+        http.formLogin()
+                .loginPage(&quot;/login&quot;)
+                .defaultSuccessUrl(&quot;/index&quot;, true)
+                .permitAll()
+                .failureUrl(&quot;/login&quot;).and();
+
+        // 自定义登出页面
+        http.logout()
+                .logoutUrl(&quot;/logout&quot;)
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutSuccessUrl(&quot;/login&quot;);
+
+        // 自定义异常跳转页面
+        http.exceptionHandling()
+                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(&quot;/login&quot;))
+                .and()
+                .exceptionHandling().accessDeniedHandler(new AccessDeniedHandlerImpl());
+
+        // 配置remember-me
+        rememberMe(http);
+    }
+
+
+    protected void rememberMe(HttpSecurity http) throws Exception {
+        http.rememberMe().rememberMeServices(new NullRememberMeServices());
+    }
+}</code></pre>
 <p>上述配置完成了以下几件事情：</p>
 <ul>
 <li>关闭跨站伪造攻击（CSRF)检查。此处为了演示简单而关闭，实际生产可能酌情打开。关于CSRF可以查看延伸资料 <a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#csrf" target="_blank" rel="noopener">Cross Site Request Forgery (CSRF)</a>、<a href="https://www.cnblogs.com/pengdai/p/12164754.html" target="_blank" rel="noopener">CSRF 详解：攻击，防御，Spring Security应用等</a>、<a href="https://tech.meituan.com/2018/10/11/fe-security-csrf.html" target="_blank" rel="noopener">前端安全系列（二）：如何防止CSRF攻击？</a></li>
@@ -322,18 +376,63 @@
 <p>以上只是演示样例，具体还需要根据业务进行调整。</p>
 <p>除了配置HttpSecurity，其他代码不是本文关注重点，请移步仓库：<a href="https://github.com/duval1024/spring-tool/tree/master/spring-security-demo" target="_blank" rel="noopener">spring-tool/spring-security-demo</a></p>
 <p>再回到之前的默认配置，启动后会自动生成一个InMemoryUserDetailsManager实例，该实例是UserDetailsService接口的实现（可见UserDetailsServiceAutoConfiguration）。InMemoryUserDetailsManager在内存里会自动生成一个用户名和密码，并在控制台中打印：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Using generated security password: <span class="number">293</span>c4e55-f111-<span class="number">4441</span>-<span class="number">9</span>db5-<span class="number">5</span>d1a531052d3</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">Using generated security password: 293c4e55-f111-4441-9db5-5d1a531052d3</code></pre>
 <p>通过这个用户名密码便可以登录。</p>
 <p>除了使用HttpSecurity进行配置，还可以使用WebSecurity 和 AuthenticationManagerBuilder，三者的区别参考<a href="https://stackoverflow.com/questions/22998731/httpsecurity-websecurity-and-authenticationmanagerbuilder" target="_blank" rel="noopener">Q&amp;A From StackOverFlow</a></p>
 <p>下边我们便在上述范例基础上进行扩展。</p>
 <h2 id="自定义UserDetailsService"><a href="#自定义UserDetailsService" class="headerlink" title="自定义UserDetailsService"></a>自定义UserDetailsService</h2><p>先看接口定义：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">* Core interface which loads user-specific data.</span></span><br><span class="line"><span class="comment">* It is used throughout the framework as a user DAO and is the strategy used by the DaoAuthenticationProvider.</span></span><br><span class="line"><span class="comment">* The interface requires only one read-only method, which simplifies support for new data-access strategies.</span></span><br><span class="line"><span class="comment">**/</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">UserDetailsService</span> </span>&#123;</span><br><span class="line">  <span class="function">UserDetails <span class="title">loadUserByUsername</span><span class="params">(String username)</span> <span class="keyword">throws</span> UsernameNotFoundException</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">/**
+* Core interface which loads user-specific data.
+* It is used throughout the framework as a user DAO and is the strategy used by the DaoAuthenticationProvider.
+* The interface requires only one read-only method, which simplifies support for new data-access strategies.
+**/
+public interface UserDetailsService {
+    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+}</code></pre>
 <p>这个接口用来根据用户名加载用户信息，此外这个接口一般在DaoAuthenticationProvider中调用：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> UserDetails <span class="title">retrieveUser</span><span class="params">(String username,</span></span></span><br><span class="line"><span class="function"><span class="params">			UsernamePasswordAuthenticationToken authentication)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> AuthenticationException </span>&#123;</span><br><span class="line">  prepareTimingAttackProtection();</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 调用loadUserByUsername获取用户账号密码信息</span></span><br><span class="line">    UserDetails loadedUser = <span class="keyword">this</span>.getUserDetailsService().loadUserByUsername(username);</span><br><span class="line">    <span class="keyword">if</span> (loadedUser == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> InternalAuthenticationServiceException(</span><br><span class="line">          <span class="string">"UserDetailsService returned null, which is an interface contract violation"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> loadedUser;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (UsernameNotFoundException ex) &#123;</span><br><span class="line">    mitigateAgainstTimingAttack(authentication);</span><br><span class="line">    <span class="keyword">throw</span> ex;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (InternalAuthenticationServiceException ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> ex;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (Exception ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> InternalAuthenticationServiceException(ex.getMessage(), ex);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">protected final UserDetails retrieveUser(String username,
+            UsernamePasswordAuthenticationToken authentication)
+            throws AuthenticationException {
+    prepareTimingAttackProtection();
+    try {
+        // 调用loadUserByUsername获取用户账号密码信息
+        UserDetails loadedUser = this.getUserDetailsService().loadUserByUsername(username);
+        if (loadedUser == null) {
+            throw new InternalAuthenticationServiceException(
+                    &quot;UserDetailsService returned null, which is an interface contract violation&quot;);
+        }
+        return loadedUser;
+    }
+    catch (UsernameNotFoundException ex) {
+        mitigateAgainstTimingAttack(authentication);
+        throw ex;
+    }
+    catch (InternalAuthenticationServiceException ex) {
+        throw ex;
+    }
+    catch (Exception ex) {
+        throw new InternalAuthenticationServiceException(ex.getMessage(), ex);
+    }
+}
+</code></pre>
 <p>因此我们可以自定义UserDetailsService来提供用户账户密码信息，而不是使用默认生成的bean实例。如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Profile</span>(<span class="string">"form"</span>)</span><br><span class="line"><span class="meta">@EnableGlobalMethodSecurity</span>(prePostEnabled = <span class="keyword">true</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SecurityFormLoginConfiguration</span> <span class="keyword">extends</span> <span class="title">GeneralSecurityConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> UserDetailsService <span class="title">createCustomServiceDetailService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> CustomServiceDetailService();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">CustomServiceDetailService</span> <span class="keyword">implements</span> <span class="title">UserDetailsService</span> </span>&#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> UserDetails <span class="title">loadUserByUsername</span><span class="params">(String username)</span> <span class="keyword">throws</span> UsernameNotFoundException </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> User(username, <span class="string">"&#123;noop&#125;123"</span>, AuthorityUtils.commaSeparatedStringToAuthorityList(ROLE_ADMIN + <span class="string">","</span> + ROLE_USER));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">
+@Component
+@Profile(&quot;form&quot;)
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class SecurityFormLoginConfiguration extends GeneralSecurityConfiguration {
+    @Bean
+    public UserDetailsService createCustomServiceDetailService() {
+        return new CustomServiceDetailService();
+    }
+
+    static class CustomServiceDetailService implements UserDetailsService {
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            return new User(username, &quot;{noop}123&quot;, AuthorityUtils.commaSeparatedStringToAuthorityList(ROLE_ADMIN + &quot;,&quot; + ROLE_USER));
+        }
+    }
+}</code></pre>
 <p>如上，我们通过注册一个CustomServiceDetailService实例，实例方法里返回的默认密码为123。现在通过这个密码我们也可以登录系统。</p>
 <ul>
 <li>为何密码指定了前缀”{noop}”?<ul>
@@ -343,7 +442,38 @@
 </ul>
 <h2 id="从数据库加载用户信息"><a href="#从数据库加载用户信息" class="headerlink" title="从数据库加载用户信息"></a>从数据库加载用户信息</h2><p>上文的范例的CustomServiceDetailService和默认生成的InMemoryUserDetailsManager 在功能上并无区别，但这里仅仅是提供一个思路。我们可以通过UserDetailsService来实现更多可能，比如从数据库加载用户信息。</p>
 <p>这里不打算通过编写dao读写代码，然后演示怎么加载用户信息。而是来看看Spring Security提供给我们JdbcUserDetailsManager类。通过JdbcUserDetailsManager我们可以非常快速地建立一个在数据库保存和加载用户信息的范例：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Profile</span>(<span class="string">"jdbc"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SecurityJdbcConfiguration</span> <span class="keyword">extends</span> <span class="title">GeneralSecurityConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> PasswordEncoder <span class="title">passwordEncoder</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> BCryptPasswordEncoder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> JdbcUserDetailsManager <span class="title">jdbcUserDetailsManager</span><span class="params">(DataSource datasource)</span> </span>&#123;</span><br><span class="line">        JdbcUserDetailsManager jdbcUserDetailsManager = <span class="keyword">new</span> JdbcUserDetailsManager(datasource);</span><br><span class="line">        jdbcUserDetailsManager.setUsersByUsernameQuery(<span class="string">"select Username,Password,Enabled from `Users` where Username = ?"</span>);</span><br><span class="line">        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery(<span class="string">"select Username,Authority from `Authorities` where Username = ?"</span>);</span><br><span class="line"></span><br><span class="line">        jdbcUserDetailsManager.setUserExistsSql(<span class="string">"select Username from `Users` where Username = ?"</span>);</span><br><span class="line">        jdbcUserDetailsManager</span><br><span class="line">                .setCreateUserSql(<span class="string">"insert into `Users` (Username, Password, Enabled) values (?,?,?)"</span>);</span><br><span class="line">        jdbcUserDetailsManager</span><br><span class="line">                .setUpdateUserSql(<span class="string">"update `Users` set Password = ?, Enabled = ? where id = (select u.id from (select id from `Users` where Username = ?) as u)"</span>);</span><br><span class="line">        jdbcUserDetailsManager.setDeleteUserSql(<span class="string">"delete from `Users` where id = (select u.id from (select id from `Users` where Username = ?) as u)"</span>);</span><br><span class="line">        jdbcUserDetailsManager</span><br><span class="line">                .setCreateAuthoritySql(<span class="string">"insert into `Authorities` (Username, Authority) values (?,?)"</span>);</span><br><span class="line">        jdbcUserDetailsManager</span><br><span class="line">                .setDeleteUserAuthoritiesSql(<span class="string">"delete from `Authorities` where id in (select a.id from (select id from `Authorities` where Username = ?) as a)"</span>);</span><br><span class="line">        jdbcUserDetailsManager</span><br><span class="line">                .setChangePasswordSql(<span class="string">"update `Users` set Password = ? where id = (select u.id from (select id from `Users` where Username = ?) as u)"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> jdbcUserDetailsManager;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Component
+@Profile(&quot;jdbc&quot;)
+public class SecurityJdbcConfiguration extends GeneralSecurityConfiguration {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public JdbcUserDetailsManager jdbcUserDetailsManager(DataSource datasource) {
+        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(datasource);
+        jdbcUserDetailsManager.setUsersByUsernameQuery(&quot;select Username,Password,Enabled from `Users` where Username = ?&quot;);
+        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery(&quot;select Username,Authority from `Authorities` where Username = ?&quot;);
+
+        jdbcUserDetailsManager.setUserExistsSql(&quot;select Username from `Users` where Username = ?&quot;);
+        jdbcUserDetailsManager
+                .setCreateUserSql(&quot;insert into `Users` (Username, Password, Enabled) values (?,?,?)&quot;);
+        jdbcUserDetailsManager
+                .setUpdateUserSql(&quot;update `Users` set Password = ?, Enabled = ? where id = (select u.id from (select id from `Users` where Username = ?) as u)&quot;);
+        jdbcUserDetailsManager.setDeleteUserSql(&quot;delete from `Users` where id = (select u.id from (select id from `Users` where Username = ?) as u)&quot;);
+        jdbcUserDetailsManager
+                .setCreateAuthoritySql(&quot;insert into `Authorities` (Username, Authority) values (?,?)&quot;);
+        jdbcUserDetailsManager
+                .setDeleteUserAuthoritiesSql(&quot;delete from `Authorities` where id in (select a.id from (select id from `Authorities` where Username = ?) as a)&quot;);
+        jdbcUserDetailsManager
+                .setChangePasswordSql(&quot;update `Users` set Password = ? where id = (select u.id from (select id from `Users` where Username = ?) as u)&quot;);
+
+        return jdbcUserDetailsManager;
+    }
+}
+</code></pre>
 <p>JdbcUserDetailsManager本质上就是UserDetailsService的一个实现。如下：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%E8%A7%A3%E8%AF%BB%2FJdbcUserDetailsManager.png" alt="JdbcUserDetailsManager.png"></p>
 <p>所以这个样例的套路其实和上一个范例一样。只不过用户数据改为了从数据库加载，并且也暴露了一些增删读写的方法，这些方法可以用在其他业务逻辑中。</p>
@@ -353,17 +483,66 @@
 <ul>
 <li>LDAP配置：(配置内容参考注释，并按照实际情况填写)</li>
 </ul>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">config:</span></span><br><span class="line">  <span class="attr">ldap:</span></span><br><span class="line">    <span class="attr">url:</span> <span class="comment">#ldap://the-company-xxx.us:390</span></span><br><span class="line">    <span class="attr">search-base:</span> <span class="comment">#ou=Employees,dc=staff,dc=the-company-xxx,dc=us</span></span><br><span class="line">    <span class="attr">user-dn:</span> <span class="comment">#cn=ldap_xxxx,cn=Persons,dc=staff,dc=the-company,dc=com</span></span><br><span class="line">    <span class="attr">search-filter:</span> <span class="comment">#'(xxxxx=&#123;0&#125;)'</span></span><br><span class="line">    <span class="attr">password:</span> <span class="comment">#xxxxxxx</span></span><br></pre></td></tr></table></figure>
-
+<pre><code class="yml">config:
+  ldap:
+    url: #ldap://the-company-xxx.us:390
+    search-base: #ou=Employees,dc=staff,dc=the-company-xxx,dc=us
+    user-dn: #cn=ldap_xxxx,cn=Persons,dc=staff,dc=the-company,dc=com
+    search-filter: #&#39;(xxxxx={0})&#39;
+    password: #xxxxxxx</code></pre>
 <ul>
 <li>注入LDAP配置</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ConfigurationProperties</span>(prefix = <span class="string">"config.ldap"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">LdapProperties</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String url;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String searchBase;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String searchFilter;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String userDn;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> String password;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Data
+@Configuration
+@ConfigurationProperties(prefix = &quot;config.ldap&quot;)
+public class LdapProperties {
+
+    private String url;
+
+    private String searchBase;
+
+    private String searchFilter;
+
+    private String userDn;
+
+    private String password;
+
+}</code></pre>
 <ul>
 <li>注入LdapContextSource、BindAuthenticator、LdapAuthenticationProvider</li>
 </ul>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Profile</span>(<span class="string">"ldap"</span>)</span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SecurityLdapConfiguration</span> <span class="keyword">extends</span> <span class="title">GeneralSecurityConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> LdapContextSource <span class="title">ldapContextSource</span><span class="params">(LdapProperties ldapProperties)</span> </span>&#123;</span><br><span class="line">        LdapContextSource contextSource = <span class="keyword">new</span> LdapContextSource();</span><br><span class="line">        contextSource.setUrl(ldapProperties.getUrl());</span><br><span class="line">        contextSource.setUserDn(ldapProperties.getUserDn());</span><br><span class="line">        contextSource.setPassword(ldapProperties.getPassword());</span><br><span class="line">        contextSource.setPooled(<span class="keyword">false</span>);</span><br><span class="line">        contextSource.afterPropertiesSet();</span><br><span class="line">        <span class="keyword">return</span> contextSource;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> BindAuthenticator <span class="title">authenticator</span><span class="params">(BaseLdapPathContextSource contextSource, LdapProperties ldapProperties)</span> </span>&#123;</span><br><span class="line">        String searchBase = ldapProperties.getSearchBase();</span><br><span class="line">        String filter = ldapProperties.getSearchFilter();</span><br><span class="line">        FilterBasedLdapUserSearch search =</span><br><span class="line">                <span class="keyword">new</span> FilterBasedLdapUserSearch(searchBase, filter, contextSource);</span><br><span class="line">        BindAuthenticator authenticator = <span class="keyword">new</span> BindAuthenticator(contextSource);</span><br><span class="line">        authenticator.setUserSearch(search);</span><br><span class="line">        <span class="keyword">return</span> authenticator;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> LdapAuthenticationProvider <span class="title">authenticationProvider</span><span class="params">(LdapAuthenticator authenticator)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> LdapAuthenticationProvider(authenticator);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Profile(&quot;ldap&quot;)
+@Component
+public class SecurityLdapConfiguration extends GeneralSecurityConfiguration {
 
+    @Bean
+    public LdapContextSource ldapContextSource(LdapProperties ldapProperties) {
+        LdapContextSource contextSource = new LdapContextSource();
+        contextSource.setUrl(ldapProperties.getUrl());
+        contextSource.setUserDn(ldapProperties.getUserDn());
+        contextSource.setPassword(ldapProperties.getPassword());
+        contextSource.setPooled(false);
+        contextSource.afterPropertiesSet();
+        return contextSource;
+    }
+
+    @Bean
+    public BindAuthenticator authenticator(BaseLdapPathContextSource contextSource, LdapProperties ldapProperties) {
+        String searchBase = ldapProperties.getSearchBase();
+        String filter = ldapProperties.getSearchFilter();
+        FilterBasedLdapUserSearch search =
+                new FilterBasedLdapUserSearch(searchBase, filter, contextSource);
+        BindAuthenticator authenticator = new BindAuthenticator(contextSource);
+        authenticator.setUserSearch(search);
+        return authenticator;
+    }
+
+    @Bean
+    public LdapAuthenticationProvider authenticationProvider(LdapAuthenticator authenticator) {
+        return new LdapAuthenticationProvider(authenticator);
+    }
+}</code></pre>
 <p>得益于Spring Security非常精妙的API设计，LDAP的集成只需要注入几个简单的bean就可以轻松实现。</p>
 <h2 id="Remeber-Me"><a href="#Remeber-Me" class="headerlink" title="Remeber-Me"></a>Remeber-Me</h2><p>“记住我”是登录系统常见的功能，一般流程是：</p>
 <ul>
@@ -373,25 +552,55 @@
 <li>服务器端自动分析cookie信息，如果cookie信息有效则为用户执行自动登录；否则清空cookie，并跳转登录流程。</li>
 </ul>
 <p>Spring Security通过 RememberMeServices接口来抽象该逻辑，暴露的三个方法与上述流程高度吻合：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">RememberMeServices</span> </span>&#123;</span><br><span class="line">  </span><br><span class="line">  <span class="function">Authentication <span class="title">autoLogin</span><span class="params">(HttpServletRequest request, HttpServletResponse response)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">loginFail</span><span class="params">(HttpServletRequest request, HttpServletResponse response)</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">void</span> <span class="title">loginSuccess</span><span class="params">(HttpServletRequest request, HttpServletResponse response,</span></span></span><br><span class="line"><span class="function"><span class="params">			Authentication successfulAuthentication)</span></span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">public interface RememberMeServices {
 
+    Authentication autoLogin(HttpServletRequest request, HttpServletResponse response);
+
+    void loginFail(HttpServletRequest request, HttpServletResponse response);
+
+    void loginSuccess(HttpServletRequest request, HttpServletResponse response,
+            Authentication successfulAuthentication);
+
+}</code></pre>
 <p>所以，”记住我”的功能只需要简单实现RememberMeServices即可。更令人值得高兴的是，Spring Security已经为我们提供了两个非常完整的实现 TokenBasedRememberMeServices 和 PersistentTokenBasedRememberMeServices。</p>
 <ul>
 <li>TokenBasedRememberMeServices 实现通过用户名、密码、失效时间和自定义key生成MD5编码，并将该编码、失效时间和用户名都保存在cookie中放回给浏览器。因此，只要下一次浏览器请求服务器端时携带cookie，服务器端能够根据cookie信息和密码信息进行自动身份认证。</li>
 <li>PersistentTokenBasedRememberMeServices 略有不同，token是随机生成的，并且保存到repository中，并将token置于cookie返回给浏览器。因此自动登录过程的鉴权只需要简单比对token是否相同即可。至于repository的实现，用户可以自定义，或者使用默认实现 InMemoryTokenRepositoryImpl 和 JdbcTokenRepositoryImpl。前者将token保存在内存中，重启后丢失；而后者将token持久化到数据库中。</li>
 </ul>
 <h3 id="实现”记住我”"><a href="#实现”记住我”" class="headerlink" title="实现”记住我”"></a>实现”记住我”</h3><p>两种Service的实现思路都差不多，这里我们只看看TokenBasedRememberMeServices 的构造函数：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">TokenBasedRememberMeServices</span><span class="params">(String key, UserDetailsService userDetailsService)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>(key, userDetailsService);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">public TokenBasedRememberMeServices(String key, UserDetailsService userDetailsService) {
+        super(key, userDetailsService);
+    }</code></pre>
 <p>可见只需要传入一个自定义的key，以及一个UserDetailsService即可。而自定义key在此处，主要是想给密码加盐，增加MD5编码的随机强度。</p>
 <p>于是，可以非常简单地对上述前两个样例进行补充，并实现”记住我”：</p>
 <ul>
 <li><p>表单范例改造：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Profile</span>(<span class="string">"form-remember"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SecurityFormLoginRememberConfiguration</span> <span class="keyword">extends</span> <span class="title">SecurityFormLoginConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> UserDetailsService userDetailsService;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">rememberMe</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        http.rememberMe().rememberMeServices(<span class="keyword">new</span> TokenBasedRememberMeServices(<span class="string">"test_key"</span>, userDetailsService));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Component
+@Profile(&quot;form-remember&quot;)
+public class SecurityFormLoginRememberConfiguration extends SecurityFormLoginConfiguration {
+
+  @Autowired
+  private UserDetailsService userDetailsService;
+
+  @Override
+  protected void rememberMe(HttpSecurity http) throws Exception {
+      http.rememberMe().rememberMeServices(new TokenBasedRememberMeServices(&quot;test_key&quot;, userDetailsService));
+  }
+}</code></pre>
 </li>
 <li><p>表单+JDBC范例改造</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Profile</span>(<span class="string">"jdbc-remember"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SecurityJdbcRememberConfiguration</span> <span class="keyword">extends</span> <span class="title">SecurityJdbcConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> JdbcUserDetailsManager jdbcUserDetailsManager;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">rememberMe</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        http.rememberMe().rememberMeServices(<span class="keyword">new</span> TokenBasedRememberMeServices(<span class="string">"test_key"</span>, jdbcUserDetailsManager));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Component
+@Profile(&quot;jdbc-remember&quot;)
+public class SecurityJdbcRememberConfiguration extends SecurityJdbcConfiguration {
 
+  @Autowired
+  private JdbcUserDetailsManager jdbcUserDetailsManager;
+
+  @Override
+  protected void rememberMe(HttpSecurity http) throws Exception {
+      http.rememberMe().rememberMeServices(new TokenBasedRememberMeServices(&quot;test_key&quot;, jdbcUserDetailsManager));
+  }
+}</code></pre>
 </li>
 </ul>
 <h3 id="LDAP范例实现”记住我”"><a href="#LDAP范例实现”记住我”" class="headerlink" title="LDAP范例实现”记住我”"></a>LDAP范例实现”记住我”</h3><p>前两个范例都包含了实现UserDetailsService接口的Bean实例，所以基于TokenBasedRememberMeServices实现”记住我”功能都非常简单。</p>
@@ -404,13 +613,108 @@
 </ul>
 <p>我们来看看具体实现细节：</p>
 <p>第一步，拓展LdapAuthenticationProvider：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CustomLdapAuthenticationProvider</span> <span class="keyword">extends</span> <span class="title">LdapAuthenticationProvider</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> CustomUserDetailsService userDetailsService;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">CustomLdapAuthenticationProvider</span><span class="params">(LdapAuthenticator authenticator, CustomUserDetailsService userDetailsService)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(authenticator);</span><br><span class="line">        <span class="keyword">this</span>.userDetailsService = userDetailsService;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Authentication <span class="title">authenticate</span><span class="params">(Authentication authentication)</span> <span class="keyword">throws</span> AuthenticationException </span>&#123;</span><br><span class="line">        Authentication result = <span class="keyword">super</span>.authenticate(authentication);</span><br><span class="line">        <span class="keyword">this</span>.userDetailsService.saveUser(authentication);</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">public class CustomLdapAuthenticationProvider extends LdapAuthenticationProvider {
+
+
+    private CustomUserDetailsService userDetailsService;
+
+    public CustomLdapAuthenticationProvider(LdapAuthenticator authenticator, CustomUserDetailsService userDetailsService) {
+        super(authenticator);
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        Authentication result = super.authenticate(authentication);
+        this.userDetailsService.saveUser(authentication);
+        return result;
+    }
+}
+</code></pre>
 <p>第二步，自定义CustomUserDetailsService：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Slf</span>4j</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CustomUserDetailsService</span> <span class="keyword">implements</span> <span class="title">UserDetailsService</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> UserRepository userRepository;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> AuthorityRepository authorityRepository;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> PasswordEncoder passwordEncoder;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">CustomUserDetailsService</span><span class="params">(UserRepository userRepository, AuthorityRepository authorityRepository)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.userRepository = userRepository;</span><br><span class="line">        <span class="keyword">this</span>.authorityRepository = authorityRepository;</span><br><span class="line">        <span class="keyword">this</span>.passwordEncoder = <span class="keyword">new</span> BCryptPasswordEncoder();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> UserDetails <span class="title">loadUserByUsername</span><span class="params">(String username)</span> <span class="keyword">throws</span> UsernameNotFoundException </span>&#123;</span><br><span class="line">        UserPO userPo = userRepository.findUserByUsername(username);</span><br><span class="line">        List&lt;AuthorityPO&gt; authorities = authorityRepository.findAuthorityPOSByUsername(username);</span><br><span class="line"></span><br><span class="line">        List&lt;SimpleGrantedAuthority&gt; simpleGrantedAuthorities = authorities.stream().map(po -&gt; <span class="keyword">new</span> SimpleGrantedAuthority(po.getAuthority())).collect(Collectors.toList());</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> User(userPo.getUsername(), userPo.getPassword(), simpleGrantedAuthorities);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Transactional</span>(rollbackOn = Exception<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">    <span class="title">public</span> <span class="title">void</span> <span class="title">saveUser</span>(<span class="title">Authentication</span> <span class="title">authentication</span>) </span>&#123;</span><br><span class="line">        String principal = (String) authentication.getPrincipal();</span><br><span class="line">        String credential = (String) authentication.getCredentials();</span><br><span class="line">        UserPO newUserPO = <span class="keyword">new</span> UserPO(principal, passwordEncoder.encode(credential));</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        UserPO existedUser = userRepository.findUserByUsername(newUserPO.getUsername());</span><br><span class="line">        <span class="keyword">if</span> (existedUser != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (StringUtils.equals(existedUser.getPassword(), newUserPO.getPassword())) &#123;</span><br><span class="line">                log.info(<span class="string">"same user existed.[username=&#123;&#125;]"</span>, existedUser.getUsername());</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            userRepository.save(newUserPO);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        Set&lt;String&gt; authorities = authentication.getAuthorities().stream().map(au -&gt; au.getAuthority()).collect(Collectors.toSet());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (authorities.isEmpty()) &#123;</span><br><span class="line">            authorities.add(<span class="string">"ROLE_user"</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        List&lt;AuthorityPO&gt; authorityPOS = authorities.stream().map(au -&gt; <span class="keyword">new</span> AuthorityPO(principal, au)).collect(Collectors.toList());</span><br><span class="line">        authorityRepository.saveAll(authorityPOS);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Slf4j
+public class CustomUserDetailsService implements UserDetailsService {
 
+    private UserRepository userRepository;
+
+    private AuthorityRepository authorityRepository;
+
+    private PasswordEncoder passwordEncoder;
+
+
+    public CustomUserDetailsService(UserRepository userRepository, AuthorityRepository authorityRepository) {
+        this.userRepository = userRepository;
+        this.authorityRepository = authorityRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserPO userPo = userRepository.findUserByUsername(username);
+        List&lt;AuthorityPO&gt; authorities = authorityRepository.findAuthorityPOSByUsername(username);
+
+        List&lt;SimpleGrantedAuthority&gt; simpleGrantedAuthorities = authorities.stream().map(po -&gt; new SimpleGrantedAuthority(po.getAuthority())).collect(Collectors.toList());
+        return new User(userPo.getUsername(), userPo.getPassword(), simpleGrantedAuthorities);
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public void saveUser(Authentication authentication) {
+        String principal = (String) authentication.getPrincipal();
+        String credential = (String) authentication.getCredentials();
+        UserPO newUserPO = new UserPO(principal, passwordEncoder.encode(credential));
+
+
+        UserPO existedUser = userRepository.findUserByUsername(newUserPO.getUsername());
+        if (existedUser != null) {
+            if (StringUtils.equals(existedUser.getPassword(), newUserPO.getPassword())) {
+                log.info(&quot;same user existed.[username={}]&quot;, existedUser.getUsername());
+                return;
+            }
+        } else {
+            userRepository.save(newUserPO);
+        }
+
+
+        Set&lt;String&gt; authorities = authentication.getAuthorities().stream().map(au -&gt; au.getAuthority()).collect(Collectors.toSet());
+
+        if (authorities.isEmpty()) {
+            authorities.add(&quot;ROLE_user&quot;);
+        }
+
+        List&lt;AuthorityPO&gt; authorityPOS = authorities.stream().map(au -&gt; new AuthorityPO(principal, au)).collect(Collectors.toList());
+        authorityRepository.saveAll(authorityPOS);
+    }
+}
+</code></pre>
 <p>第三步，注册TokenBasedRememberMeServices的bean实例：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Profile</span>(<span class="string">"ldap-remember"</span>)</span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SecurityLdapRememberConfiguration</span> <span class="keyword">extends</span> <span class="title">SecurityLdapConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RememberMeServices rememberMeServices;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> LdapAuthenticationProvider <span class="title">authenticationProvider</span><span class="params">(LdapAuthenticator authenticator, CustomUserDetailsService userDetailsService)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> CustomLdapAuthenticationProvider(authenticator, userDetailsService);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> CustomUserDetailsService <span class="title">customUserDetailsService</span><span class="params">(UserRepository userRepository, AuthorityRepository authorityRepository)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> CustomUserDetailsService(userRepository, authorityRepository);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> RememberMeServices <span class="title">tokenBasedRememberMeServices</span><span class="params">(UserDetailsService userDetailsService)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> TokenBasedRememberMeServices(<span class="string">"test_key"</span>, userDetailsService);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">rememberMe</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        http.rememberMe().rememberMeServices(rememberMeServices);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Profile(&quot;ldap-remember&quot;)
+@Component
+public class SecurityLdapRememberConfiguration extends SecurityLdapConfiguration {
 
+    @Autowired
+    private RememberMeServices rememberMeServices;
+
+    @Bean
+    public LdapAuthenticationProvider authenticationProvider(LdapAuthenticator authenticator, CustomUserDetailsService userDetailsService) {
+        return new CustomLdapAuthenticationProvider(authenticator, userDetailsService);
+    }
+
+    @Bean
+    public CustomUserDetailsService customUserDetailsService(UserRepository userRepository, AuthorityRepository authorityRepository) {
+        return new CustomUserDetailsService(userRepository, authorityRepository);
+    }
+
+    @Bean
+    public RememberMeServices tokenBasedRememberMeServices(UserDetailsService userDetailsService) {
+        return new TokenBasedRememberMeServices(&quot;test_key&quot;, userDetailsService);
+    }
+
+    @Override
+    protected void rememberMe(HttpSecurity http) throws Exception {
+        http.rememberMe().rememberMeServices(rememberMeServices);
+    }
+}
+</code></pre>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文主要探讨并实现了Spring Security的几个应用范例，核心思路是实现自定义的UserDetailService实例。接下来一篇文章，我会深入源码探讨具体的实现原理。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/" target="_blank" rel="noopener">Spring Security官方文档</a>：官方文档是全网最佳资料</li>
@@ -454,12 +758,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -471,7 +775,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -572,10 +876,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -655,17 +959,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

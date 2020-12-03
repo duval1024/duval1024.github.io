@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,13 +64,13 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="再读Spring源码之一 Spring如何对付循环引用">
 <meta property="og:url" content="https://blog.duval.top/2020/08/21/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80-Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="关于Spring如何解决循环依赖这个问题，以前写过一篇文章Spring源码分析3-对Bean循环依赖的处理。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80%20Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8%2Fspring-bean-%E5%8A%A0%E8%BD%BD%E6%97%B6%E5%BA%8F%E5%9B%BE.png">
 <meta property="article:published_time" content="2020-08-21T12:59:52.000Z">
 <meta property="article:modified_time" content="2020-10-27T10:50:25.226Z">
-<meta property="article:author" content="Duval">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="源码分析">
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
@@ -79,7 +88,7 @@
   };
 </script>
 
-  <title>再读Spring源码之一 Spring如何对付循环引用 | Duval</title>
+  <title>再读Spring源码之一 Spring如何对付循环引用 | 杜瓦尔</title>
   
 
 
@@ -123,11 +132,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -219,12 +227,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -279,7 +287,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>13k</span>
+              <span>12k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -302,8 +310,58 @@
 <a id="more"></a>
 
 <h2 id="Bean循环依赖"><a href="#Bean循环依赖" class="headerlink" title="Bean循环依赖"></a>Bean循环依赖</h2><p>spring框架的bean可以互相依赖，因此，可能存在循环依赖的情况，例如：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!--构造器循环依赖（单例）--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testA"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestA"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">index</span> = <span class="string">"0"</span> <span class="attr">ref</span>=<span class="string">"testB"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testB"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestB"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">index</span> = <span class="string">"0"</span> <span class="attr">ref</span>=<span class="string">"testC"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testC"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestC"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">index</span> = <span class="string">"0"</span> <span class="attr">ref</span>=<span class="string">"testA"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!--构造器循环依赖(prototype)--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testA0"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestA"</span> <span class="attr">scope</span>=<span class="string">"prototype"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">index</span> = <span class="string">"0"</span> <span class="attr">ref</span>=<span class="string">"testB0"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testB0"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestB"</span> <span class="attr">scope</span>=<span class="string">"prototype"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">index</span> = <span class="string">"0"</span> <span class="attr">ref</span>=<span class="string">"testC0"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testC0"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestC"</span> <span class="attr">scope</span>=<span class="string">"prototype"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">constructor-arg</span> <span class="attr">index</span> = <span class="string">"0"</span> <span class="attr">ref</span>=<span class="string">"testA0"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!--属性注入循环依赖（单例）--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testA1"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestA"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"testB"</span> <span class="attr">ref</span> = <span class="string">"testB1"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testB1"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestB"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"testC"</span> <span class="attr">ref</span> = <span class="string">"testC1"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testC1"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestC"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"testA"</span> <span class="attr">ref</span> = <span class="string">"testA1"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!--属性注入循环依赖（prototype）--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testA2"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestA"</span> <span class="attr">scope</span>=<span class="string">"prototype"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"testB"</span> <span class="attr">ref</span> = <span class="string">"testB2"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testB2"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestB"</span> <span class="attr">scope</span>=<span class="string">"prototype"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"testC"</span> <span class="attr">ref</span> = <span class="string">"testC2"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span> = <span class="string">"testC2"</span> <span class="attr">class</span>=<span class="string">"org.demo.circle.TestC"</span> <span class="attr">scope</span>=<span class="string">"prototype"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"testA"</span> <span class="attr">ref</span> = <span class="string">"testA2"</span>&gt;</span><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<pre><code class="xml">    &lt;!--构造器循环依赖（单例）--&gt;
+    &lt;bean id = &quot;testA&quot; class=&quot;org.demo.circle.TestA&quot;&gt;
+        &lt;constructor-arg index = &quot;0&quot; ref=&quot;testB&quot;/&gt;
+    &lt;/bean&gt;
 
+    &lt;bean id = &quot;testB&quot; class=&quot;org.demo.circle.TestB&quot;&gt;
+        &lt;constructor-arg index = &quot;0&quot; ref=&quot;testC&quot;/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testC&quot; class=&quot;org.demo.circle.TestC&quot;&gt;
+        &lt;constructor-arg index = &quot;0&quot; ref=&quot;testA&quot;/&gt;
+    &lt;/bean&gt;
+
+    &lt;!--构造器循环依赖(prototype)--&gt;
+    &lt;bean id = &quot;testA0&quot; class=&quot;org.demo.circle.TestA&quot; scope=&quot;prototype&quot;&gt;
+        &lt;constructor-arg index = &quot;0&quot; ref=&quot;testB0&quot;/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testB0&quot; class=&quot;org.demo.circle.TestB&quot; scope=&quot;prototype&quot;&gt;
+        &lt;constructor-arg index = &quot;0&quot; ref=&quot;testC0&quot;/&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testC0&quot; class=&quot;org.demo.circle.TestC&quot; scope=&quot;prototype&quot;&gt;
+        &lt;constructor-arg index = &quot;0&quot; ref=&quot;testA0&quot;/&gt;
+    &lt;/bean&gt;
+
+    &lt;!--属性注入循环依赖（单例）--&gt;
+    &lt;bean id = &quot;testA1&quot; class=&quot;org.demo.circle.TestA&quot;&gt;
+        &lt;property name=&quot;testB&quot; ref = &quot;testB1&quot;&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testB1&quot; class=&quot;org.demo.circle.TestB&quot;&gt;
+        &lt;property name=&quot;testC&quot; ref = &quot;testC1&quot;&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testC1&quot; class=&quot;org.demo.circle.TestC&quot;&gt;
+        &lt;property name=&quot;testA&quot; ref = &quot;testA1&quot;&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+
+    &lt;!--属性注入循环依赖（prototype）--&gt;
+    &lt;bean id = &quot;testA2&quot; class=&quot;org.demo.circle.TestA&quot; scope=&quot;prototype&quot;&gt;
+        &lt;property name=&quot;testB&quot; ref = &quot;testB2&quot;&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testB2&quot; class=&quot;org.demo.circle.TestB&quot; scope=&quot;prototype&quot;&gt;
+        &lt;property name=&quot;testC&quot; ref = &quot;testC2&quot;&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+
+    &lt;bean id = &quot;testC2&quot; class=&quot;org.demo.circle.TestC&quot; scope=&quot;prototype&quot;&gt;
+        &lt;property name=&quot;testA&quot; ref = &quot;testA2&quot;&gt;&lt;/property&gt;
+    &lt;/bean&gt;
+</code></pre>
 <p>如上配置文件，包含常见的几种循环依赖，可以归类为以下两大类：</p>
 <ul>
 <li><p>通过构造器注入形成循环依赖：</p>
@@ -322,17 +380,97 @@
 <p>按照bean的类型又可以细分为单例和prototype两种（其他scope类型不常用暂不讨论）</p>
 <p>本文主要探讨spring对这几种循环依赖的处理策略和原理。</p>
 <h2 id="Spring处理策略"><a href="#Spring处理策略" class="headerlink" title="Spring处理策略"></a>Spring处理策略</h2><p>先来说结论，通过测试用例我们可以简单验证以上几种循环依赖的处理策略：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 测试构造器注入循环依赖(单例）</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Test</span>(expected = BeanCreationException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">void</span> <span class="title">testCircleRefByConstructor</span>() </span>&#123;</span><br><span class="line">      BeanFactory beanFactory = <span class="keyword">new</span> XmlBeanFactory(<span class="keyword">new</span> ClassPathResource(<span class="string">"circle.xml"</span>));</span><br><span class="line">      TestA testA = (TestA) beanFactory.getBean(<span class="string">"testA"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 测试构造器注入循环依赖(prototype类型）</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Test</span>(expected = BeanCreationException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">void</span> <span class="title">testCircleRefByConstructorForPrototype</span>() </span>&#123;</span><br><span class="line">      BeanFactory beanFactory = <span class="keyword">new</span> XmlBeanFactory(<span class="keyword">new</span> ClassPathResource(<span class="string">"circle.xml"</span>));</span><br><span class="line">      TestA testA = (TestA) beanFactory.getBean(<span class="string">"testA0"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 测试属性注入循环依赖（单例）</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testCircleRefBySetter</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      BeanFactory beanFactory = <span class="keyword">new</span> XmlBeanFactory(<span class="keyword">new</span> ClassPathResource(<span class="string">"circle.xml"</span>));</span><br><span class="line">      TestA testA = (TestA) beanFactory.getBean(<span class="string">"testA1"</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 测试的属性注入循环依赖（prototype类型）</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Test</span>(expected = BeanCreationException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">void</span> <span class="title">testPrototypeRefBySetter</span>() </span>&#123;</span><br><span class="line">      BeanFactory beanFactory = <span class="keyword">new</span> XmlBeanFactory(<span class="keyword">new</span> ClassPathResource(<span class="string">"circle.xml"</span>));</span><br><span class="line">      TestA testA = (TestA) beanFactory.getBean(<span class="string">"testA2"</span>);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">
+  /**
+     * 测试构造器注入循环依赖(单例）
+     */
+    @Test(expected = BeanCreationException.class)
+    public void testCircleRefByConstructor() {
+        BeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource(&quot;circle.xml&quot;));
+        TestA testA = (TestA) beanFactory.getBean(&quot;testA&quot;);
+    }
 
+    /**
+     * 测试构造器注入循环依赖(prototype类型）
+     */
+    @Test(expected = BeanCreationException.class)
+    public void testCircleRefByConstructorForPrototype() {
+        BeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource(&quot;circle.xml&quot;));
+        TestA testA = (TestA) beanFactory.getBean(&quot;testA0&quot;);
+    }
+
+    /**
+     * 测试属性注入循环依赖（单例）
+     */
+    @Test
+    public void testCircleRefBySetter() {
+        BeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource(&quot;circle.xml&quot;));
+        TestA testA = (TestA) beanFactory.getBean(&quot;testA1&quot;);
+    }
+
+
+    /**
+     * 测试的属性注入循环依赖（prototype类型）
+     */
+    @Test(expected = BeanCreationException.class)
+    public void testPrototypeRefBySetter() {
+        BeanFactory beanFactory = new XmlBeanFactory(new ClassPathResource(&quot;circle.xml&quot;));
+        TestA testA = (TestA) beanFactory.getBean(&quot;testA2&quot;);
+    }</code></pre>
 <p>本文的测试用例代码可以移步<a href="https://github.com/duval1024/spring-tool/blob/master/spring-learn/src/test/java/org/demo/BeanFactoryTest.java" target="_blank" rel="noopener">spring-learn仓库</a></p>
 <p>测试结果表明：<strong>只有单例模式下通过属性注入才能够实现循环依赖</strong>，其他情况下都将抛出以下异常BeanCreationException。</p>
 <h2 id="源码实现"><a href="#源码实现" class="headerlink" title="源码实现"></a>源码实现</h2><h3 id="调用时序图"><a href="#调用时序图" class="headerlink" title="调用时序图"></a>调用时序图</h3><p>我们从上边的测试用例出发分析源码实现，主要涉及的类包括XmlBeanFactory及其父类AbstractBeanFactory，和DefaultSingletonBeanRegistry以及它的父类AbstractAutowireCapableBeanFactory。核心的方法如下时序图：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80%20Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8%2Fspring-bean-%E5%8A%A0%E8%BD%BD%E6%97%B6%E5%BA%8F%E5%9B%BE.png" alt="spring-bean-加载时序图.png"></p>
 <p>读者可以沿着这个时序图的思路去阅读下bean初始化构建的源码。</p>
 <h3 id="检查缓存的单例"><a href="#检查缓存的单例" class="headerlink" title="检查缓存的单例"></a>检查缓存的单例</h3><p>我们直接从AbstractBeanFactory#doGetBean开始深入。这个方法一开始先调用getSingleton(beanName)检查缓存里是否有名为name的单例Bean缓存。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> &lt;T&gt; <span class="function">T <span class="title">doGetBean</span><span class="params">( String name, @Nullable Class&lt;T&gt; requiredType, @Nullable Object[] args, <span class="keyword">boolean</span> typeCheckOnly)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">      </span><br><span class="line">  String beanName = transformedBeanName(name);</span><br><span class="line">  Object bean;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取已经注册的单例bean实例</span></span><br><span class="line">  Object sharedInstance = getSingleton(beanName);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">protected &lt;T&gt; T doGetBean( String name, @Nullable Class&lt;T&gt; requiredType, @Nullable Object[] args, boolean typeCheckOnly)
+            throws BeansException {
+
+  String beanName = transformedBeanName(name);
+  Object bean;
+
+  // 获取已经注册的单例bean实例
+  Object sharedInstance = getSingleton(beanName);
+
+  // ...
+
+}
+</code></pre>
 <p>注意getSingleton(beanName)默认传入的allowEarlyReference参数为true。EarlyReference（早期引用）其实就是spring将还没有初始化完毕的单例bean放进缓存的bean引用，当发生循环依赖的时候，可以直接引用这个早期引用，而不会发生死循环不断地进行bean初始化。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Object <span class="title">getSingleton</span><span class="params">(String beanName)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> getSingleton(beanName, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">getSingleton</span><span class="params">(String beanName, <span class="keyword">boolean</span> allowEarlyReference)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 从singletonObjects获取已经初始化完毕的单例对象</span></span><br><span class="line">  Object singletonObject = <span class="keyword">this</span>.singletonObjects.get(beanName);</span><br><span class="line">  <span class="comment">// 判断该bean是不是正在初始化的单例bean</span></span><br><span class="line">  <span class="keyword">if</span> (singletonObject == <span class="keyword">null</span> &amp;&amp; isSingletonCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>.singletonObjects) &#123;</span><br><span class="line">      <span class="comment">// 从earlySingletonObjects中获取单例bean</span></span><br><span class="line">      singletonObject = <span class="keyword">this</span>.earlySingletonObjects.get(beanName);</span><br><span class="line">      <span class="keyword">if</span> (singletonObject == <span class="keyword">null</span> &amp;&amp; allowEarlyReference) &#123;</span><br><span class="line">        <span class="comment">// 从singletonFactories缓存里获取单例工厂对象</span></span><br><span class="line">        ObjectFactory&lt;?&gt; singletonFactory = <span class="keyword">this</span>.singletonFactories.get(beanName);</span><br><span class="line">        <span class="keyword">if</span> (singletonFactory != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="comment">// 通过单例工厂对象中获取早期单例bean对象，并缓存到earlySingletonObjects中</span></span><br><span class="line">          singletonObject = singletonFactory.getObject();</span><br><span class="line">          <span class="keyword">this</span>.earlySingletonObjects.put(beanName, singletonObject);</span><br><span class="line">          <span class="keyword">this</span>.singletonFactories.remove(beanName);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> singletonObject;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isSingletonCurrentlyInCreation</span><span class="params">(String beanName)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.singletonsCurrentlyInCreation.contains(beanName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Override
+@Nullable
+public Object getSingleton(String beanName) {
+  return getSingleton(beanName, true);
+}
+
+@Nullable
+protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+  // 从singletonObjects获取已经初始化完毕的单例对象
+  Object singletonObject = this.singletonObjects.get(beanName);
+  // 判断该bean是不是正在初始化的单例bean
+  if (singletonObject == null &amp;&amp; isSingletonCurrentlyInCreation(beanName)) {
+    synchronized (this.singletonObjects) {
+      // 从earlySingletonObjects中获取单例bean
+      singletonObject = this.earlySingletonObjects.get(beanName);
+      if (singletonObject == null &amp;&amp; allowEarlyReference) {
+        // 从singletonFactories缓存里获取单例工厂对象
+        ObjectFactory&lt;?&gt; singletonFactory = this.singletonFactories.get(beanName);
+        if (singletonFactory != null) {
+          // 通过单例工厂对象中获取早期单例bean对象，并缓存到earlySingletonObjects中
+          singletonObject = singletonFactory.getObject();
+          this.earlySingletonObjects.put(beanName, singletonObject);
+          this.singletonFactories.remove(beanName);
+        }
+      }
+    }
+  }
+  return singletonObject;
+}
+
+public boolean isSingletonCurrentlyInCreation(String beanName) {
+  return this.singletonsCurrentlyInCreation.contains(beanName);
+}
+</code></pre>
 <p>总结下，getSingleton的流程就是：</p>
 <ul>
 <li>如果该单例已经初始化完毕，直接返回；</li>
@@ -341,31 +479,155 @@
 </ul>
 <p>这里先记住这个几个缓存很重要，尤其关注singletonFactories，下文会用到它。</p>
 <h3 id="检查prototype循环依赖"><a href="#检查prototype循环依赖" class="headerlink" title="检查prototype循环依赖"></a>检查prototype循环依赖</h3><p>上述检查单例如果返回null，则会进入Prototype的循环依赖检测：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Object sharedInstance = getSingleton(beanName);</span><br><span class="line"><span class="keyword">if</span> (sharedInstance != <span class="keyword">null</span> &amp;&amp; args == <span class="keyword">null</span>) &#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="comment">// prototype循环依赖检测</span></span><br><span class="line">  <span class="keyword">if</span> (isPrototypeCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCurrentlyInCreationException(beanName);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">Object sharedInstance = getSingleton(beanName);
+if (sharedInstance != null &amp;&amp; args == null) {
+  // ...
+} else {
+  // prototype循环依赖检测
+  if (isPrototypeCurrentlyInCreation(beanName)) {
+    throw new BeanCurrentlyInCreationException(beanName);
+  }
+  // ...
+}         </code></pre>
 <p>这里检查到该bean是prototype，而且处于构建中状态，则意味着形成了循环依赖，直接抛异常终止初始化过程。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">isPrototypeCurrentlyInCreation</span><span class="params">(String beanName)</span> </span>&#123;</span><br><span class="line">  Object curVal = <span class="keyword">this</span>.prototypesCurrentlyInCreation.get();</span><br><span class="line">  <span class="keyword">return</span> (curVal != <span class="keyword">null</span> &amp;&amp;</span><br><span class="line">      (curVal.equals(beanName) || (curVal <span class="keyword">instanceof</span> Set &amp;&amp; ((Set&lt;?&gt;) curVal).contains(beanName))));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">protected boolean isPrototypeCurrentlyInCreation(String beanName) {
+  Object curVal = this.prototypesCurrentlyInCreation.get();
+  return (curVal != null &amp;&amp;
+      (curVal.equals(beanName) || (curVal instanceof Set &amp;&amp; ((Set&lt;?&gt;) curVal).contains(beanName))));
+}</code></pre>
 <p>检查方法很简单，通过名字相同来判断是否为同一个bean。注意因为是prototype，所以缓存字段prototypesCurrentlyInCreation可能为Set，包含多个bean实例。</p>
 <p>因此我们知道，<strong>prototype的bean无论是构造器或者属性注入，都不允许实现循环依赖</strong>。</p>
 <h3 id="构建不同类型的实例"><a href="#构建不同类型的实例" class="headerlink" title="构建不同类型的实例"></a>构建不同类型的实例</h3><p>根据bean类型，分别有各自的构建类型，分为单例、prototype和其他类型三种情况：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//单例</span></span><br><span class="line"><span class="keyword">if</span> (mbd.isSingleton()) &#123;</span><br><span class="line">  sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">      <span class="comment">// Explicitly remove instance from singleton cache: It might have been put there</span></span><br><span class="line">      <span class="comment">// eagerly by the creation process, to allow for circular reference resolution.</span></span><br><span class="line">      <span class="comment">// Also remove any beans that received a temporary reference to the bean.</span></span><br><span class="line">      destroySingleton(beanName);</span><br><span class="line">      <span class="keyword">throw</span> ex;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// prototype类型</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (mbd.isPrototype()) &#123;</span><br><span class="line">  <span class="comment">// It's a prototype -&gt; create a new instance.</span></span><br><span class="line">  Object prototypeInstance = <span class="keyword">null</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    beforePrototypeCreation(beanName);</span><br><span class="line">    prototypeInstance = createBean(beanName, mbd, args);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">finally</span> &#123;</span><br><span class="line">    afterPrototypeCreation(beanName);</span><br><span class="line">  &#125;</span><br><span class="line">  bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 其他类型</span></span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">  String scopeName = mbd.getScope();</span><br><span class="line">  <span class="keyword">if</span> (!StringUtils.hasLength(scopeName)) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"No scope name defined for bean ´"</span> + beanName + <span class="string">"'"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  Scope scope = <span class="keyword">this</span>.scopes.get(scopeName);</span><br><span class="line">  <span class="keyword">if</span> (scope == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"No Scope registered for scope name '"</span> + scopeName + <span class="string">"'"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    Object scopedInstance = scope.get(beanName, () -&gt; &#123;</span><br><span class="line">      beforePrototypeCreation(beanName);</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">finally</span> &#123;</span><br><span class="line">        afterPrototypeCreation(beanName);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (IllegalStateException ex) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCreationException(beanName,</span><br><span class="line">        <span class="string">"Scope '"</span> + scopeName + <span class="string">"' is not active for the current thread; consider "</span> +</span><br><span class="line">        <span class="string">"defining a scoped proxy for this bean if you intend to refer to it from a singleton"</span>,</span><br><span class="line">        ex);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">//单例
+if (mbd.isSingleton()) {
+  sharedInstance = getSingleton(beanName, () -&gt; {
+    try {
+      return createBean(beanName, mbd, args);
+    }
+    catch (BeansException ex) {
+      // Explicitly remove instance from singleton cache: It might have been put there
+      // eagerly by the creation process, to allow for circular reference resolution.
+      // Also remove any beans that received a temporary reference to the bean.
+      destroySingleton(beanName);
+      throw ex;
+    }
+  });
+  bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
+}
+// prototype类型
+else if (mbd.isPrototype()) {
+  // It&#39;s a prototype -&gt; create a new instance.
+  Object prototypeInstance = null;
+  try {
+    beforePrototypeCreation(beanName);
+    prototypeInstance = createBean(beanName, mbd, args);
+  }
+  finally {
+    afterPrototypeCreation(beanName);
+  }
+  bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
+}
+// 其他类型
+else {
+  String scopeName = mbd.getScope();
+  if (!StringUtils.hasLength(scopeName)) {
+    throw new IllegalStateException(&quot;No scope name defined for bean ´&quot; + beanName + &quot;&#39;&quot;);
+  }
+  Scope scope = this.scopes.get(scopeName);
+  if (scope == null) {
+    throw new IllegalStateException(&quot;No Scope registered for scope name &#39;&quot; + scopeName + &quot;&#39;&quot;);
+  }
+  try {
+    Object scopedInstance = scope.get(beanName, () -&gt; {
+      beforePrototypeCreation(beanName);
+      try {
+        return createBean(beanName, mbd, args);
+      }
+      finally {
+        afterPrototypeCreation(beanName);
+      }
+    });
+    bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
+  }
+  catch (IllegalStateException ex) {
+    throw new BeanCreationException(beanName,
+        &quot;Scope &#39;&quot; + scopeName + &quot;&#39; is not active for the current thread; consider &quot; +
+        &quot;defining a scoped proxy for this bean if you intend to refer to it from a singleton&quot;,
+        ex);
+  }
+}</code></pre>
 <p>值得注意的是构建实例前，spring都会在缓存里标记该bean正常构建中。</p>
 <p>比如单例类型在构建前会调用beforeSingletonCreation(beanName),该方法会把该beanName加入缓存中。在前一个章节 <em>《检查缓存的单例》</em> 中会使用这里的缓存来判断这个bean是否处于单例构建状态。注意这个方法，如果缓存里边已存在该bean，会抛出BeanCurrentlyInCreationException异常。<strong>这个异常正是在构造器循环依赖（单例）的时候抛出。</strong></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">beforeSingletonCreation</span><span class="params">(String beanName)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!<span class="keyword">this</span>.inCreationCheckExclusions.contains(beanName) &amp;&amp; !<span class="keyword">this</span>.singletonsCurrentlyInCreation.add(beanName)) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BeanCurrentlyInCreationException(beanName);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">protected void beforeSingletonCreation(String beanName) {
+  if (!this.inCreationCheckExclusions.contains(beanName) &amp;&amp; !this.singletonsCurrentlyInCreation.add(beanName)) {
+    throw new BeanCurrentlyInCreationException(beanName);
+  }
+}</code></pre>
 <p>而prototype以及其他类型调用的是beforePrototypeCreation(beanName)，同样也是将beanName加入缓存：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">beforePrototypeCreation</span><span class="params">(String beanName)</span> </span>&#123;</span><br><span class="line">  Object curVal = <span class="keyword">this</span>.prototypesCurrentlyInCreation.get();</span><br><span class="line">  <span class="keyword">if</span> (curVal == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>.prototypesCurrentlyInCreation.set(beanName);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> (curVal <span class="keyword">instanceof</span> String) &#123;</span><br><span class="line">    Set&lt;String&gt; beanNameSet = <span class="keyword">new</span> HashSet&lt;&gt;(<span class="number">2</span>);</span><br><span class="line">    beanNameSet.add((String) curVal);</span><br><span class="line">    beanNameSet.add(beanName);</span><br><span class="line">    <span class="keyword">this</span>.prototypesCurrentlyInCreation.set(beanNameSet);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    Set&lt;String&gt; beanNameSet = (Set&lt;String&gt;) curVal;</span><br><span class="line">    beanNameSet.add(beanName);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">protected void beforePrototypeCreation(String beanName) {
+  Object curVal = this.prototypesCurrentlyInCreation.get();
+  if (curVal == null) {
+    this.prototypesCurrentlyInCreation.set(beanName);
+  }
+  else if (curVal instanceof String) {
+    Set&lt;String&gt; beanNameSet = new HashSet&lt;&gt;(2);
+    beanNameSet.add((String) curVal);
+    beanNameSet.add(beanName);
+    this.prototypesCurrentlyInCreation.set(beanNameSet);
+  }
+  else {
+    Set&lt;String&gt; beanNameSet = (Set&lt;String&gt;) curVal;
+    beanNameSet.add(beanName);
+  }
+}</code></pre>
 <p>这里用到的缓存prototypesCurrentlyInCreation，也正好呼应了是前一章 <em>《检查prototype循环依赖》</em>。</p>
 <p>其他类型的bean和prototype类型相同。</p>
 <p>因此，spring在构建bean之前都会在缓存里标记该bean处于构建中，所以当发生循环依赖的时候可以快速感知到。</p>
 <h3 id="单例对象的早期引用"><a href="#单例对象的早期引用" class="headerlink" title="单例对象的早期引用"></a>单例对象的早期引用</h3><p>接上文，如果是单例对象，会调用匿名函数新建createBean进行单例bean构建：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (mbd.isSingleton()) &#123;</span><br><span class="line">  sharedInstance = getSingleton(beanName, () -&gt; &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> createBean(beanName, mbd, args);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">      <span class="comment">// Explicitly remove instance from singleton cache: It might have been put there</span></span><br><span class="line">      <span class="comment">// eagerly by the creation process, to allow for circular reference resolution.</span></span><br><span class="line">      <span class="comment">// Also remove any beans that received a temporary reference to the bean.</span></span><br><span class="line">      destroySingleton(beanName);</span><br><span class="line">      <span class="keyword">throw</span> ex;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">if (mbd.isSingleton()) {
+  sharedInstance = getSingleton(beanName, () -&gt; {
+    try {
+      return createBean(beanName, mbd, args);
+    }
+    catch (BeansException ex) {
+      // Explicitly remove instance from singleton cache: It might have been put there
+      // eagerly by the creation process, to allow for circular reference resolution.
+      // Also remove any beans that received a temporary reference to the bean.
+      destroySingleton(beanName);
+      throw ex;
+    }
+  });
+}</code></pre>
 <p>createBean只是做一些构造前的准备，实际的构建过程在doCreateBean中。这很符合spring一贯的命名风格：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">doCreateBean</span><span class="params">(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)</span> <span class="keyword">throws</span> BeanCreationException </span>&#123;</span><br><span class="line">  <span class="comment">/// ...</span></span><br><span class="line">  <span class="keyword">if</span> (instanceWrapper == <span class="keyword">null</span>) &#123;</span><br><span class="line">    instanceWrapper = createBeanInstance(beanName, mbd, args);</span><br><span class="line">  &#125;</span><br><span class="line">  Object bean = instanceWrapper.getWrappedInstance();</span><br><span class="line">  <span class="comment">/// ...</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Eagerly cache singletons to be able to resolve circular references</span></span><br><span class="line">  <span class="comment">// even when triggered by lifecycle interfaces like BeanFactoryAware.</span></span><br><span class="line">  <span class="keyword">boolean</span> earlySingletonExposure = (mbd.isSingleton() &amp;&amp; <span class="keyword">this</span>.allowCircularReferences &amp;&amp;</span><br><span class="line">      isSingletonCurrentlyInCreation(beanName));</span><br><span class="line">  <span class="keyword">if</span> (earlySingletonExposure) &#123;</span><br><span class="line">    <span class="keyword">if</span> (logger.isTraceEnabled()) &#123;</span><br><span class="line">      logger.trace(<span class="string">"Eagerly caching bean '"</span> + beanName +</span><br><span class="line">          <span class="string">"' to allow for resolving potential circular references"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    addSingletonFactory(beanName, () -&gt; getEarlyBeanReference(beanName, mbd, bean));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Initialize the bean instance.</span></span><br><span class="line">  Object exposedObject = bean;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    populateBean(beanName, mbd, instanceWrapper);</span><br><span class="line">    exposedObject = initializeBean(beanName, exposedObject, mbd);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">protected Object doCreateBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) throws BeanCreationException {
+  /// ...
+  if (instanceWrapper == null) {
+    instanceWrapper = createBeanInstance(beanName, mbd, args);
+  }
+  Object bean = instanceWrapper.getWrappedInstance();
+  /// ...
 
+  // Eagerly cache singletons to be able to resolve circular references
+  // even when triggered by lifecycle interfaces like BeanFactoryAware.
+  boolean earlySingletonExposure = (mbd.isSingleton() &amp;&amp; this.allowCircularReferences &amp;&amp;
+      isSingletonCurrentlyInCreation(beanName));
+  if (earlySingletonExposure) {
+    if (logger.isTraceEnabled()) {
+      logger.trace(&quot;Eagerly caching bean &#39;&quot; + beanName +
+          &quot;&#39; to allow for resolving potential circular references&quot;);
+    }
+    addSingletonFactory(beanName, () -&gt; getEarlyBeanReference(beanName, mbd, bean));
+  }
+
+  // Initialize the bean instance.
+  Object exposedObject = bean;
+  try {
+    populateBean(beanName, mbd, instanceWrapper);
+    exposedObject = initializeBean(beanName, exposedObject, mbd);
+  }
+
+  /// ...
+}</code></pre>
 <p>doCreateBean比较长，上边只保留核心代码。可以看到主要包含三个步骤：</p>
 <ul>
 <li>1.调用createBeanInstance初始化一个半成品的bean，该方法中会寻找满足条件的构造函数进行bean的初始化；</li>
@@ -374,12 +636,41 @@
 </ul>
 <p>扼要地讲，步骤一处理了构造器注入；步骤二进行了半成品bean的早期引用曝光；步骤三进行了属性注入！</p>
 <p>我们来看看早期引用曝光的逻辑：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">addSingletonFactory</span><span class="params">(String beanName, ObjectFactory&lt;?&gt; singletonFactory)</span> </span>&#123;</span><br><span class="line">  Assert.notNull(singletonFactory, <span class="string">"Singleton factory must not be null"</span>);</span><br><span class="line">  <span class="keyword">synchronized</span> (<span class="keyword">this</span>.singletonObjects) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">this</span>.singletonObjects.containsKey(beanName)) &#123;</span><br><span class="line">      <span class="keyword">this</span>.singletonFactories.put(beanName, singletonFactory);</span><br><span class="line">      <span class="keyword">this</span>.earlySingletonObjects.remove(beanName);</span><br><span class="line">      <span class="keyword">this</span>.registeredSingletons.add(beanName);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">protected void addSingletonFactory(String beanName, ObjectFactory&lt;?&gt; singletonFactory) {
+  Assert.notNull(singletonFactory, &quot;Singleton factory must not be null&quot;);
+  synchronized (this.singletonObjects) {
+    if (!this.singletonObjects.containsKey(beanName)) {
+      this.singletonFactories.put(beanName, singletonFactory);
+      this.earlySingletonObjects.remove(beanName);
+      this.registeredSingletons.add(beanName);
+    }
+  }
+}</code></pre>
 <p>我们看到singletonFactories中会缓存一个工厂对象ObjectFactory，而这个ObjectFactory的getObject方法正是可以返回一个处于构建中半成品bean对象引用。</p>
 <p>我们在前边已经讲到，单例对象构建中如果发现出现循环依赖，会尝试从单例的工厂对象中获得一个早期bean对象，并返回，从而避免循环依赖出现死循环。我们再来回忆下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Object <span class="title">getSingleton</span><span class="params">(String beanName, <span class="keyword">boolean</span> allowEarlyReference)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// 从singletonObjects获取已经初始化完毕的单例对象</span></span><br><span class="line">  Object singletonObject = <span class="keyword">this</span>.singletonObjects.get(beanName);</span><br><span class="line">  <span class="comment">// 判断该bean是不是正在初始化的单例bean</span></span><br><span class="line">  <span class="keyword">if</span> (singletonObject == <span class="keyword">null</span> &amp;&amp; isSingletonCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>.singletonObjects) &#123;</span><br><span class="line">      <span class="comment">// 从earlySingletonObjects中获取单例bean</span></span><br><span class="line">      singletonObject = <span class="keyword">this</span>.earlySingletonObjects.get(beanName);</span><br><span class="line">      <span class="keyword">if</span> (singletonObject == <span class="keyword">null</span> &amp;&amp; allowEarlyReference) &#123;</span><br><span class="line">        <span class="comment">// 从singletonFactories缓存里获取单例工厂对象</span></span><br><span class="line">        ObjectFactory&lt;?&gt; singletonFactory = <span class="keyword">this</span>.singletonFactories.get(beanName);</span><br><span class="line">        <span class="keyword">if</span> (singletonFactory != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="comment">// 通过单例工厂对象中获取早期单例bean对象，并缓存到earlySingletonObjects中</span></span><br><span class="line">          singletonObject = singletonFactory.getObject();</span><br><span class="line">          <span class="keyword">this</span>.earlySingletonObjects.put(beanName, singletonObject);</span><br><span class="line">          <span class="keyword">this</span>.singletonFactories.remove(beanName);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> singletonObject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">@Nullable
+protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+  // 从singletonObjects获取已经初始化完毕的单例对象
+  Object singletonObject = this.singletonObjects.get(beanName);
+  // 判断该bean是不是正在初始化的单例bean
+  if (singletonObject == null &amp;&amp; isSingletonCurrentlyInCreation(beanName)) {
+    synchronized (this.singletonObjects) {
+      // 从earlySingletonObjects中获取单例bean
+      singletonObject = this.earlySingletonObjects.get(beanName);
+      if (singletonObject == null &amp;&amp; allowEarlyReference) {
+        // 从singletonFactories缓存里获取单例工厂对象
+        ObjectFactory&lt;?&gt; singletonFactory = this.singletonFactories.get(beanName);
+        if (singletonFactory != null) {
+          // 通过单例工厂对象中获取早期单例bean对象，并缓存到earlySingletonObjects中
+          singletonObject = singletonFactory.getObject();
+          this.earlySingletonObjects.put(beanName, singletonObject);
+          this.singletonFactories.remove(beanName);
+        }
+      }
+    }
+  }
+  return singletonObject;
+}</code></pre>
 <p>因此看到这里你就应该明白，<strong>单例对象的构造器注入没有进行早期引用曝光，所以是不能实现循环依赖的！但是单例对象的属性注入是先进行了早期引用曝光，在进行属性注入，所以是支持循环依赖的！</strong></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文主要是探讨spring对循环依赖的处理策略和实现原理。我们认识到spring只支持单例对象的属性注入循环依赖，而其他类型的循环依赖都不支持。</p>
 
@@ -421,12 +712,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -438,7 +729,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -539,10 +830,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -622,17 +913,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 

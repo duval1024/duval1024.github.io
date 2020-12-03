@@ -7,6 +7,15 @@
 <meta name="generator" content="Hexo 4.2.0">
 <meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
 <meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -55,14 +64,14 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Apollo源码学习——防御性编程">
 <meta property="og:url" content="https://blog.duval.top/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/index.html">
-<meta property="og:site_name" content="Duval">
+<meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="Apollo是国内开源社区里质量非常高的一个分布式配置服务。最近我仔细看了一遍Apollo的源码，摘录并总结一些值得学习借鉴的代码开发经验。本文主要介绍Apollo里一些值得学习的防御性编程技巧。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-11-18T14:00:40.000Z">
 <meta property="article:modified_time" content="2020-11-19T08:52:46.565Z">
-<meta property="article:author" content="Duval">
-<meta property="article:tag" content="Apollo">
+<meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="源码分析">
+<meta property="article:tag" content="Apollo">
 <meta name="twitter:card" content="summary">
 
 <link rel="canonical" href="https://blog.duval.top/2020/11/18/Apollo%E6%BA%90%E7%A0%81%E8%AF%A6%E8%A7%A3%E2%80%94%E2%80%94%E9%98%B2%E5%BE%A1%E6%80%A7%E7%BC%96%E7%A8%8B/">
@@ -77,7 +86,7 @@
   };
 </script>
 
-  <title>Apollo源码学习——防御性编程 | Duval</title>
+  <title>Apollo源码学习——防御性编程 | 杜瓦尔</title>
   
 
 
@@ -121,11 +130,10 @@
     <div>
       <a href="/" class="brand" rel="start">
         <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Duval</span>
+        <span class="site-title">杜瓦尔</span>
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">技术与生活</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -217,12 +225,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="Duval">
-      <meta itemprop="description" content="学习技术，记录生活">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Duval">
+      <meta itemprop="name" content="杜瓦尔">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -284,7 +292,7 @@
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
+              <span>11 分钟</span>
             </span>
 
         </div>
@@ -301,25 +309,192 @@
 
 <h2 id="入参检查"><a href="#入参检查" class="headerlink" title="入参检查"></a>入参检查</h2><p>Apollo内部的controller层和service层都有大量的入参校验，将大部分的潜在问题请求都拦截下来。</p>
 <ul>
-<li><p>model入参检查<br>检查请求的入参是否有效，无效直接抛出异常：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!Objects.equals(appId, appNamespaceDTO.getAppId())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"AppId not equal. AppId in path = %s, AppId in payload = %s"</span>, appId,</span><br><span class="line">                                                appNamespaceDTO.getAppId()));</span><br><span class="line">&#125;</span><br><span class="line">RequestPrecondition.checkArgumentsNotEmpty(appNamespaceDTO.getAppId(), appNamespaceDTO.getName(),</span><br><span class="line">                                            appNamespaceDTO.getFormat(), appNamespaceDTO.getDataChangeCreatedBy());</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!InputValidator.isValidAppNamespace(appNamespaceDTO.getName())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"Invalid Namespace format: %s"</span>,</span><br><span class="line">                                                InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + <span class="string">" &amp; "</span></span><br><span class="line">                                                + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!ConfigFileFormat.isValidFormat(appNamespaceDTO.getFormat())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"Invalid namespace format. format = %s"</span>, appNamespaceDTO.getFormat()));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">String operator = appNamespaceDTO.getDataChangeCreatedBy();</span><br><span class="line"><span class="keyword">if</span> (userService.findByUserId(operator) == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(String.format(<span class="string">"Illegal user. user = %s"</span>, operator));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>service入参检查<br>同样service层也有很多条件检查，比如创建namespace前，先检查app是否存在：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> AppNamespace <span class="title">createAppNamespaceInLocal</span><span class="params">(AppNamespace appNamespace, <span class="keyword">boolean</span> appendNamespacePrefix)</span> </span>&#123;</span><br><span class="line">  String appId = appNamespace.getAppId();</span><br><span class="line"></span><br><span class="line">  <span class="comment">//add app org id as prefix</span></span><br><span class="line">  App app = appService.load(appId);</span><br><span class="line">  <span class="keyword">if</span> (app == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(<span class="string">"App not exist. AppId = "</span> + appId);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//....</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<li>model入参检查<br>检查请求的入参是否有效，无效直接抛出异常：<pre><code class="java">if (!Objects.equals(appId, appNamespaceDTO.getAppId())) {
+  throw new BadRequestException(String.format(&quot;AppId not equal. AppId in path = %s, AppId in payload = %s&quot;, appId,
+                                              appNamespaceDTO.getAppId()));
+}
+RequestPrecondition.checkArgumentsNotEmpty(appNamespaceDTO.getAppId(), appNamespaceDTO.getName(),
+                                          appNamespaceDTO.getFormat(), appNamespaceDTO.getDataChangeCreatedBy());
+</code></pre>
 </li>
 </ul>
-<h2 id="数据库表字段初始化"><a href="#数据库表字段初始化" class="headerlink" title="数据库表字段初始化"></a>数据库表字段初始化</h2><p>包含自增主键字段或者其他默认字段的表，保存的时候应初始化这些字段。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Cluster <span class="title">saveWithoutInstanceOfAppNamespaces</span><span class="params">(Cluster entity)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!isClusterNameUnique(entity.getAppId(), entity.getName())) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> BadRequestException(<span class="string">"cluster not unique"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  entity.setId(<span class="number">0</span>);<span class="comment">//protection</span></span><br><span class="line">  Cluster cluster = clusterRepository.save(entity);</span><br><span class="line"></span><br><span class="line">  auditService.audit(Cluster<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>(), <span class="title">cluster</span>.<span class="title">getId</span>(), <span class="title">Audit</span>.<span class="title">OP</span>.<span class="title">INSERT</span>,</span></span><br><span class="line"><span class="class">                     <span class="title">cluster</span>.<span class="title">getDataChangeCreatedBy</span>())</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> cluster;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>if (!InputValidator.isValidAppNamespace(appNamespaceDTO.getName())) {<br>    throw new BadRequestException(String.format(“Invalid Namespace format: %s”,<br>                                                InputValidator.INVALID_CLUSTER_NAMESPACE_MESSAGE + “ &amp; “<br>                                                + InputValidator.INVALID_NAMESPACE_NAMESPACE_MESSAGE));<br>}</p>
+<p>if (!ConfigFileFormat.isValidFormat(appNamespaceDTO.getFormat())) {<br>    throw new BadRequestException(String.format(“Invalid namespace format. format = %s”, appNamespaceDTO.getFormat()));<br>}</p>
+<p>String operator = appNamespaceDTO.getDataChangeCreatedBy();<br>if (userService.findByUserId(operator) == null) {<br>    throw new BadRequestException(String.format(“Illegal user. user = %s”, operator));<br>}</p>
+<pre><code>
+- service入参检查
+同样service层也有很多条件检查，比如创建namespace前，先检查app是否存在：
+```java
+  @Transactional
+  public AppNamespace createAppNamespaceInLocal(AppNamespace appNamespace, boolean appendNamespacePrefix) {
+    String appId = appNamespace.getAppId();
 
+    //add app org id as prefix
+    App app = appService.load(appId);
+    if (app == null) {
+      throw new BadRequestException(&quot;App not exist. AppId = &quot; + appId);
+    }
+    //....
+  }</code></pre><h2 id="数据库表字段初始化"><a href="#数据库表字段初始化" class="headerlink" title="数据库表字段初始化"></a>数据库表字段初始化</h2><p>包含自增主键字段或者其他默认字段的表，保存的时候应初始化这些字段。</p>
+<pre><code class="java">  @Transactional
+  public Cluster saveWithoutInstanceOfAppNamespaces(Cluster entity) {
+    if (!isClusterNameUnique(entity.getAppId(), entity.getName())) {
+      throw new BadRequestException(&quot;cluster not unique&quot;);
+    }
+    entity.setId(0);//protection
+    Cluster cluster = clusterRepository.save(entity);
+
+    auditService.audit(Cluster.class.getSimpleName(), cluster.getId(), Audit.OP.INSERT,
+                       cluster.getDataChangeCreatedBy());
+
+    return cluster;
+  }
+</code></pre>
 <h2 id="统一异常处理"><a href="#统一异常处理" class="headerlink" title="统一异常处理"></a>统一异常处理</h2><p>很多项目常常在controller、sevice层维护一堆异常码，其实维护起来非常麻烦，代码也不够优雅。又或者在service层或者dao层使用try catch捕获异常进行处理，同样非常恶心繁琐。其实像这种业务系统其实应该使用统一异常处理，Apollo正是如此。其service和controller层出现错误直接抛异常，然后由在 <em>GlobalDefaultExceptionHandler</em> 里进行统一的捕获处理。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerAdvice</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GlobalDefaultExceptionHandler</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> Gson gson = <span class="keyword">new</span> Gson();</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Type mapType = <span class="keyword">new</span> TypeToken&lt;Map&lt;String, Object&gt;&gt;() &#123;</span><br><span class="line">  &#125;.getType();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger logger = LoggerFactory.getLogger(GlobalDefaultExceptionHandler<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//处理系统内置的Exception</span></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(Throwable<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">exception</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">Throwable</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, INTERNAL_SERVER_ERROR, ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(&#123;HttpRequestMethodNotSupportedException<span class="class">.<span class="keyword">class</span>, <span class="title">HttpMediaTypeException</span>.<span class="title">class</span>&#125;)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">badRequest</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>,</span></span><br><span class="line"><span class="class">                                                        <span class="title">ServletException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, BAD_REQUEST, ex, WARN);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(HttpStatusCodeException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">restTemplateException</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>,</span></span><br><span class="line"><span class="class">                                                                   <span class="title">HttpStatusCodeException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, ex.getStatusCode(), ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(AccessDeniedException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">accessDeny</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>,</span></span><br><span class="line"><span class="class">                                                        <span class="title">AccessDeniedException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, FORBIDDEN, ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//处理自定义Exception</span></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(&#123;AbstractApolloHttpException<span class="class">.<span class="keyword">class</span>&#125;)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">badRequest</span>(<span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">AbstractApolloHttpException</span> <span class="title">ex</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, ex.getHttpStatus(), ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(MethodArgumentNotValidException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">handleMethodArgumentNotValidException</span>(</span></span><br><span class="line"><span class="class">      <span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">MethodArgumentNotValidException</span> <span class="title">ex</span></span></span><br><span class="line"><span class="class">  ) </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> Optional&lt;ObjectError&gt; firstError = ex.getBindingResult().getAllErrors().stream().findFirst();</span><br><span class="line">    <span class="keyword">if</span> (firstError.isPresent()) &#123;</span><br><span class="line">      <span class="keyword">final</span> String firstErrorMessage = firstError.get().getDefaultMessage();</span><br><span class="line">      <span class="keyword">return</span> handleError(request, BAD_REQUEST, <span class="keyword">new</span> BadRequestException(firstErrorMessage));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, BAD_REQUEST, ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ExceptionHandler</span>(ConstraintViolationException<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class">  <span class="title">public</span> <span class="title">ResponseEntity</span>&lt;<span class="title">Map</span>&lt;<span class="title">String</span>, <span class="title">Object</span>&gt;&gt; <span class="title">handleConstraintViolationException</span>(</span></span><br><span class="line"><span class="class">      <span class="title">HttpServletRequest</span> <span class="title">request</span>, <span class="title">ConstraintViolationException</span> <span class="title">ex</span></span></span><br><span class="line"><span class="class">  ) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, BAD_REQUEST, <span class="keyword">new</span> BadRequestException(ex.getMessage()));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleError(HttpServletRequest request,</span><br><span class="line">                                                          HttpStatus status, Throwable ex) &#123;</span><br><span class="line">    <span class="keyword">return</span> handleError(request, status, ex, ERROR);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleError(HttpServletRequest request,</span><br><span class="line">                                                          HttpStatus status, Throwable ex, Level logLevel) &#123;</span><br><span class="line">    String message = ex.getMessage();</span><br><span class="line">    printLog(message, ex, logLevel);</span><br><span class="line"></span><br><span class="line">    Map&lt;String, Object&gt; errorAttributes = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">    <span class="keyword">boolean</span> errorHandled = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (ex <span class="keyword">instanceof</span> HttpStatusCodeException) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">//try to extract the original error info if it is thrown from apollo programs, e.g. admin service</span></span><br><span class="line">        errorAttributes = gson.fromJson(((HttpStatusCodeException) ex).getResponseBodyAsString(), mapType);</span><br><span class="line">        status = ((HttpStatusCodeException) ex).getStatusCode();</span><br><span class="line">        errorHandled = <span class="keyword">true</span>;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Throwable th) &#123;</span><br><span class="line">        <span class="comment">//ignore</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!errorHandled) &#123;</span><br><span class="line">      errorAttributes.put(<span class="string">"status"</span>, status.value());</span><br><span class="line">      errorAttributes.put(<span class="string">"message"</span>, message);</span><br><span class="line">      errorAttributes.put(<span class="string">"timestamp"</span>,</span><br><span class="line">          LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));</span><br><span class="line">      errorAttributes.put(<span class="string">"exception"</span>, ex.getClass().getName());</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    HttpHeaders headers = <span class="keyword">new</span> HttpHeaders();</span><br><span class="line">    headers.setContentType(MediaType.APPLICATION_JSON_UTF8);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ResponseEntity&lt;&gt;(errorAttributes, headers, status);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//打印日志, 其中logLevel为日志级别: ERROR/WARN/DEBUG/INFO/TRACE</span></span><br><span class="line">  <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">printLog</span><span class="params">(String message, Throwable ex, Level logLevel)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">switch</span> (logLevel) &#123;</span><br><span class="line">      <span class="keyword">case</span> ERROR:</span><br><span class="line">        logger.error(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> WARN:</span><br><span class="line">        logger.warn(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> DEBUG:</span><br><span class="line">        logger.debug(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> INFO:</span><br><span class="line">        logger.info(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> TRACE:</span><br><span class="line">        logger.trace(message, ex);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Tracer.logError(ex);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@ControllerAdvice
+public class GlobalDefaultExceptionHandler {
+  private Gson gson = new Gson();
+  private static Type mapType = new TypeToken&lt;Map&lt;String, Object&gt;&gt;() {
+  }.getType();
+
+  private static final Logger logger = LoggerFactory.getLogger(GlobalDefaultExceptionHandler.class);
+
+  //处理系统内置的Exception
+  @ExceptionHandler(Throwable.class)
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; exception(HttpServletRequest request, Throwable ex) {
+    return handleError(request, INTERNAL_SERVER_ERROR, ex);
+  }
+
+  @ExceptionHandler({HttpRequestMethodNotSupportedException.class, HttpMediaTypeException.class})
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; badRequest(HttpServletRequest request,
+                                                        ServletException ex) {
+    return handleError(request, BAD_REQUEST, ex, WARN);
+  }
+
+  @ExceptionHandler(HttpStatusCodeException.class)
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; restTemplateException(HttpServletRequest request,
+                                                                   HttpStatusCodeException ex) {
+    return handleError(request, ex.getStatusCode(), ex);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; accessDeny(HttpServletRequest request,
+                                                        AccessDeniedException ex) {
+    return handleError(request, FORBIDDEN, ex);
+  }
+
+  //处理自定义Exception
+  @ExceptionHandler({AbstractApolloHttpException.class})
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; badRequest(HttpServletRequest request, AbstractApolloHttpException ex) {
+    return handleError(request, ex.getHttpStatus(), ex);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleMethodArgumentNotValidException(
+      HttpServletRequest request, MethodArgumentNotValidException ex
+  ) {
+    final Optional&lt;ObjectError&gt; firstError = ex.getBindingResult().getAllErrors().stream().findFirst();
+    if (firstError.isPresent()) {
+      final String firstErrorMessage = firstError.get().getDefaultMessage();
+      return handleError(request, BAD_REQUEST, new BadRequestException(firstErrorMessage));
+    }
+    return handleError(request, BAD_REQUEST, ex);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleConstraintViolationException(
+      HttpServletRequest request, ConstraintViolationException ex
+  ) {
+    return handleError(request, BAD_REQUEST, new BadRequestException(ex.getMessage()));
+  }
+
+  private ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleError(HttpServletRequest request,
+                                                          HttpStatus status, Throwable ex) {
+    return handleError(request, status, ex, ERROR);
+  }
+
+  private ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleError(HttpServletRequest request,
+                                                          HttpStatus status, Throwable ex, Level logLevel) {
+    String message = ex.getMessage();
+    printLog(message, ex, logLevel);
+
+    Map&lt;String, Object&gt; errorAttributes = new HashMap&lt;&gt;();
+    boolean errorHandled = false;
+
+    if (ex instanceof HttpStatusCodeException) {
+      try {
+        //try to extract the original error info if it is thrown from apollo programs, e.g. admin service
+        errorAttributes = gson.fromJson(((HttpStatusCodeException) ex).getResponseBodyAsString(), mapType);
+        status = ((HttpStatusCodeException) ex).getStatusCode();
+        errorHandled = true;
+      } catch (Throwable th) {
+        //ignore
+      }
+    }
+
+    if (!errorHandled) {
+      errorAttributes.put(&quot;status&quot;, status.value());
+      errorAttributes.put(&quot;message&quot;, message);
+      errorAttributes.put(&quot;timestamp&quot;,
+          LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+      errorAttributes.put(&quot;exception&quot;, ex.getClass().getName());
+
+    }
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+    return new ResponseEntity&lt;&gt;(errorAttributes, headers, status);
+  }
+
+  //打印日志, 其中logLevel为日志级别: ERROR/WARN/DEBUG/INFO/TRACE
+  private void printLog(String message, Throwable ex, Level logLevel) {
+    switch (logLevel) {
+      case ERROR:
+        logger.error(message, ex);
+        break;
+      case WARN:
+        logger.warn(message, ex);
+        break;
+      case DEBUG:
+        logger.debug(message, ex);
+        break;
+      case INFO:
+        logger.info(message, ex);
+        break;
+      case TRACE:
+        logger.trace(message, ex);
+        break;
+    }
+
+    Tracer.logError(ex);
+  }
+
+}
+</code></pre>
 <h2 id="数据库逻辑删除"><a href="#数据库逻辑删除" class="headerlink" title="数据库逻辑删除"></a>数据库逻辑删除</h2><p>Apollo所有的实体表都采用逻辑删除，而不是物理删除。这一点在敏感重要数据的删除上其实是很有必要的，当然如果是过期且没有用的数据物理删除倒是无妨。ORM框架一般都支持逻辑删除，比如hibernate中有@SQLDelete和@Where可以非常轻量级实现：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="meta">@Table</span>(name = <span class="string">"Namespace"</span>)</span><br><span class="line"><span class="meta">@SQLDelete</span>(sql = <span class="string">"Update Namespace set isDeleted = 1 where id = ?"</span>)</span><br><span class="line"><span class="meta">@Where</span>(clause = <span class="string">"isDeleted = 0"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Namespace</span> <span class="keyword">extends</span> <span class="title">BaseEntity</span> </span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<pre><code class="java">@Entity
+@Table(name = &quot;Namespace&quot;)
+@SQLDelete(sql = &quot;Update Namespace set isDeleted = 1 where id = ?&quot;)
+@Where(clause = &quot;isDeleted = 0&quot;)
+public class Namespace extends BaseEntity {
+    // ...
+}
+</code></pre>
 <h2 id="数据更新先读后写"><a href="#数据更新先读后写" class="headerlink" title="数据更新先读后写"></a>数据更新先读后写</h2><p>在后台管理系统这种并发量不高的情景下，这种先读后写的事务逻辑还是可取的：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Item <span class="title">delete</span><span class="params">(<span class="keyword">long</span> id, String operator)</span> </span>&#123;</span><br><span class="line">  Item item = itemRepository.findById(id).orElse(<span class="keyword">null</span>);</span><br><span class="line">  <span class="keyword">if</span> (item == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"item not exist. ID:"</span> + id);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  item.setDeleted(<span class="keyword">true</span>);</span><br><span class="line">  item.setDataChangeLastModifiedBy(operator);</span><br><span class="line">  Item deletedItem = itemRepository.save(item);</span><br><span class="line"></span><br><span class="line">  auditService.audit(Item<span class="class">.<span class="keyword">class</span>.<span class="title">getSimpleName</span>(), <span class="title">id</span>, <span class="title">Audit</span>.<span class="title">OP</span>.<span class="title">DELETE</span>, <span class="title">operator</span>)</span>;</span><br><span class="line">  <span class="keyword">return</span> deletedItem;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  @Transactional
+  public Item delete(long id, String operator) {
+    Item item = itemRepository.findById(id).orElse(null);
+    if (item == null) {
+      throw new IllegalArgumentException(&quot;item not exist. ID:&quot; + id);
+    }
 
+    item.setDeleted(true);
+    item.setDataChangeLastModifiedBy(operator);
+    Item deletedItem = itemRepository.save(item);
+
+    auditService.audit(Item.class.getSimpleName(), id, Audit.OP.DELETE, operator);
+    return deletedItem;
+  }</code></pre>
 <h2 id="权限控制"><a href="#权限控制" class="headerlink" title="权限控制"></a>权限控制</h2><h3 id="权限信息保存"><a href="#权限信息保存" class="headerlink" title="权限信息保存"></a>权限信息保存</h3><p>按照我的理解，Apollo的权限模型应该是使用RBAC（Role-Based Access Control）模型。</p>
 <p>具体权限模型请参考<a href="https://www.jianshu.com/p/ce0944b4a903" target="_blank" rel="noopener">《权限系统设计模型分析（DAC，MAC，RBAC，ABAC）》</a> 以及 <a href="https://zhuanlan.zhihu.com/p/70548562" target="_blank" rel="noopener">《【设计权限系统】ACL, DAC, MAC, RBAC, ABAC模型的不同应用场景》</a>，本文不深入探讨。概括来说，绝大多数情境下，RBAC都能胜任。</p>
 <p>具体来看，Apollo使用5张表来实现权限控制系统：Permission、Role、RolePermission、UserRole、User。</p>
@@ -330,15 +505,96 @@
 <li>UserRole保存的是某个用户拥有的角色信息；</li>
 <li>User保存的是用户名和密码信息。</li>
 </ul>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from permission limit 5;</span><br><span class="line">+<span class="comment">----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | PermissionType    | TargetId       | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 | CreateApplication | SystemRole     |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |</span><br><span class="line">|  2 | CreateCluster     | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  3 | AssignRole        | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 | CreateNamespace   | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  5 | ManageAppMaster   | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">+<span class="comment">----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">role</span> <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | RoleName                                    | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 | CreateApplication+SystemRole                |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |</span><br><span class="line">|  2 | Master+my-apollo-demo                       |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  3 | ManageAppMaster+my-apollo-demo              |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 | ModifyNamespace+my-apollo-demo+application  |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  5 | ReleaseNamespace+my-apollo-demo+application |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">+<span class="comment">----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> rolepermission <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | RoleId | PermissionId | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 |      1 |            1 |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |</span><br><span class="line">|  2 |      2 |            2 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  3 |      2 |            3 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 |      2 |            4 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  5 |      3 |            5 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">+<span class="comment">----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> userrole <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">| Id | UserId | RoleId | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |</span><br><span class="line">+<span class="comment">----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">|  1 | apollo |      1 |           | apollo               | 2020-11-09 04:10:13    | apollo                    | 2020-11-09 04:10:13 |</span><br><span class="line">|  2 | root   |      1 |           | apollo               | 2020-11-09 04:44:05    | apollo                    | 2020-11-09 04:44:05 |</span><br><span class="line">|  3 | root   |      2 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |</span><br><span class="line">|  4 | root   |      4 |           | root                 | 2020-11-09 04:45:19    | root                      | 2020-11-09 04:45:19 |</span><br><span class="line">|  5 | root   |      5 |           | root                 | 2020-11-09 04:45:19    | root                      | 2020-11-09 04:45:19 |</span><br><span class="line">+<span class="comment">----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+</span></span><br><span class="line">5 rows in <span class="keyword">set</span> (<span class="number">0.03</span> sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; <span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">Users</span> <span class="keyword">limit</span> <span class="number">5</span>;</span><br><span class="line">+<span class="comment">----+----------+--------------------------------------------------------------+-----------------+---------+</span></span><br><span class="line">| Id | Username | Password                                                     | Email           | Enabled |</span><br><span class="line">+<span class="comment">----+----------+--------------------------------------------------------------+-----------------+---------+</span></span><br><span class="line">|  1 | apollo   | $2a$10$7r20uS.BQ9uBpf3Baj3uQOZvMVvB1RN3PYoKE94gtz2.WAOuiiwXS | apollo@acme.com |       1 |</span><br><span class="line">|  2 | root     | $2a$10$udXyw6b8Ybdbt2oPkSdLi.rw.l0hL5NxgZetWptPefpmdnj8JYNIq | root@itiger.com |       1 |</span><br><span class="line">+<span class="comment">----+----------+--------------------------------------------------------------+-----------------+---------+</span></span><br><span class="line">2 rows in <span class="keyword">set</span> (<span class="number">0.01</span> sec)</span><br></pre></td></tr></table></figure>
+<pre><code class="sql">mysql&gt; select * from permission limit 5;
++----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+| Id | PermissionType    | TargetId       | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |
++----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+|  1 | CreateApplication | SystemRole     |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |
+|  2 | CreateCluster     | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  3 | AssignRole        | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  4 | CreateNamespace   | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  5 | ManageAppMaster   | my-apollo-demo |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
++----+-------------------+----------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+5 rows in set (0.01 sec)
 
+mysql&gt; select * from role limit 5;
++----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+| Id | RoleName                                    | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |
++----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+|  1 | CreateApplication+SystemRole                |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |
+|  2 | Master+my-apollo-demo                       |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  3 | ManageAppMaster+my-apollo-demo              |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  4 | ModifyNamespace+my-apollo-demo+application  |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  5 | ReleaseNamespace+my-apollo-demo+application |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
++----+---------------------------------------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+5 rows in set (0.01 sec)
+
+mysql&gt; select * from rolepermission limit 5;
++----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+| Id | RoleId | PermissionId | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |
++----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+|  1 |      1 |            1 |           | apollo               | 2020-11-09 03:59:20    | apollo                    | 2020-11-09 03:59:20 |
+|  2 |      2 |            2 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  3 |      2 |            3 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  4 |      2 |            4 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  5 |      3 |            5 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
++----+--------+--------------+-----------+----------------------+------------------------+---------------------------+---------------------+
+5 rows in set (0.00 sec)
+
+mysql&gt; select * from userrole limit 5;
++----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+
+| Id | UserId | RoleId | IsDeleted | DataChange_CreatedBy | DataChange_CreatedTime | DataChange_LastModifiedBy | DataChange_LastTime |
++----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+
+|  1 | apollo |      1 |           | apollo               | 2020-11-09 04:10:13    | apollo                    | 2020-11-09 04:10:13 |
+|  2 | root   |      1 |           | apollo               | 2020-11-09 04:44:05    | apollo                    | 2020-11-09 04:44:05 |
+|  3 | root   |      2 |           | root                 | 2020-11-09 04:45:18    | root                      | 2020-11-09 04:45:18 |
+|  4 | root   |      4 |           | root                 | 2020-11-09 04:45:19    | root                      | 2020-11-09 04:45:19 |
+|  5 | root   |      5 |           | root                 | 2020-11-09 04:45:19    | root                      | 2020-11-09 04:45:19 |
++----+--------+--------+-----------+----------------------+------------------------+---------------------------+---------------------+
+5 rows in set (0.03 sec)
+
+mysql&gt; select * from Users limit 5;
++----+----------+--------------------------------------------------------------+-----------------+---------+
+| Id | Username | Password                                                     | Email           | Enabled |
++----+----------+--------------------------------------------------------------+-----------------+---------+
+|  1 | apollo   | $2a$10$7r20uS.BQ9uBpf3Baj3uQOZvMVvB1RN3PYoKE94gtz2.WAOuiiwXS | apollo@acme.com |       1 |
+|  2 | root     | $2a$10$udXyw6b8Ybdbt2oPkSdLi.rw.l0hL5NxgZetWptPefpmdnj8JYNIq | root@itiger.com |       1 |
++----+----------+--------------------------------------------------------------+-----------------+---------+
+2 rows in set (0.01 sec)
+</code></pre>
 <p>通过以上五张表可以非常灵活地保存用户权限信息。</p>
 <h3 id="权限信息检查"><a href="#权限信息检查" class="headerlink" title="权限信息检查"></a>权限信息检查</h3><p>检查入口是在Controller通过注解@PreAuthorize实现：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@PreAuthorize</span>(value = <span class="string">"@permissionValidator.hasCreateNamespacePermission(#appId)"</span>)</span><br><span class="line"><span class="meta">@PostMapping</span>(<span class="string">"/apps/&#123;appId&#125;/namespaces"</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> ResponseEntity&lt;Void&gt; <span class="title">createNamespace</span><span class="params">(@PathVariable String appId,</span></span></span><br><span class="line"><span class="function"><span class="params">                                            @RequestBody List&lt;NamespaceCreationModel&gt; models)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  checkModel(!CollectionUtils.isEmpty(models));</span><br><span class="line"></span><br><span class="line">  String namespaceName = models.get(<span class="number">0</span>).getNamespace().getNamespaceName();</span><br><span class="line">  String operator = userInfoHolder.getUser().getUserId();</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code class="java">  @PreAuthorize(value = &quot;@permissionValidator.hasCreateNamespacePermission(#appId)&quot;)
+  @PostMapping(&quot;/apps/{appId}/namespaces&quot;)
+  public ResponseEntity&lt;Void&gt; createNamespace(@PathVariable String appId,
+                                              @RequestBody List&lt;NamespaceCreationModel&gt; models) {
 
+    checkModel(!CollectionUtils.isEmpty(models));
+
+    String namespaceName = models.get(0).getNamespace().getNamespaceName();
+    String operator = userInfoHolder.getUser().getUserId();
+    // ...
+  }</code></pre>
 <p>校验类的实现也非常简单，调用相关sevice类查询数据库确认是否有相关权限：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span>(<span class="string">"permissionValidator"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PermissionValidator</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> UserInfoHolder userInfoHolder;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> RolePermissionService rolePermissionService;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> PortalConfig portalConfig;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> AppNamespaceService appNamespaceService;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> SystemRoleManagerService systemRoleManagerService;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">hasCreateNamespacePermission</span><span class="params">(String appId)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> rolePermissionService.userHasPermission(userInfoHolder.getUser().getUserId(),</span><br><span class="line">        PermissionType.CREATE_NAMESPACE,</span><br><span class="line">        appId);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">后台管理系统使用这种简单粗暴的权限控制方式还是蛮可行的。</span><br></pre></td></tr></table></figure>
+<pre><code class="java">@Component(&quot;permissionValidator&quot;)
+public class PermissionValidator {
 
+  private final UserInfoHolder userInfoHolder;
+  private final RolePermissionService rolePermissionService;
+  private final PortalConfig portalConfig;
+  private final AppNamespaceService appNamespaceService;
+  private final SystemRoleManagerService systemRoleManagerService;
+
+  public boolean hasCreateNamespacePermission(String appId) {
+    return rolePermissionService.userHasPermission(userInfoHolder.getUser().getUserId(),
+        PermissionType.CREATE_NAMESPACE,
+        appId);
+  }
+
+  // ...
+}
+
+后台管理系统使用这种简单粗暴的权限控制方式还是蛮可行的。</code></pre>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="http://www.iocoder.cn/categories/Apollo/" target="_blank" rel="noopener">芋道源码Apollo</a>：非常详细的源码分析博客</li>
 <li><a href="https://github.com/ctripcorp/apollo" target="_blank" rel="noopener">Apollo</a>：官方文档非常详尽易懂</li>
@@ -382,12 +638,12 @@
   <div id="qr" style="display: none;">
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="Duval 微信支付">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
         <p>微信支付</p>
       </div>
       
       <div style="display: inline-block;">
-        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="Duval 支付宝">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
         <p>支付宝</p>
       </div>
 
@@ -399,7 +655,7 @@
 <div>
 <ul class="post-copyright">
   <li class="post-copyright-author">
-    <strong>本文作者： </strong>Duval
+    <strong>本文作者： </strong>杜瓦尔
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
@@ -416,8 +672,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/Apollo/" rel="tag"><i class="fa fa-tag"></i> Apollo</a>
               <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" rel="tag"><i class="fa fa-tag"></i> 源码分析</a>
+              <a href="/tags/Apollo/" rel="tag"><i class="fa fa-tag"></i> Apollo</a>
           </div>
 
         
@@ -500,10 +756,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="Duval"
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-  <p class="site-author-name" itemprop="name">Duval</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活</div>
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -583,17 +839,17 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">Duval</span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">413k</span>
+    <span title="站点总字数">390k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:16</span>
+    <span title="站点阅读时长">5:55</span>
 
 </div>
 
