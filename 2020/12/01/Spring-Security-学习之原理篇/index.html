@@ -60,12 +60,12 @@
   };
 </script>
 
-  <meta name="description" content="接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。本文我们将在这几个范例的基础上进行调试，并深入研究其在源码层面上的实现原理。只有知其然，知其所以然，才能在Spring Security的使用上更加得心应手。本文主要参考了官方文档9-11章节，在文档基础上进行丰富、拓展和提炼。">
+  <meta name="description" content="接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。 本文我们将在这几个范例的基础上进行调试，并深入研究其在源码层面上的实现原理。只有知其然，知其所以然，才能在Spring Security的使用上更加得心应手。 本文主要参考了官方文档9-11章节，在文档基础上进行丰富、拓展和提炼。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring Security 学习之原理篇">
 <meta property="og:url" content="https://blog.duval.top/2020/12/01/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。本文我们将在这几个范例的基础上进行调试，并深入研究其在源码层面上的实现原理。只有知其然，知其所以然，才能在Spring Security的使用上更加得心应手。本文主要参考了官方文档9-11章节，在文档基础上进行丰富、拓展和提炼。">
+<meta property="og:description" content="接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。 本文我们将在这几个范例的基础上进行调试，并深入研究其在源码层面上的实现原理。只有知其然，知其所以然，才能在Spring Security的使用上更加得心应手。 本文主要参考了官方文档9-11章节，在文档基础上进行丰富、拓展和提炼。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87%2Fdelegatingfilterproxy.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87%2Ffilterchainproxy.png">
@@ -80,7 +80,7 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87%2Fabstractauthenticationprocessingfilter.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FSpring%20Security%20%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87%2Fdaoauthenticationprovider.png">
 <meta property="article:published_time" content="2020-12-01T14:26:16.000Z">
-<meta property="article:modified_time" content="2020-12-03T09:04:51.720Z">
+<meta property="article:modified_time" content="2020-12-04T03:39:36.850Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="源码分析">
 <meta property="article:tag" content="Spring">
@@ -239,7 +239,7 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
       <meta itemprop="name" content="杜瓦尔">
-      <meta itemprop="description" content="学习技术，记录生活，专心养猪">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -317,7 +317,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。本文我们将在这几个范例的基础上进行调试，并深入研究其在源码层面上的实现原理。只有知其然，知其所以然，才能在Spring Security的使用上更加得心应手。本文主要参考了<a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#servlet-architecture" target="_blank" rel="noopener">官方文档9-11章节</a>，在文档基础上进行丰富、拓展和提炼。</p>
+        <p>接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。</p>
+<p>本文我们将在这几个范例的基础上进行调试，并深入研究其在源码层面上的实现原理。只有知其然，知其所以然，才能在Spring Security的使用上更加得心应手。</p>
+<p>本文主要参考了<a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#servlet-architecture" target="_blank" rel="noopener">官方文档9-11章节</a>，在文档基础上进行丰富、拓展和提炼。</p>
 <a id="more"></a>
 
 <h2 id="Spring-Security初始化"><a href="#Spring-Security初始化" class="headerlink" title="Spring Security初始化"></a>Spring Security初始化</h2><h3 id="SecurityAutoConfiguration"><a href="#SecurityAutoConfiguration" class="headerlink" title="SecurityAutoConfiguration"></a>SecurityAutoConfiguration</h3><p>按照Spring Boot Starter的套路，一定有一个Configuration提供一些默认的Bean注入。而在Spring Security中，SecurityAutoConfiguration承担着该角色：</p>
@@ -1303,6 +1305,7 @@ public class SecurityLdapConfiguration extends GeneralSecurityConfiguration {
 <p>通过深入学习原理，我们可以大大提高对Spring Security的掌握程度，真正做到融会贯通、得心应手。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#servlet-architecture" target="_blank" rel="noopener">官方文档9-11章节</a>：非常清晰的文档</li>
+<li><a href="https://blog.duval.top/">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
 </ul>
 
     </div>
@@ -1461,7 +1464,7 @@ public class SecurityLdapConfiguration extends GeneralSecurityConfiguration {
     <img class="site-author-image" itemprop="image" alt="杜瓦尔"
       src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
   <p class="site-author-name" itemprop="name">杜瓦尔</p>
-  <div class="site-description" itemprop="description">学习技术，记录生活，专心养猪</div>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
