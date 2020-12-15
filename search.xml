@@ -1990,8 +1990,8 @@ public class PermissionValidator {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Apollo</tag>
         <tag>源码分析</tag>
+        <tag>Apollo</tag>
       </tags>
   </entry>
   <entry>
@@ -4112,8 +4112,8 @@ protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List&lt;Object&gt;
         <category>Java</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Netty</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>
@@ -4903,8 +4903,8 @@ c.t.n.u.UnsafeBenchmark.unsafeMethod    thrpt        4  3141320463.164 ± 120448
         <category>Java</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Netty</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>
@@ -5287,8 +5287,8 @@ else {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Netty</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>
