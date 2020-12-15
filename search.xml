@@ -1,6 +1,266 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>抓虫笔记:ExceptionInInitializerError导致线程池中的线程异常被吞</title>
+    <url>/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/</url>
+    <content><![CDATA[<p>最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。</p>
+<a id="more"></a>
+
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>吞异常代码核心思想提炼后的样例是这样的：</p>
+<pre><code class="java">@Slf4j
+public class ExceptionSingleton {
+
+    private ExceptionSingleton() {
+        // 单例实例化过程中抛出运行时异常
+        throw new RuntimeException(&quot;ExceptionSingleton constructor exception.&quot;);
+    }
+
+    private static class SingletonHolder {
+        // 懒汉式单例
+        private volatile static ExceptionSingleton INSTANCE = new ExceptionSingleton();
+    }
+
+    public static ExceptionSingleton getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    static class Processor implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                ExceptionSingleton.getInstance();
+            } catch (Exception e) {
+                // 此处尝试捕获单例构造过程中抛出的RuntimeException，但其实无效
+                log.error(&quot;can not catch this exception here&quot;, e);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException, TimeoutException, ExecutionException {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(new Processor(););
+
+        Thread.currentThread().join();
+    }
+}</code></pre>
+<p>这段代码的期望思路是在线程池线程中捕获单例实例化所抛出的 RuntimeException，并打印日志。实际执行结果并没有打印任何日志，提交到线程池的 Processor 仿佛是凭空消失了一般。</p>
+<p>要深究背后的原因，我们先来探讨几个知识点：</p>
+<h2 id="ExceptionInInitializerError"><a href="#ExceptionInInitializerError" class="headerlink" title="ExceptionInInitializerError"></a>ExceptionInInitializerError</h2><ul>
+<li><p>从类注释可以看出来，ExceptionInInitializerError 在静态类变量或者静态块初始化的时候会被抛出：</p>
+<pre><code class="java">  /**
+  * Signals that an unexpected exception has occurred in a static initializer.
+  * An &lt;code&gt;ExceptionInInitializerError&lt;/code&gt; is thrown to indicate that an
+  * exception occurred during evaluation of a static initializer or the
+  * initializer for a static variable.
+  *
+  * &lt;p&gt;As of release 1.4, this exception has been retrofitted to conform to
+  * the general purpose exception-chaining mechanism.  The &quot;saved throwable
+  * object&quot; that may be provided at construction time and accessed via
+  * the {@link #getException()} method is now known as the &lt;i&gt;cause&lt;/i&gt;,
+  * and may be accessed via the {@link Throwable#getCause()} method, as well
+  * as the aforementioned &quot;legacy method.&quot;
+  *
+  * @author  Frank Yellin
+  * @since   JDK1.1
+  */
+  public class ExceptionInInitializerError extends LinkageError {
+      /**
+      * This field holds the exception if the
+      * ExceptionInInitializerError(Throwable thrown) constructor was
+      * used to instantiate the object
+      *
+      * @serial
+      *
+      */
+      private Throwable exception;
+      // ...
+  }</code></pre>
+</li>
+<li><p>还需要注意在静态类变量或者静态块初始化中所抛出的所有异常，都需要使用 ExceptionInInitializerError 进行包装。特别注意的是：<strong>如果是抛出的是 RuntimeException，则JDK会自动使用 ExceptionInInitializerError 进行包装。</strong> </p>
+</li>
+</ul>
+<p>所以，最开始样例的单例抛出的 RuntimeException，其实被JDK包装成了 ExceptionInInitializerError。那么 Processor 内部的 try catch 块捕获的是 Exception 而不是 Throwable，那当然就不会打印异常日志 。不要忘记 Exception、Error 和 Throwable 三者的关系：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png" alt="throwable-exception-error.png"></p>
+<h2 id="FutureTask"><a href="#FutureTask" class="headerlink" title="FutureTask"></a>FutureTask</h2><p>虽然 Processor 没有捕获 ExceptionInInitializerError，但为啥线程池内部也没打印相关错误日志呢？</p>
+<p>这得深入看看线程池的代码。我们看到样例使用的提交方法是 submit：</p>
+<pre><code class="java">public Future&lt;?&gt; submit(Runnable task) {
+    if (task == null) throw new NullPointerException();
+    RunnableFuture&lt;Void&gt; ftask = newTaskFor(task, null);
+    execute(ftask);
+    return ftask;
+}</code></pre>
+<p>submit 方法很简洁，一开始通过 newTaskFor 方法新建了一个 FutureTask,FutureTask 的第一个入参是用户提交的业务逻辑 runnable：</p>
+<pre><code class="java">protected &lt;T&gt; RunnableFuture&lt;T&gt; newTaskFor(Runnable runnable, T value) {
+    return new FutureTask&lt;T&gt;(runnable, value);
+}</code></pre>
+<p>runnable 会被缓存到内部字段 callable ：</p>
+<pre><code class="java">
+public class FutureTask&lt;V&gt; implements RunnableFuture&lt;V&gt; {
+    /** The underlying callable; nulled out after running */
+    private Callable&lt;V&gt; callable;
+
+    public FutureTask(Callable&lt;V&gt; callable) {
+        if (callable == null)
+            throw new NullPointerException();
+        this.callable = callable;
+        this.state = NEW;       // ensure visibility of callable
+    }
+    // ...
+}
+</code></pre>
+<p>然后这个 ftask 会被提交到线程池队列中。紧接着，在线程池中会被取出ftask，并执行：</p>
+<pre><code class="java">final void runWorker(Worker w) {
+    Thread wt = Thread.currentThread();
+    Runnable task = w.firstTask;
+    w.firstTask = null;
+    w.unlock(); // allow interrupts
+    boolean completedAbruptly = true;
+    try {
+        while (task != null || (task = getTask()) != null) {
+            w.lock();
+            // If pool is stopping, ensure thread is interrupted;
+            // if not, ensure thread is not interrupted.  This
+            // requires a recheck in second case to deal with
+            // shutdownNow race while clearing interrupt
+            if ((runStateAtLeast(ctl.get(), STOP) ||
+                    (Thread.interrupted() &amp;&amp;
+                    runStateAtLeast(ctl.get(), STOP))) &amp;&amp;
+                !wt.isInterrupted())
+                wt.interrupt();
+            try {
+                beforeExecute(wt, task);
+                Throwable thrown = null;
+                try {
+                    // 执行task
+                    task.run();
+                } catch (RuntimeException x) {
+                    thrown = x; throw x;
+                } catch (Error x) {
+                    thrown = x; throw x;
+                } catch (Throwable x) {
+                    thrown = x; throw new Error(x);
+                } finally {
+                    // 调用afterExecute来做一些最后处理（比如可以打印执行异常）
+                    afterExecute(task, thrown);
+                }
+            } finally {
+                task = null;
+                w.completedTasks++;
+                w.unlock();
+            }
+        }
+        completedAbruptly = false;
+    } finally {
+        processWorkerExit(w, completedAbruptly);
+    }
+}
+</code></pre>
+<p>task.run() 实际执行的是 FutureTask#run() 方法：</p>
+<pre><code class="java"> public void run() {
+    if (state != NEW ||
+        !UNSAFE.compareAndSwapObject(this, runnerOffset,
+                                        null, Thread.currentThread()))
+        return;
+    try {
+        Callable&lt;V&gt; c = callable;
+        if (c != null &amp;&amp; state == NEW) {
+            V result;
+            boolean ran;
+            try {
+                result = c.call();
+                ran = true;
+            } catch (Throwable ex) {
+                // 这里捕获了所有的异常和错误
+                result = null;
+                ran = false;
+                setException(ex);
+            }
+            if (ran)
+                set(result);
+        }
+    } finally {
+        // runner must be non-null until state is settled to
+        // prevent concurrent calls to run()
+        runner = null;
+        // state must be re-read after nulling runner to prevent
+        // leaked interrupts
+        int s = state;
+        if (s &gt;= INTERRUPTING)
+            handlePossibleCancellationInterrupt(s);
+    }
+}
+</code></pre>
+<p>callable 就是用户自定义的业务逻辑，如果在 callable 中抛出任何异常或者错误，都会在 try-catch 块中被捕获，并且通过 setException(ex) 方法，缓存到了字段 outcome 上：</p>
+<pre><code class="java">/** The result to return or exception to throw from get() */
+private Object outcome; // non-volatile, protected by state reads/writes
+
+protected void setException(Throwable t) {
+    if (UNSAFE.compareAndSwapInt(this, stateOffset, NEW, COMPLETING)) {
+        outcome = t;
+        UNSAFE.putOrderedInt(this, stateOffset, EXCEPTIONAL); // final state
+        finishCompletion();
+    }
+}</code></pre>
+<p>因此，通过 submit 提交到线程池的 task 所抛出的异常，其实是被缓存到了 FutureTask 当中。</p>
+<h2 id="修复方法"><a href="#修复方法" class="headerlink" title="修复方法"></a>修复方法</h2><p>通过以上的探讨，这个吞异常的问题可以有多个解决方法。</p>
+<h3 id="捕获Throwable而不是Exception"><a href="#捕获Throwable而不是Exception" class="headerlink" title="捕获Throwable而不是Exception"></a>捕获Throwable而不是Exception</h3><p>既然静态代码发生异常抛出的是 ExceptionInInitializerError ，它和 Exception 都是Throwable 的子类。因此，我们可以通过捕获 Throwable 来修复吞异常的问题:</p>
+<pre><code class="java">static class Processor implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                ExceptionSingleton.getInstance();
+            } catch (Throwable e) {
+                log.error(&quot;catch throwable here&quot;, e);
+            }
+        }
+}</code></pre>
+<h3 id="使用execute提交任务到线程池而不是submit"><a href="#使用execute提交任务到线程池而不是submit" class="headerlink" title="使用execute提交任务到线程池而不是submit"></a>使用execute提交任务到线程池而不是submit</h3><p>通过 submit 方法提交的 task 会被自动包装为 FutureTask 而导致异常被缓存而不是直接抛出。但 execute 方法提交就不会进行包装，所以，改为 execute 方法也能修复问题：</p>
+<pre><code class="java">executorService.execute(new Processor());</code></pre>
+<p>更进一步，我们从上边的 runWorker 方法可以注意到还可以重载 ThreadPoolExecutor 的 afterExecute 方法来打印异常信息，比如：</p>
+<pre><code class="java">class MyThreadExecutor extends ThreadPoolExecutor {
+    // ...
+
+    @Override
+    protected void afterExecute(Runnable r, Throwable t) {
+        super.afterExecute(r, t);
+        // log throwable
+    }
+}</code></pre>
+<h3 id="消费-Future"><a href="#消费-Future" class="headerlink" title="消费 Future"></a>消费 Future</h3><p>这个问题样例在使用 submit 其实不够严谨。因为 summit 返回了一个 Future 实例，熟悉异步编程的话，应该知道我们应该消费掉这个 Future。所以可以这样子修复：</p>
+<pre><code class="java">Future task = executorService.submit(new Processor());
+task.get(500, TimeUnit.MILLISECONDS);</code></pre>
+<p>调用 FutureTask 的 get 方法，方法内部会检查到错误异常，并向外抛出。</p>
+<pre><code class="java">Exception in thread &quot;main&quot; java.util.concurrent.ExecutionException: java.lang.ExceptionInInitializerError
+    at java.util.concurrent.FutureTask.report(FutureTask.java:122)
+    at java.util.concurrent.FutureTask.get(FutureTask.java:206)
+    at org.demo.singleton.ExceptionSingleton.main(ExceptionSingleton.java:50)
+Caused by: java.lang.ExceptionInInitializerError
+    at org.demo.singleton.ExceptionSingleton.getInstance(ExceptionSingleton.java:24)
+    at org.demo.singleton.ExceptionSingleton$Processor.run(ExceptionSingleton.java:32)
+    at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+    at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+    at java.lang.Thread.run(Thread.java:748)
+Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
+    at org.demo.singleton.ExceptionSingleton.&lt;init&gt;(ExceptionSingleton.java:16)
+    at org.demo.singleton.ExceptionSingleton.&lt;init&gt;(ExceptionSingleton.java:12)
+    at org.demo.singleton.ExceptionSingleton$SingletonHolder.&lt;clinit&gt;(ExceptionSingleton.java:20)
+    ... 7 more</code></pre>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.baeldung.com/java-exceptionininitializererror" target="_blank" rel="noopener">When Does Java Throw the ExceptionInInitializerError?</a>：介绍什么时候抛出ExceptionInInitializerError错误的好文章</li>
+</ul>
+]]></content>
+      <categories>
+        <category>抓虫笔记</category>
+      </categories>
+      <tags>
+        <tag>bugfix</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring Security 学习之原理篇</title>
     <url>/2020/12/01/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87/</url>
     <content><![CDATA[<p>接上一篇，我们已经熟悉了Spring Security的基本使用，并且实操了几个范例。</p>
@@ -6444,8 +6704,8 @@ Time taken for various other sequential phases of the GC pause.
       </tags>
   </entry>
   <entry>
-    <title>生产问题--Java进程CPU占用过高</title>
-    <url>/2020/02/11/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/</url>
+    <title>抓虫笔记:Java进程CPU占用过高</title>
+    <url>/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/</url>
     <content><![CDATA[<p>从一个实际生产问题出发，教你如何排查Java进程CPU占用过高。</p>
 <a id="more"></a>
 
@@ -6493,7 +6753,7 @@ Time taken for various other sequential phases of the GC pause.
 <p>解决办法：coreSize改为非0值，或者升级到JDK9。</p>
 ]]></content>
       <categories>
-        <category>生产问题</category>
+        <category>抓虫笔记</category>
       </categories>
       <tags>
         <tag>bugfix</tag>

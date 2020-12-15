@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="抓虫笔记:ExceptionInInitializerError导致线程池中的线程异常被吞">
+<meta property="og:url" content="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/index.html">
+<meta property="og:site_name" content="杜瓦尔">
+<meta property="og:description" content="最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png">
+<meta property="article:published_time" content="2020-12-15T09:26:29.000Z">
+<meta property="article:modified_time" content="2020-12-15T11:51:41.681Z">
+<meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="bugfix">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png">
+
+<link rel="canonical" href="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>抓虫笔记:ExceptionInInitializerError导致线程池中的线程异常被吞 | 杜瓦尔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">杜瓦尔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          抓虫笔记:ExceptionInInitializerError导致线程池中的线程异常被吞
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-12-15 17:26:29" itemprop="dateCreated datePublished" datetime="2020-12-15T17:26:29+08:00">2020-12-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index">
+                    <span itemprop="name">抓虫笔记</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" class="post-meta-item leancloud_visitors" data-flag-title="抓虫笔记:ExceptionInInitializerError导致线程池中的线程异常被吞" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。</p>
+<a id="more"></a>
+
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>吞异常代码核心思想提炼后的样例是这样的：</p>
+<pre><code class="java">@Slf4j
+public class ExceptionSingleton {
+
+    private ExceptionSingleton() {
+        // 单例实例化过程中抛出运行时异常
+        throw new RuntimeException(&quot;ExceptionSingleton constructor exception.&quot;);
+    }
+
+    private static class SingletonHolder {
+        // 懒汉式单例
+        private volatile static ExceptionSingleton INSTANCE = new ExceptionSingleton();
+    }
+
+    public static ExceptionSingleton getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    static class Processor implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                ExceptionSingleton.getInstance();
+            } catch (Exception e) {
+                // 此处尝试捕获单例构造过程中抛出的RuntimeException，但其实无效
+                log.error(&quot;can not catch this exception here&quot;, e);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException, TimeoutException, ExecutionException {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(new Processor(););
+
+        Thread.currentThread().join();
+    }
+}</code></pre>
+<p>这段代码的期望思路是在线程池线程中捕获单例实例化所抛出的 RuntimeException，并打印日志。实际执行结果并没有打印任何日志，提交到线程池的 Processor 仿佛是凭空消失了一般。</p>
+<p>要深究背后的原因，我们先来探讨几个知识点：</p>
+<h2 id="ExceptionInInitializerError"><a href="#ExceptionInInitializerError" class="headerlink" title="ExceptionInInitializerError"></a>ExceptionInInitializerError</h2><ul>
+<li><p>从类注释可以看出来，ExceptionInInitializerError 在静态类变量或者静态块初始化的时候会被抛出：</p>
+<pre><code class="java">  /**
+  * Signals that an unexpected exception has occurred in a static initializer.
+  * An &lt;code&gt;ExceptionInInitializerError&lt;/code&gt; is thrown to indicate that an
+  * exception occurred during evaluation of a static initializer or the
+  * initializer for a static variable.
+  *
+  * &lt;p&gt;As of release 1.4, this exception has been retrofitted to conform to
+  * the general purpose exception-chaining mechanism.  The &quot;saved throwable
+  * object&quot; that may be provided at construction time and accessed via
+  * the {@link #getException()} method is now known as the &lt;i&gt;cause&lt;/i&gt;,
+  * and may be accessed via the {@link Throwable#getCause()} method, as well
+  * as the aforementioned &quot;legacy method.&quot;
+  *
+  * @author  Frank Yellin
+  * @since   JDK1.1
+  */
+  public class ExceptionInInitializerError extends LinkageError {
+      /**
+      * This field holds the exception if the
+      * ExceptionInInitializerError(Throwable thrown) constructor was
+      * used to instantiate the object
+      *
+      * @serial
+      *
+      */
+      private Throwable exception;
+      // ...
+  }</code></pre>
+</li>
+<li><p>还需要注意在静态类变量或者静态块初始化中所抛出的所有异常，都需要使用 ExceptionInInitializerError 进行包装。特别注意的是：<strong>如果是抛出的是 RuntimeException，则JDK会自动使用 ExceptionInInitializerError 进行包装。</strong> </p>
+</li>
+</ul>
+<p>所以，最开始样例的单例抛出的 RuntimeException，其实被JDK包装成了 ExceptionInInitializerError。那么 Processor 内部的 try catch 块捕获的是 Exception 而不是 Throwable，那当然就不会打印异常日志 。不要忘记 Exception、Error 和 Throwable 三者的关系：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png" alt="throwable-exception-error.png"></p>
+<h2 id="FutureTask"><a href="#FutureTask" class="headerlink" title="FutureTask"></a>FutureTask</h2><p>虽然 Processor 没有捕获 ExceptionInInitializerError，但为啥线程池内部也没打印相关错误日志呢？</p>
+<p>这得深入看看线程池的代码。我们看到样例使用的提交方法是 submit：</p>
+<pre><code class="java">public Future&lt;?&gt; submit(Runnable task) {
+    if (task == null) throw new NullPointerException();
+    RunnableFuture&lt;Void&gt; ftask = newTaskFor(task, null);
+    execute(ftask);
+    return ftask;
+}</code></pre>
+<p>submit 方法很简洁，一开始通过 newTaskFor 方法新建了一个 FutureTask,FutureTask 的第一个入参是用户提交的业务逻辑 runnable：</p>
+<pre><code class="java">protected &lt;T&gt; RunnableFuture&lt;T&gt; newTaskFor(Runnable runnable, T value) {
+    return new FutureTask&lt;T&gt;(runnable, value);
+}</code></pre>
+<p>runnable 会被缓存到内部字段 callable ：</p>
+<pre><code class="java">
+public class FutureTask&lt;V&gt; implements RunnableFuture&lt;V&gt; {
+    /** The underlying callable; nulled out after running */
+    private Callable&lt;V&gt; callable;
+
+    public FutureTask(Callable&lt;V&gt; callable) {
+        if (callable == null)
+            throw new NullPointerException();
+        this.callable = callable;
+        this.state = NEW;       // ensure visibility of callable
+    }
+    // ...
+}
+</code></pre>
+<p>然后这个 ftask 会被提交到线程池队列中。紧接着，在线程池中会被取出ftask，并执行：</p>
+<pre><code class="java">final void runWorker(Worker w) {
+    Thread wt = Thread.currentThread();
+    Runnable task = w.firstTask;
+    w.firstTask = null;
+    w.unlock(); // allow interrupts
+    boolean completedAbruptly = true;
+    try {
+        while (task != null || (task = getTask()) != null) {
+            w.lock();
+            // If pool is stopping, ensure thread is interrupted;
+            // if not, ensure thread is not interrupted.  This
+            // requires a recheck in second case to deal with
+            // shutdownNow race while clearing interrupt
+            if ((runStateAtLeast(ctl.get(), STOP) ||
+                    (Thread.interrupted() &amp;&amp;
+                    runStateAtLeast(ctl.get(), STOP))) &amp;&amp;
+                !wt.isInterrupted())
+                wt.interrupt();
+            try {
+                beforeExecute(wt, task);
+                Throwable thrown = null;
+                try {
+                    // 执行task
+                    task.run();
+                } catch (RuntimeException x) {
+                    thrown = x; throw x;
+                } catch (Error x) {
+                    thrown = x; throw x;
+                } catch (Throwable x) {
+                    thrown = x; throw new Error(x);
+                } finally {
+                    // 调用afterExecute来做一些最后处理（比如可以打印执行异常）
+                    afterExecute(task, thrown);
+                }
+            } finally {
+                task = null;
+                w.completedTasks++;
+                w.unlock();
+            }
+        }
+        completedAbruptly = false;
+    } finally {
+        processWorkerExit(w, completedAbruptly);
+    }
+}
+</code></pre>
+<p>task.run() 实际执行的是 FutureTask#run() 方法：</p>
+<pre><code class="java"> public void run() {
+    if (state != NEW ||
+        !UNSAFE.compareAndSwapObject(this, runnerOffset,
+                                        null, Thread.currentThread()))
+        return;
+    try {
+        Callable&lt;V&gt; c = callable;
+        if (c != null &amp;&amp; state == NEW) {
+            V result;
+            boolean ran;
+            try {
+                result = c.call();
+                ran = true;
+            } catch (Throwable ex) {
+                // 这里捕获了所有的异常和错误
+                result = null;
+                ran = false;
+                setException(ex);
+            }
+            if (ran)
+                set(result);
+        }
+    } finally {
+        // runner must be non-null until state is settled to
+        // prevent concurrent calls to run()
+        runner = null;
+        // state must be re-read after nulling runner to prevent
+        // leaked interrupts
+        int s = state;
+        if (s &gt;= INTERRUPTING)
+            handlePossibleCancellationInterrupt(s);
+    }
+}
+</code></pre>
+<p>callable 就是用户自定义的业务逻辑，如果在 callable 中抛出任何异常或者错误，都会在 try-catch 块中被捕获，并且通过 setException(ex) 方法，缓存到了字段 outcome 上：</p>
+<pre><code class="java">/** The result to return or exception to throw from get() */
+private Object outcome; // non-volatile, protected by state reads/writes
+
+protected void setException(Throwable t) {
+    if (UNSAFE.compareAndSwapInt(this, stateOffset, NEW, COMPLETING)) {
+        outcome = t;
+        UNSAFE.putOrderedInt(this, stateOffset, EXCEPTIONAL); // final state
+        finishCompletion();
+    }
+}</code></pre>
+<p>因此，通过 submit 提交到线程池的 task 所抛出的异常，其实是被缓存到了 FutureTask 当中。</p>
+<h2 id="修复方法"><a href="#修复方法" class="headerlink" title="修复方法"></a>修复方法</h2><p>通过以上的探讨，这个吞异常的问题可以有多个解决方法。</p>
+<h3 id="捕获Throwable而不是Exception"><a href="#捕获Throwable而不是Exception" class="headerlink" title="捕获Throwable而不是Exception"></a>捕获Throwable而不是Exception</h3><p>既然静态代码发生异常抛出的是 ExceptionInInitializerError ，它和 Exception 都是Throwable 的子类。因此，我们可以通过捕获 Throwable 来修复吞异常的问题:</p>
+<pre><code class="java">static class Processor implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                ExceptionSingleton.getInstance();
+            } catch (Throwable e) {
+                log.error(&quot;catch throwable here&quot;, e);
+            }
+        }
+}</code></pre>
+<h3 id="使用execute提交任务到线程池而不是submit"><a href="#使用execute提交任务到线程池而不是submit" class="headerlink" title="使用execute提交任务到线程池而不是submit"></a>使用execute提交任务到线程池而不是submit</h3><p>通过 submit 方法提交的 task 会被自动包装为 FutureTask 而导致异常被缓存而不是直接抛出。但 execute 方法提交就不会进行包装，所以，改为 execute 方法也能修复问题：</p>
+<pre><code class="java">executorService.execute(new Processor());</code></pre>
+<p>更进一步，我们从上边的 runWorker 方法可以注意到还可以重载 ThreadPoolExecutor 的 afterExecute 方法来打印异常信息，比如：</p>
+<pre><code class="java">class MyThreadExecutor extends ThreadPoolExecutor {
+    // ...
+
+    @Override
+    protected void afterExecute(Runnable r, Throwable t) {
+        super.afterExecute(r, t);
+        // log throwable
+    }
+}</code></pre>
+<h3 id="消费-Future"><a href="#消费-Future" class="headerlink" title="消费 Future"></a>消费 Future</h3><p>这个问题样例在使用 submit 其实不够严谨。因为 summit 返回了一个 Future 实例，熟悉异步编程的话，应该知道我们应该消费掉这个 Future。所以可以这样子修复：</p>
+<pre><code class="java">Future task = executorService.submit(new Processor());
+task.get(500, TimeUnit.MILLISECONDS);</code></pre>
+<p>调用 FutureTask 的 get 方法，方法内部会检查到错误异常，并向外抛出。</p>
+<pre><code class="java">Exception in thread &quot;main&quot; java.util.concurrent.ExecutionException: java.lang.ExceptionInInitializerError
+    at java.util.concurrent.FutureTask.report(FutureTask.java:122)
+    at java.util.concurrent.FutureTask.get(FutureTask.java:206)
+    at org.demo.singleton.ExceptionSingleton.main(ExceptionSingleton.java:50)
+Caused by: java.lang.ExceptionInInitializerError
+    at org.demo.singleton.ExceptionSingleton.getInstance(ExceptionSingleton.java:24)
+    at org.demo.singleton.ExceptionSingleton$Processor.run(ExceptionSingleton.java:32)
+    at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+    at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+    at java.lang.Thread.run(Thread.java:748)
+Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
+    at org.demo.singleton.ExceptionSingleton.&lt;init&gt;(ExceptionSingleton.java:16)
+    at org.demo.singleton.ExceptionSingleton.&lt;init&gt;(ExceptionSingleton.java:12)
+    at org.demo.singleton.ExceptionSingleton$SingletonHolder.&lt;clinit&gt;(ExceptionSingleton.java:20)
+    ... 7 more</code></pre>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.baeldung.com/java-exceptionininitializererror" target="_blank" rel="noopener">When Does Java Throw the ExceptionInInitializerError?</a>：介绍什么时候抛出ExceptionInInitializerError错误的好文章</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/02/11/抓虫笔记-Java进程CPU占用过高/" rel="bookmark">抓虫笔记:Java进程CPU占用过高</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杜瓦尔
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" title="抓虫笔记:ExceptionInInitializerError导致线程池中的线程异常被吞">https://blog.duval.top/2020/12/15/抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/bugfix/" rel="tag"><i class="fa fa-tag"></i> bugfix</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/01/Spring-Security-%E5%AD%A6%E4%B9%A0%E4%B9%8B%E5%8E%9F%E7%90%86%E7%AF%87/" rel="prev" title="Spring Security 学习之原理篇">
+      <i class="fa fa-chevron-left"></i> Spring Security 学习之原理篇
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#问题描述"><span class="nav-number">1.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ExceptionInInitializerError"><span class="nav-number">2.</span> <span class="nav-text">ExceptionInInitializerError</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FutureTask"><span class="nav-number">3.</span> <span class="nav-text">FutureTask</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修复方法"><span class="nav-number">4.</span> <span class="nav-text">修复方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#捕获Throwable而不是Exception"><span class="nav-number">4.1.</span> <span class="nav-text">捕获Throwable而不是Exception</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用execute提交任务到线程池而不是submit"><span class="nav-number">4.2.</span> <span class="nav-text">使用execute提交任务到线程池而不是submit</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#消费-Future"><span class="nav-number">4.3.</span> <span class="nav-text">消费 Future</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">397k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">6:01</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
