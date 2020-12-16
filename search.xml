@@ -1990,8 +1990,8 @@ public class PermissionValidator {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Apollo</tag>
         <tag>源码分析</tag>
+        <tag>Apollo</tag>
       </tags>
   </entry>
   <entry>
@@ -3147,8 +3147,8 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>数据库</tag>
         <tag>MySQL</tag>
+        <tag>数据库</tag>
       </tags>
   </entry>
   <entry>
@@ -11063,8 +11063,8 @@ hiveStatement.execute(sql);    </code></pre>
         <category>Azkaban</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Azkaban</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>
@@ -11601,8 +11601,8 @@ protected boolean createStreamingResultSet() {
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>数据库</tag>
         <tag>MySQL</tag>
+        <tag>数据库</tag>
       </tags>
   </entry>
   <entry>
