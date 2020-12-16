@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本文将深入理解文件描述符，并从 JDK 源码上分析文件描述符在文件输入输出流中的运用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解Java文件输入输出流和文件描述符">
+<meta property="og:url" content="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/index.html">
+<meta property="og:site_name" content="杜瓦尔">
+<meta property="og:description" content="本文将深入理解文件描述符，并从 JDK 源码上分析文件描述符在文件输入输出流中的运用。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2Fstd-in-out-err.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2F%E8%BF%9B%E7%A8%8B%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6.jpg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2F%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E7%B1%BB%E5%9B%BE.png">
+<meta property="article:published_time" content="2020-12-16T14:03:33.000Z">
+<meta property="article:modified_time" content="2020-12-16T10:54:53.898Z">
+<meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="文件描述符">
+<meta property="article:tag" content="输入输出流">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2Fstd-in-out-err.png">
+
+<link rel="canonical" href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>深入理解Java文件输入输出流和文件描述符 | 杜瓦尔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">杜瓦尔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入理解Java文件输入输出流和文件描述符
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-12-16 22:03:33" itemprop="dateCreated datePublished" datetime="2020-12-16T22:03:33+08:00">2020-12-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" class="post-meta-item leancloud_visitors" data-flag-title="深入理解Java文件输入输出流和文件描述符" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文将深入理解文件描述符，并从 JDK 源码上分析文件描述符在文件输入输出流中的运用。</p>
+<a id="more"></a>
+
+<blockquote>
+<p>特别声明，为避免重复造轮子，部分内容和图片摘自文末参考资料。本文仅限用于交流学习，严禁用于商业用途。</p>
+</blockquote>
+<h2 id="文件描述符是什么？"><a href="#文件描述符是什么？" class="headerlink" title="文件描述符是什么？"></a>文件描述符是什么？</h2><p>[1] 在Linux系统中一切皆可以看成是文件，文件又可分为：普通文件、目录文件、链接文件和设备文件。文件描述符（file descriptor）是内核为了高效管理已被打开的文件所创建的索引，其是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。程序刚刚启动的时候，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3。POSIX标准要求每次打开文件时（含socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话。标准文件描述符图如下：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2Fstd-in-out-err.png" alt="std-in-out-err.png"></p>
+<h2 id="Linux-进程中的文件描述符"><a href="#Linux-进程中的文件描述符" class="headerlink" title="Linux 进程中的文件描述符"></a>Linux 进程中的文件描述符</h2><p>[2] 从 Linux 进程的数据结构也可以看出端倪：</p>
+<pre><code class="c++">struct task_struct {
+    // 进程状态
+    long              state;
+    // 虚拟内存结构体
+    struct mm_struct  *mm;
+    // 进程号
+    pid_t             pid;
+    // 指向父进程的指针
+    struct task_struct __rcu  *parent;
+    // 子进程列表
+    struct list_head        children;
+    // 存放文件系统信息的指针
+    struct fs_struct        *fs;
+    // 一个数组，包含该进程打开的文件指针
+    struct files_struct     *files;
+};</code></pre>
+<p>files 指针指向一个数组，这个数组里装着所有该进程打开的文件的指针。每个进程被创建时，files的前三位被填入默认值，分别指向标准输入流、标准输出流、标准错误流。我们常说的「文件描述符」就是指这个文件指针数组的索引，所以程序的文件描述符默认情况下 0 是输入，1 是输出，2 是错误。如下图所示：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2F%E8%BF%9B%E7%A8%8B%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6.jpg" alt="进程文件描述符.jpg"></p>
+<p>所以，在 linux 中的重定向、管道等操作，其实只是修改了进程的 files 数组前三位的指向。</p>
+<h2 id="FileDescriptor"><a href="#FileDescriptor" class="headerlink" title="FileDescriptor"></a>FileDescriptor</h2><p>FileDescriptor 是文件描述符在 JVM 中的抽象。来看看内部结构：</p>
+<pre><code class="java">public final class FileDescriptor {
+    // 文件描述符（就是上文所说的 files 数组下标）
+    private int fd;
+    // 该文件描述符所关联的实例（通常是输入输出流实例，比如 FileInputStream ）
+    private Closeable parent;
+    private List&lt;Closeable&gt; otherParents;
+
+    private boolean closed;
+    // 标准输入
+    public static final FileDescriptor in = new FileDescriptor(0);
+    // 标准输出
+    public static final FileDescriptor out = new FileDescriptor(1);
+    // 标准错误
+    public static final FileDescriptor err = new FileDescriptor(2);
+
+    public boolean valid() {
+        return fd != -1;
+    }
+
+    /* This routine initializes JNI field offsets for the class */
+    private static native void initIDs();
+
+    static {
+        initIDs();
+    }
+}</code></pre>
+<p>FileDescriptor 非常清晰，我们可以直接总结以下几点：</p>
+<ul>
+<li>FileDescriptor 与文件描述符一一对应，使用 fd 字段保存文件描述符；</li>
+<li>单个 FileDescriptor 可以和多个 Closeable 关联（通常是输入输出流实例，比如 FileInputStream ）；</li>
+<li>FileDescriptor 内部有三个公开静态常量 in、out 和 err 分别代表标准输入、标准输出和标准错误，这仨通常用在 java.lang.System 中；</li>
+<li>文件描述符 fd 通常为非负数；</li>
+</ul>
+<h3 id="initIDs"><a href="#initIDs" class="headerlink" title="initIDs"></a>initIDs</h3><p>initIDs 方法用于初始化 fd 字段的 ID （我觉得可以理解为 fd 字段的指针）。这是一个 native 方法，可以在 JDK 源码里找到相应的 JNI 实现。以 Window 下的实现为例（因为 Window 的相对容易找到 = =)：</p>
+<pre><code class="C++">/* field id for jint &#39;fd&#39; in java.io.FileDescriptor */
+jfieldID IO_fd_fdID;
+
+/* field id for jlong &#39;handle&#39; in java.io.FileDescriptor */
+jfieldID IO_handle_fdID;
+
+/**************************************************************
+ * static methods to store field IDs in initializers
+ */
+
+JNIEXPORT void JNICALL
+Java_java_io_FileDescriptor_initIDs(JNIEnv *env, jclass fdClass) {
+    CHECK_NULL(IO_fd_fdID = (*env)-&gt;GetFieldID(env, fdClass, &quot;fd&quot;, &quot;I&quot;));
+    CHECK_NULL(IO_handle_fdID = (*env)-&gt;GetFieldID(env, fdClass, &quot;handle&quot;, &quot;J&quot;));
+}</code></pre>
+<p>可见 fd 的字段ID被保存到了全局字段中，后续其他代码可以根据其字段ID来修改 fd 的值。字段ID在这里我理解为一个指针。这里还处理了 handle 字段，可能是版本问题，我没有在 JDK 里看到这个字段。</p>
+<h2 id="文件输入输出流"><a href="#文件输入输出流" class="headerlink" title="文件输入输出流"></a>文件输入输出流</h2><p>Java IO 里的文件输入输出流类有二：FileInputStream 和 FileOutputStream。两者的类图继承结构非常清晰：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%2F%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E7%B1%BB%E5%9B%BE.png" alt="文件输入输出流类图.png"></p>
+<p>因为两者实现原理差不多，下边以 FileInputStream 展开探讨。</p>
+<h3 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h3><p>先来看看 FileInputStream 的源码。</p>
+<p>内部字段很少很简洁，详见注释：</p>
+<pre><code class="java">public
+class FileInputStream extends InputStream
+    /* 文件描述符对象**/
+    private final FileDescriptor fd;
+    /** 文件路径 **/
+    private final String path;
+    /** 可以操作读写文件的通道 **/
+    private FileChannel channel = null;
+    /** 关闭时用于并发控制的锁对象 **/
+    private final Object closeLock = new Object();
+    private volatile boolean closed = false;
+}</code></pre>
+<p>还有一个与 FileDescriptor 类似的 initIDs 方法，也是用来设置内部的 fd 字段ID：</p>
+<pre><code class="java">private static native void initIDs();
+
+private native void close0() throws IOException;
+
+static {
+    initIDs();
+}</code></pre>
+<p>构造方法也挺简单的，关键是看看其中这个构造函数：</p>
+<pre><code class="java">public FileInputStream(File file) throws FileNotFoundException {
+    String name = (file != null ? file.getPath() : null);
+    SecurityManager security = System.getSecurityManager();
+    if (security != null) {
+        security.checkRead(name);
+    }
+    if (name == null) {
+        throw new NullPointerException();
+    }
+    if (file.isInvalid()) {
+        throw new FileNotFoundException(&quot;Invalid file path&quot;);
+    }
+    // 新建一个文件描述符对象
+    fd = new FileDescriptor();
+    // 将当前 FileInputStream 和该文件描述符关联起来
+    fd.attach(this);
+    path = name;
+    // 打开该文件
+    open(name);
+}
+</code></pre>
+<p>构造函数中新建了一个文件描述符对象 fd，要记得这个对象的内部还有一个 long 类型的 fd 字段，默认初始化为 0L。而 fd 字段的初始化逻辑是在 open 方法。最终调用的是 native 方法：</p>
+<pre><code class="java">/**
+    * Opens the specified file for reading.
+    * @param name the name of the file
+    */
+private native void open0(String name) throws FileNotFoundException;</code></pre>
+<blockquote>
+<p>题外话，这里提一下怎么通过 这个 native 方法找到对应的 C++ 实现：</p>
+<ul>
+<li>下载相应版本的 JDK 源码；</li>
+<li>找到 jdk/src/share/classes/java/io/FileInputStream.java；</li>
+<li>执行 javah java.io.FileInputStream 便可以生成 Header文件 java_io_FileInputStream.h ：</li>
+</ul>
+<pre><code class="C++">/*
+ * Class:     java_io_FileInputStream
+ * Method:    open0
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_java_io_FileInputStream_open0 (JNIEnv *, jobject, jstring);</code></pre>
+<ul>
+<li>使用 C++ 方法名 Java_java_io_FileInputStream_open0 进行搜索便很快能找到对应的 C++ 方法实现；</li>
+</ul>
+</blockquote>
+<p>我们查看 JDK 源码（jdk/src/share/native/java/io/FileInputStream.c），有以下代码：</p>
+<pre><code class="C++">jfieldID fis_fd; /* id for jobject &#39;fd&#39; in java.io.FileInputStream */
+
+/**************************************************************
+ * static methods to store field ID&#39;s in initializers
+ */
+
+JNIEXPORT void JNICALL
+Java_java_io_FileInputStream_initIDs(JNIEnv *env, jclass fdClass) {
+    fis_fd = (*env)-&gt;GetFieldID(env, fdClass, &quot;fd&quot;, &quot;Ljava/io/FileDescriptor;&quot;);
+}
+
+/**************************************************************
+ * Input stream
+ */
+
+JNIEXPORT void JNICALL
+Java_java_io_FileInputStream_open0(JNIEnv *env, jobject this, jstring path) {
+    fileOpen(env, this, path, fis_fd, O_RDONLY);
+}
+</code></pre>
+<p>这里可以看到 initIDs 方法实现，其逻辑是将名为“fd”的 FileDescriptor 类型对象的字段ID保存到全局变量 fid中；</p>
+<p>而 open0 方法调用了 fileOpen。在不同的操作系统上有不同的实现，以 Window 为例：</p>
+<pre><code class="C++">void
+fileOpen(JNIEnv *env, jobject this, jstring path, jfieldID fid, int flags)
+{
+    FD h = winFileHandleOpen(env, path, flags);
+    if (h &gt;= 0) {
+        SET_FD(this, h, fid);
+    }
+}</code></pre>
+<p>这里对展开 winFileHandleOpen 方法不感兴趣，大体意思就是调用 Window 的系统方法打开了文件，并返回了文件描述符 h。</p>
+<p>然后调用 SET_FD 方法将文件描述符 h 设置到 fid 中。fid 就是 initIDs 所缓存的字段ID（理解为 fd 字段的指针）。</p>
+<p>至此，FileInputStream 和文件描述符关联了起来。后续在 FileInputStream 上的读写，JVM 都可以通过其内部的 fd 字段非常方便地找到需要读写的文件！所以，FileInputStream 还支持指定文件描述符的构造形式：</p>
+<pre><code class="java">FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);</code></pre>
+<p>这其实就是 System.out 的实现。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>我们学习了 Linux 系统的文件操作符概念，理解了”一切皆是文件“的设计理念。此外，还深入学习了文件输入输出流类的源码实现，探讨它们是怎么利用文件描述符和操作系统进行交互。希望大家有所收获！</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote>
+<p>特别声明，本文部分段落摘自以下资料。</p>
+</blockquote>
+<ul>
+<li>[1] <a href="https://blog.csdn.net/cywosp/article/details/38965239" target="_blank" rel="noopener">《每天进步一点点——Linux中的文件描述符与打开文件之间的关系》</a> </li>
+<li>[2] <a href="https://zhuanlan.zhihu.com/p/105086274" target="_blank" rel="noopener">《Linux 进程、线程、文件描述符的底层原理》</a></li>
+</ul>
+<blockquote>
+<p>其他参考资料</p>
+</blockquote>
+<ul>
+<li><a href="https://blog.csdn.net/lili13897741554/article/details/82115105" target="_blank" rel="noopener">Java IO流之文件描述符FileDescriptor</a></li>
+<li><a href="https://segmentfault.com/a/1190000009724931" target="_blank" rel="noopener">文件描述符（File Descriptor）简介</a>：这文章讲到文件描述符限制的相关命令，非常实用！</li>
+<li><a href="https://gorden5566.com/post/1027.html" target="_blank" rel="noopener">如何查找 jdk 中的 native 实现</a>：查看 JDK 源码必备技能</li>
+<li><a href="https://www.cnblogs.com/java-chen-hao/p/11083740.html" target="_blank" rel="noopener">高级Java工程师必备 —– 深入分析 Java IO （三）</a>：介绍Java IO 类库的好文</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杜瓦尔
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" title="深入理解Java文件输入输出流和文件描述符">https://blog.duval.top/2020/12/16/深入理解Java文件输入输出流和文件描述符/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Java/" rel="tag"><i class="fa fa-tag"></i> Java</a>
+              <a href="/tags/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" rel="tag"><i class="fa fa-tag"></i> 文件描述符</a>
+              <a href="/tags/%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81/" rel="tag"><i class="fa fa-tag"></i> 输入输出流</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" rel="prev" title="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞">
+      <i class="fa fa-chevron-left"></i> 抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#文件描述符是什么？"><span class="nav-number">1.</span> <span class="nav-text">文件描述符是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux-进程中的文件描述符"><span class="nav-number">2.</span> <span class="nav-text">Linux 进程中的文件描述符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FileDescriptor"><span class="nav-number">3.</span> <span class="nav-text">FileDescriptor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#initIDs"><span class="nav-number">3.1.</span> <span class="nav-text">initIDs</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件输入输出流"><span class="nav-number">4.</span> <span class="nav-text">文件输入输出流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#FileInputStream"><span class="nav-number">4.1.</span> <span class="nav-text">FileInputStream</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">6.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">37</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">403k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">6:06</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
