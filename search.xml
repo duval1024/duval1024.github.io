@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>一文彻底掌握Java IO类库</title>
+    <url>/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/</url>
+    <content><![CDATA[<p>Java开发过程中经常会用到Java IO类库，本文将深入源码，带你彻底掌握Java IO类库。</p>
+<a id="more"></a>
+
+<h2 id="Java-IO类图框架"><a href="#Java-IO类图框架" class="headerlink" title="Java IO类图框架"></a>Java IO类图框架</h2><p>Java IO类库可以大体划分为字节流和字符流两大类，再根据输入和输出两种情况，可以再分为四小类。所以大致框架如下所示：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java%20IO%E7%B1%BB%E5%BA%93%2FJava%20IO%20%E7%B1%BB%E5%9B%BE.png" alt="Java IO 类图.png"></p>
+<p>(待续)</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>IO</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>深入理解Java文件输入输出流和文件描述符</title>
     <url>/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</url>
     <content><![CDATA[<p>本文将深入理解文件描述符，并从 JDK 源码上分析文件描述符在文件输入输出流中的运用。</p>
@@ -2205,8 +2222,8 @@ public class PermissionValidator {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Apollo</tag>
         <tag>源码分析</tag>
+        <tag>Apollo</tag>
       </tags>
   </entry>
   <entry>
@@ -3362,8 +3379,8 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -11334,8 +11351,8 @@ hiveStatement.execute(sql);    </code></pre>
         <category>Azkaban</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Azkaban</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>
@@ -11872,8 +11889,8 @@ protected boolean createStreamingResultSet() {
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
