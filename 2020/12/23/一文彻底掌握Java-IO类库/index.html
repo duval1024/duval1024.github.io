@@ -60,16 +60,16 @@
   };
 </script>
 
-  <meta name="description" content="Java开发过程中经常会用到Java IO类库，本文将深入源码，带你彻底掌握Java IO类库。">
+  <meta name="description" content="Java开发过程中经常会用到 Java IO 类库，本文将深入源码，带你彻底掌握 Java IO 类库。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="一文彻底掌握Java IO类库">
 <meta property="og:url" content="https://blog.duval.top/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="Java开发过程中经常会用到Java IO类库，本文将深入源码，带你彻底掌握Java IO类库。">
+<meta property="og:description" content="Java开发过程中经常会用到 Java IO 类库，本文将深入源码，带你彻底掌握 Java IO 类库。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java%20IO%E7%B1%BB%E5%BA%93%2FJava%20IO%20%E7%B1%BB%E5%9B%BE.png">
 <meta property="article:published_time" content="2020-12-23T14:57:44.000Z">
-<meta property="article:modified_time" content="2020-12-23T03:53:09.645Z">
+<meta property="article:modified_time" content="2020-12-24T02:47:48.992Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="Java">
 <meta property="article:tag" content="IO">
@@ -287,14 +287,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>119</span>
+              <span>9.6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
+              <span>9 分钟</span>
             </span>
 
         </div>
@@ -306,11 +306,329 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Java开发过程中经常会用到Java IO类库，本文将深入源码，带你彻底掌握Java IO类库。</p>
+        <p>Java开发过程中经常会用到 Java IO 类库，本文将深入源码，带你彻底掌握 Java IO 类库。</p>
 <a id="more"></a>
 
-<h2 id="Java-IO类图框架"><a href="#Java-IO类图框架" class="headerlink" title="Java IO类图框架"></a>Java IO类图框架</h2><p>Java IO类库可以大体划分为字节流和字符流两大类，再根据输入和输出两种情况，可以再分为四小类。所以大致框架如下所示：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java%20IO%E7%B1%BB%E5%BA%93%2FJava%20IO%20%E7%B1%BB%E5%9B%BE.png" alt="Java IO 类图.png"></p>
-<p>(待续)</p>
+<h2 id="Java-IO类图框架"><a href="#Java-IO类图框架" class="headerlink" title="Java IO类图框架"></a>Java IO类图框架</h2><p>Java IO 类库可以大体划分为字节流和字符流两大类，再根据输入和输出两种情况，可以再分为四小类。所以<a href="https://bubcoaxnbl.feishu.cn/mindnotes/bmncnZAhJYFx5oWnuECGAXR2Fhd" target="_blank" rel="noopener">大致框架图</a>如下所示：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java%20IO%E7%B1%BB%E5%BA%93%2FJava%20IO%20%E7%B1%BB%E5%9B%BE.png" alt="Java IO 类图.png"></p>
+<p>如上图，Java 类图并不繁多，而且分类和命名都非常清晰。其中需要重点掌握的类已经加粗展示在图里。</p>
+<p>下边我们逐类逐个展开分析整个类库。</p>
+<h2 id="字节流"><a href="#字节流" class="headerlink" title="字节流"></a>字节流</h2><p>顾名思义，字节流相关类是处理字节类型数据的，而且都是以『Stream』为后缀的类。根据输入输出类型，可以划分为 InputStream 或 OutputStream 的两大类的实现类。</p>
+<h3 id="InputStream"><a href="#InputStream" class="headerlink" title="InputStream"></a>InputStream</h3><p>先看看内部方法：</p>
+<pre><code class="java">public abstract class InputStream implements Closeable {
+    public abstract int read() throws IOException;
+    public int read(byte b[]) throws IOException {/***/}
+    public int read(byte b[], int off, int len) throws IOException {/***/}
+    public long skip(long n) throws IOException {/***/}
+    public int available() throws IOException {/***/}
+    public void close() throws IOException {/***/}
+    public synchronized void mark(int readlimit) {/***/}
+    public synchronized void reset() throws IOException {/***/}
+    public boolean markSupported() {/***/}</code></pre>
+<p>InputStream 实现了 Closeable 接口，并且内部只有一个抽象方法 read， 所有实现类都强制要求实现该方法。其他方法提供了非常扼要的默认实现，实现类可以酌情覆盖实现。</p>
+<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
+<p>简单来说，FileInputStream 内部通过文件描述符 FileDescriptor 和系统文件关联起来，并通过 native 方法调用系统 API 读写文件。</p>
+<h4 id="FilterInputStream"><a href="#FilterInputStream" class="headerlink" title="FilterInputStream"></a>FilterInputStream</h4><p>FilterInputStream 采用装饰器模式，内部包装了一个 InputStream 对象，并且继承了 InputStream 并覆写全部方法，但方法内容都是单纯地调用内部包装的 InputStream 对象。如下：</p>
+<pre><code class="java">public
+class FilterInputStream extends InputStream {
+    protected volatile InputStream in;
+
+    protected FilterInputStream(InputStream in) {
+        this.in = in;
+    }
+
+    public int read() throws IOException {
+        return in.read();
+    }
+
+    public int read(byte b[]) throws IOException {
+        return read(b, 0, b.length);
+    }
+
+    public int read(byte b[], int off, int len) throws IOException {
+        return in.read(b, off, len);
+    }
+
+    public long skip(long n) throws IOException {
+        return in.skip(n);
+    }
+
+    public int available() throws IOException {
+        return in.available();
+    }
+
+    public void close() throws IOException {
+        in.close();
+    }
+
+
+    public synchronized void mark(int readlimit) {
+        in.mark(readlimit);
+    }
+
+    public synchronized void reset() throws IOException {
+        in.reset();
+    }
+
+    public boolean markSupported() {
+        return in.markSupported();
+    }
+}</code></pre>
+<p>所以正如其名，FilterInputStream 就像是内部 InputStream 对象的一个过滤器一般，所有方法调用都需要经过一层包装方法的『过滤』才能到达内部对象。FilterInputStream 并没有逻辑实现，具体实现需要子类覆写相关方法实现。</p>
+<p>比较有意思的实现有以下几个：</p>
+<ul>
+<li><strong>BufferedInputStream</strong><blockquote>
+<p>BufferedInputStream 内部使用一个 buf 字节数组进行缓冲，覆写了 FilterInputStream 的全部方法实现一个带缓冲区的字节流类。在进行磁盘或网络IO时，原始的InputStream对数据读取的过程都是一个字节一个字节操作的，而BufferedInputStream在其内部提供了一个buffer，在读数据时，会一次读取一大块数据到buffer中，这样比单字节的操作效率要高的多，特别是进程磁盘IO和对大量数据进行读写的时候,能提升IO性能。</p>
+</blockquote>
+</li>
+<li><strong>PushbackInputStream</strong><blockquote>
+<p>PushbackInputStream 内部同样使用一个 buf 字节数组对已读数据进行缓存，然后可以通过 unread 方法将已读的数据重新放回 buf 数组，从而实现了一个支持 push back 的字节流类。</p>
+</blockquote>
+</li>
+<li><strong>DataInputStream</strong><blockquote>
+<p>DataInputStream 提供了许多可以读取 Java 基本类型的方法。</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="ByteArrayInputStream"><a href="#ByteArrayInputStream" class="headerlink" title="ByteArrayInputStream"></a>ByteArrayInputStream</h4><p>ByteArrayInputStream 支持从 byte 数组读取数据，通过构造函数可以指定该 byte 数组：</p>
+<pre><code class="java">    protected byte buf[];
+
+    protected int pos;
+
+    protected int mark = 0;
+
+    protected int count;
+
+    public ByteArrayInputStream(byte buf[]) {
+        this.buf = buf;
+        this.pos = 0;
+        this.count = buf.length;
+    }
+
+    public ByteArrayInputStream(byte buf[], int offset, int length) {
+        this.buf = buf;
+        this.pos = offset;
+        this.count = Math.min(offset + length, buf.length);
+        this.mark = offset;
+    }</code></pre>
+<h4 id="ObjectInputStream"><a href="#ObjectInputStream" class="headerlink" title="ObjectInputStream"></a>ObjectInputStream</h4><p>ObjectInputStream 与 DataInputStream 类似也支持 Java 基本类型的读取，此外还支持反序列化读取对象。它常常与 ObjectOutputStream 搭配使用。因此，ObjectOutputStream 实现将基本类型或者对象序列化并输出到 IO 字节流或者设备上，而 ObjectInputStream 从 IO 字节流或者设备上反序列化读取基本类型或者对象。</p>
+<p>比如，从文件中读取一个 person 对象。</p>
+<pre><code class="java">ObjectInputStream input = new ObjectInputStream(new FileInputStream(&quot;data.txt&quot;));
+Person person = (MyClass) input.readObject(); 
+input.close();</code></pre>
+<p>这里要求 Person 一定要实现 java.io.Serializable 接口。</p>
+<h4 id="PipedInputStream"><a href="#PipedInputStream" class="headerlink" title="PipedInputStream"></a>PipedInputStream</h4><p>PipedInputStream 通常和 PipedOutputStream 搭配使用，实现了一个承载字节流的管道类。PipedOutputStream 的输出会自动调用 PipedInputStream 的 receive 方法作为输入。PipedInputStream 提供了以下几个特殊方法：</p>
+<pre><code class="java">// 连接 PipedOutputStream 对象，形成管道
+public void connect(PipedOutputStream src) throws IOException;
+// 接收一个字节
+protected synchronized void receive(int b) throws IOException;
+// 接收一个字节数组
+synchronized void receive(byte b[], int off, int len)  throws IOException;</code></pre>
+<p>注意到其 read 方法和 receive 都是同步方法，read 方法在没有数据的时候会发生阻塞，而 receive 方法在缓冲数组没有剩余空间的时候也会发生阻塞：</p>
+<pre><code class="java">public synchronized int read()  throws IOException {
+        if (!connected) {
+            throw new IOException(&quot;Pipe not connected&quot;);
+        } else if (closedByReader) {
+            throw new IOException(&quot;Pipe closed&quot;);
+        } else if (writeSide != null &amp;&amp; !writeSide.isAlive()
+                   &amp;&amp; !closedByWriter &amp;&amp; (in &lt; 0)) {
+            throw new IOException(&quot;Write end dead&quot;);
+        }
+
+        readSide = Thread.currentThread();
+        int trials = 2;
+        while (in &lt; 0) {
+            // in小于0表示缓冲数组为空，处于无数据状态
+            if (closedByWriter) {
+                /* closed by writer, return EOF */
+                return -1;
+            }
+            if ((writeSide != null) &amp;&amp; (!writeSide.isAlive()) &amp;&amp; (--trials &lt; 0)) {
+                throw new IOException(&quot;Pipe broken&quot;);
+            }
+            /* might be a writer waiting */
+            notifyAll();
+            try {
+                // 阻塞等待
+                wait(1000);
+            } catch (InterruptedException ex) {
+                throw new java.io.InterruptedIOException();
+            }
+        }
+        int ret = buffer[out++] &amp; 0xFF;
+        if (out &gt;= buffer.length) {
+            out = 0;
+        }
+        if (in == out) {
+            /* now empty */
+            in = -1;
+        }
+
+        return ret;
+    }
+
+
+protected synchronized void receive(int b) throws IOException {
+        checkStateForReceive();
+        writeSide = Thread.currentThread();
+        if (in == out)
+            // 当in等于out，意味着缓冲数组已满，阻塞等待空间释放
+            awaitSpace();
+        if (in &lt; 0) {
+            in = 0;
+            out = 0;
+        }
+        buffer[in++] = (byte)(b &amp; 0xFF);
+        if (in &gt;= buffer.length) {
+            in = 0;
+        }
+    }</code></pre>
+<h4 id="SequenceInputStream"><a href="#SequenceInputStream" class="headerlink" title="SequenceInputStream"></a>SequenceInputStream</h4><p>SequenceInputStream 支持将多个 InputStream 组合起来，并按照顺序进行读取。</p>
+<h3 id="OutputStream"><a href="#OutputStream" class="headerlink" title="OutputStream"></a>OutputStream</h3><p>OutputStream 与 InputStream 相对应，实现上存在很多相似之处。先看看内部方法：</p>
+<pre><code class="java">public abstract class OutputStream implements Closeable, Flushable {
+    public abstract void write(int b) throws IOException;
+    public void write(byte b[]) throws IOException {/***/}
+    public void write(byte b[], int off, int len) throws IOException {/***/}
+    public void flush() throws IOException {/***/}
+    public void close() throws IOException {/***/}
+}</code></pre>
+<p>OutputStream 实现了 Closeable 接口和 Flushable 方法，同样有一个抽象的 write 方法需要实现。其他方法提供框架性代码，也需要实现类覆写相关方法，提供更多的自定义功能。</p>
+<h4 id="FileOutputStream"><a href="#FileOutputStream" class="headerlink" title="FileOutputStream"></a>FileOutputStream</h4><p>实现上与 FileInputStream 类似，提供对文件写入字节流的功能。</p>
+<h4 id="FilterOutputStream"><a href="#FilterOutputStream" class="headerlink" title="FilterOutputStream"></a>FilterOutputStream</h4><p>与 FilterInputStream 类似，对 OutputStream 对象进行包装，并继承了 OutputStream 并覆写全部方法，方法内容都是简单地调用内部的 OutputStream 对象。</p>
+<p>同样的也有几个子类实现：</p>
+<ul>
+<li><strong>BufferedOutputStream</strong>：带缓冲区的字节流输出类，与 BufferedInputStream 对应；</li>
+<li><strong>DataOutputStream</strong>：提供写 Java 基本类型相关方法的字节流类，与 DataInputStream 对应；</li>
+<li><strong>PrintStream</strong>：与 DataOutputStream 有些类似，不过它提供了更加丰富的写出方法，并且支持换行输出。</li>
+</ul>
+<h4 id="ByteArrayOutputStream"><a href="#ByteArrayOutputStream" class="headerlink" title="ByteArrayOutputStream"></a>ByteArrayOutputStream</h4><p>与 ByteArrayInputStream 相反，ByteArrayOutputStream 实现输出到内部的缓存字节数组 buf 中。特有的方法有：</p>
+<pre><code class="java">/** 将该 Stream 输出为 byte 数组**/
+public synchronized byte toByteArray()[] {
+    return Arrays.copyOf(buf, count);
+}
+/** 将该 Stream 输出到另一个 Stream 上**/
+public synchronized void writeTo(OutputStream out) throws IOException {
+    out.write(buf, 0, count);
+}</code></pre>
+<h4 id="ObjectOutputStream"><a href="#ObjectOutputStream" class="headerlink" title="ObjectOutputStream"></a>ObjectOutputStream</h4><p>与 ObjectInputStream 对应，ObjectOutputStream 实现将 Java 基本类型数据或者 Java 对象序列化后写入输出字节流中。</p>
+<h4 id="PipedOutputStream"><a href="#PipedOutputStream" class="headerlink" title="PipedOutputStream"></a>PipedOutputStream</h4><p>与 PipedInputStream 搭配使用，PipedOutputStream 会输出字节流到管道另一端的 PipedInputStream。</p>
+<h2 id="字符流"><a href="#字符流" class="headerlink" title="字符流"></a>字符流</h2><p>字节流处理的是 byte 数组，而字符流处理的是 char 数组。而且字符流相关的类都以 Reader 或者 Writer 为后缀。</p>
+<h3 id="Reader"><a href="#Reader" class="headerlink" title="Reader"></a>Reader</h3><p>先看看内部方法：</p>
+<pre><code class="java">public abstract class Reader implements Readable, Closeable {
+    public int read(java.nio.CharBuffer target) throws IOException;
+    public int read() throws IOException;
+    public int read(char cbuf[]) throws IOException;
+    abstract public int read(char cbuf[], int off, int len) throws IOException;
+    public long skip(long n) throws IOException;
+    public boolean ready() throws IOException;
+    public boolean markSupported();
+    public void mark(int readAheadLimit) throws IOException;
+    public void reset() throws IOException;
+    abstract public void close() throws IOException;
+}</code></pre>
+<p>内部方法与 InputStream 非常相似，同样实现类需要实现 read 方法。</p>
+<h4 id="BufferedReader"><a href="#BufferedReader" class="headerlink" title="BufferedReader"></a>BufferedReader</h4><p>带缓冲区的 Reader 实现。</p>
+<h4 id="CharArrayReader"><a href="#CharArrayReader" class="headerlink" title="CharArrayReader"></a>CharArrayReader</h4><p>从字符数组读取数据的 Reader 实现。</p>
+<h4 id="InputStreamReader"><a href="#InputStreamReader" class="headerlink" title="InputStreamReader"></a>InputStreamReader</h4><p>InputStreamReader 是一个包装类，内部对象是 StreamDecoder。StreamDecoder 支持从 InputStream 中读取字符。</p>
+<pre><code class="java">public class InputStreamReader extends Reader {
+
+    private final StreamDecoder sd;
+
+    /**
+     * Creates an InputStreamReader that uses the default charset.
+     *
+     * @param  in   An InputStream
+     */
+    public InputStreamReader(InputStream in) {
+        super(in);
+        try {
+            sd = StreamDecoder.forInputStreamReader(in, this, (String)null); // ## check lock object
+        } catch (UnsupportedEncodingException e) {
+            // The default encoding should always be available
+            throw new Error(e);
+        }
+    }
+    // ...
+}
+</code></pre>
+<ul>
+<li><p><strong>FileReader</strong>：InputStreamReader 的实现，入参是一个 FileInputStream 对象</p>
+<pre><code class="java">  public FileReader(String fileName) throws FileNotFoundException {
+      super(new FileInputStream(fileName));
+  }</code></pre>
+</li>
+</ul>
+<h4 id="FilterReader"><a href="#FilterReader" class="headerlink" title="FilterReader"></a>FilterReader</h4><p>FilterReader 与上文的 FilterInputStream 类似，也是一个包装类。它内部包含一个 Reader 对象，并且继承自 Reader 并覆写所有方法，而方法内容都是简单调用内部 Reader 对象。</p>
+<ul>
+<li><strong>PushbackReader</strong>：FilterReader 的实现类，内部使用一个 buf 字符数组对已读数据进行缓存，然后可以通过 unread 方法将已读的数据重新放回 buf 数组，从而实现了一个支持 push back 的字符流类。</li>
+</ul>
+<h4 id="PipedReader"><a href="#PipedReader" class="headerlink" title="PipedReader"></a>PipedReader</h4><p>与 PipedInputStream 类似</p>
+<h4 id="StringReader"><a href="#StringReader" class="headerlink" title="StringReader"></a>StringReader</h4><p>与 CharArrayReader 类似</p>
+<h3 id="Writer"><a href="#Writer" class="headerlink" title="Writer"></a>Writer</h3><h4 id="BufferedWriter"><a href="#BufferedWriter" class="headerlink" title="BufferedWriter"></a>BufferedWriter</h4><p>带缓冲区的 Writer 实现。</p>
+<h4 id="CharArrayWriter"><a href="#CharArrayWriter" class="headerlink" title="CharArrayWriter"></a>CharArrayWriter</h4><p>与 CharArrayReader 相反，CharArrayWriter 将数据写入内部字符数组中。其特有方法有：</p>
+<pre><code class="java">public char toCharArray()[] {
+    synchronized (lock) {
+        return Arrays.copyOf(buf, count);
+    }
+}
+
+public void writeTo(Writer out) throws IOException {
+    synchronized (lock) {
+        out.write(buf, 0, count);
+    }
+}</code></pre>
+<h4 id="OutputStreamWriter"><a href="#OutputStreamWriter" class="headerlink" title="OutputStreamWriter"></a>OutputStreamWriter</h4><p>与 InputStreamReader 相对，OutputStreamWriter 也是一个包装类，内部对象是 StreamEncoder。StreamEncoder 支持将字符输出到 OutputStream 中。</p>
+<ul>
+<li><p><strong>FileWriter</strong>OutputStreamWriter 的实现，入参是一个 FileOutputStream 对象</p>
+<pre><code class="java">  public FileWriter(String fileName) throws IOException {
+      super(new FileOutputStream(fileName));
+  }</code></pre>
+</li>
+</ul>
+<h4 id="FilterWriter"><a href="#FilterWriter" class="headerlink" title="FilterWriter"></a>FilterWriter</h4><p>FilterWriter 的是一个包装类，内部包含一个 Writer 对象，同时也继承了 Writer，并覆写了部分方法。这个类在 JDK 里没有找到相关实现子类。</p>
+<h4 id="PipedWriter"><a href="#PipedWriter" class="headerlink" title="PipedWriter"></a>PipedWriter</h4><p>与 PipedReader PipedWriter 会输出字符流到管道另一端的 PipedWriter。</p>
+<h4 id="PrintWriter"><a href="#PrintWriter" class="headerlink" title="PrintWriter"></a>PrintWriter</h4><p>类似 PrintStream，提供了丰富的写出方法，并且支持换行输出。这里发现其并没有实现 FilterWriter，这点与 PrintStream 的继承结构并不吻合。个人觉得这点不是很好，但是也无伤大雅。</p>
+<h4 id="StringWriter"><a href="#StringWriter" class="headerlink" title="StringWriter"></a>StringWriter</h4><p>将字符流输出到内部的 StringBuffer 上，同时可以通过 toString 方法获取内部的字符串缓存：</p>
+<pre><code class="java">public String toString() {
+    return buf.toString();
+}</code></pre>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><h3 id="RandomAccessFile"><a href="#RandomAccessFile" class="headerlink" title="RandomAccessFile"></a>RandomAccessFile</h3><p>FileInputStream（文件字符流）或 FileReader（文件字节流）来读文件都只能够实现从文件开始顺序读取到文件结束。</p>
+<p>而 RandomAccessFile 可以实现随机读写，用来只读取文件中的一部分：</p>
+<pre><code class="java">public class RandAccessDemo {
+    public static String randomAccessFileRead() throws IOException {
+        // 创建一个RandomAccessFile对象
+        RandomAccessFile file = new RandomAccessFile( &quot;data.txt&quot;, &quot;rw&quot;);
+        // 通过seek方法来移动读写位置的指针
+        file.seek(10);
+        // 获取当前指针
+        long pointerBegin = file.getFilePointer();
+        // 从当前指针开始读
+        byte[] contents = new byte[1024];
+        file.read( contents);
+        long pointerEnd = file.getFilePointer();
+        System. out.println( &quot;pointerBegin:&quot; + pointerBegin + &quot;\n&quot; + &quot;pointerEnd:&quot; + pointerEnd + &quot;\n&quot; + new String(contents));
+        String dataStr = new String(contents);
+        file.close();
+        return dataStr;
+    }
+
+    public static void randomAccessFileWrite(String dataStr) throws IOException {
+        // 创建一个RandomAccessFile对象
+        RandomAccessFile file = new RandomAccessFile(&quot;data.txt&quot;, &quot;rw&quot;);
+        // 通过seek方法来移动读写位置的指针
+        file.seek(10);
+        // 获取当前指针
+        long pointerBegin = file.getFilePointer();
+        // 从当前指针位置开始写
+        file.write(dataStr.getBytes());
+        long pointerEnd = file.getFilePointer();
+        System.out.println(&quot;pointerBegin:&quot; + pointerBegin + &quot;\n&quot; + &quot;pointerEnd:&quot; + pointerEnd + &quot;\n&quot;);
+        file.close();
+    }
+}
+</code></pre>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.cnblogs.com/java-chen-hao/p/11083740.html#_label2_5" target="_blank" rel="noopener">高级Java工程师必备 —– 深入分析 Java IO （三）</a></li>
+</ul>
 
     </div>
 
@@ -447,7 +765,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-IO类图框架"><span class="nav-number">1.</span> <span class="nav-text">Java IO类图框架</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-IO类图框架"><span class="nav-number">1.</span> <span class="nav-text">Java IO类图框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#字节流"><span class="nav-number">2.</span> <span class="nav-text">字节流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#InputStream"><span class="nav-number">2.1.</span> <span class="nav-text">InputStream</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#FileInputStream"><span class="nav-number">2.1.1.</span> <span class="nav-text">FileInputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FilterInputStream"><span class="nav-number">2.1.2.</span> <span class="nav-text">FilterInputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ByteArrayInputStream"><span class="nav-number">2.1.3.</span> <span class="nav-text">ByteArrayInputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ObjectInputStream"><span class="nav-number">2.1.4.</span> <span class="nav-text">ObjectInputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PipedInputStream"><span class="nav-number">2.1.5.</span> <span class="nav-text">PipedInputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SequenceInputStream"><span class="nav-number">2.1.6.</span> <span class="nav-text">SequenceInputStream</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OutputStream"><span class="nav-number">2.2.</span> <span class="nav-text">OutputStream</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#FileOutputStream"><span class="nav-number">2.2.1.</span> <span class="nav-text">FileOutputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FilterOutputStream"><span class="nav-number">2.2.2.</span> <span class="nav-text">FilterOutputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ByteArrayOutputStream"><span class="nav-number">2.2.3.</span> <span class="nav-text">ByteArrayOutputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ObjectOutputStream"><span class="nav-number">2.2.4.</span> <span class="nav-text">ObjectOutputStream</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PipedOutputStream"><span class="nav-number">2.2.5.</span> <span class="nav-text">PipedOutputStream</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#字符流"><span class="nav-number">3.</span> <span class="nav-text">字符流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reader"><span class="nav-number">3.1.</span> <span class="nav-text">Reader</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#BufferedReader"><span class="nav-number">3.1.1.</span> <span class="nav-text">BufferedReader</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CharArrayReader"><span class="nav-number">3.1.2.</span> <span class="nav-text">CharArrayReader</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#InputStreamReader"><span class="nav-number">3.1.3.</span> <span class="nav-text">InputStreamReader</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FilterReader"><span class="nav-number">3.1.4.</span> <span class="nav-text">FilterReader</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PipedReader"><span class="nav-number">3.1.5.</span> <span class="nav-text">PipedReader</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#StringReader"><span class="nav-number">3.1.6.</span> <span class="nav-text">StringReader</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Writer"><span class="nav-number">3.2.</span> <span class="nav-text">Writer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#BufferedWriter"><span class="nav-number">3.2.1.</span> <span class="nav-text">BufferedWriter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CharArrayWriter"><span class="nav-number">3.2.2.</span> <span class="nav-text">CharArrayWriter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#OutputStreamWriter"><span class="nav-number">3.2.3.</span> <span class="nav-text">OutputStreamWriter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FilterWriter"><span class="nav-number">3.2.4.</span> <span class="nav-text">FilterWriter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PipedWriter"><span class="nav-number">3.2.5.</span> <span class="nav-text">PipedWriter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PrintWriter"><span class="nav-number">3.2.6.</span> <span class="nav-text">PrintWriter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#StringWriter"><span class="nav-number">3.2.7.</span> <span class="nav-text">StringWriter</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其他"><span class="nav-number">4.</span> <span class="nav-text">其他</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RandomAccessFile"><span class="nav-number">4.1.</span> <span class="nav-text">RandomAccessFile</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -541,12 +859,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">403k</span>
+    <span title="站点总字数">413k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:06</span>
+    <span title="站点阅读时长">6:15</span>
 
 </div>
 
