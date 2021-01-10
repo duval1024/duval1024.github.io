@@ -60,18 +60,18 @@
   };
 </script>
 
-  <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。系列文章都将力求全面而概要地汇总核心知识点，并使知识点串联成面，以方便学习、备忘以及工作使用。本文将介绍第一部分——内存划分。">
+  <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java 虚拟机原理之内存划分">
 <meta property="og:url" content="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。系列文章都将力求全面而概要地汇总核心知识点，并使知识点串联成面，以方便学习、备忘以及工作使用。本文将介绍第一部分——内存划分。">
+<meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.svg">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.svg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg">
 <meta property="article:published_time" content="2021-01-07T14:56:07.000Z">
-<meta property="article:modified_time" content="2021-01-08T06:10:58.492Z">
+<meta property="article:modified_time" content="2021-01-09T10:50:00.753Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="Java">
@@ -308,7 +308,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。系列文章都将力求全面而概要地汇总核心知识点，并使知识点串联成面，以方便学习、备忘以及工作使用。本文将介绍第一部分——内存划分。</p>
+        <p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。</p>
 <a id="more"></a>
 
 <h2 id="JDK-体系架构"><a href="#JDK-体系架构" class="headerlink" title="JDK 体系架构"></a>JDK 体系架构</h2><p>先从宏观上来看 JVM 所处的位置，且看官方文档的<a href="https://docs.oracle.com/javase/8/docs/" target="_blank" rel="noopener">体系架构图</a>：</p>
@@ -319,7 +319,7 @@
 <li>JDK（Java SE Development Kit）：Java 开发工具包，是在 JRE 基础上增加了开发 Java 程序所需要的各种工具包。</li>
 </ul>
 <p>因此本系列文章主要探讨最底层的 JVM 底层原理。</p>
-<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.svg" alt="JVM 内存模型图.svg"></p>
+<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg" alt="JVM 内存模型图.jpg"></p>
 <p>上图展示的是以下样例代码的内存模型：</p>
 <pre><code class="java">public class App {
 
@@ -345,7 +345,7 @@
 </ul>
 <p>此外，直接内存也是非常重要一部分内存空间。 JVM 元数据空间以及 Java NIO 等都是用到直接内存。</p>
 <h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><p>JVM 提供了若干参数来控制上述各个区域的大小，如下图所示：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.svg" alt="JVM 内存模型与调优参数.svg"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg" alt="JVM 内存模型与调优参数.jpg"></p>
 <p>配置样例如：</p>
 <pre><code class="bash">java -Xmx6g -Xms6g -Xmn3g -Xss512K -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:SurvivorRatio=8 -XX:MetaspaceSize=64m ‐XX:MaxMetaspaceSize=128M -jar myapp.jar</code></pre>
 <p>需要注意，元数据空间在缺省参数的情况下，默认初始大小为21M，如果发生空间不足，会触发 Full GC 进行扩容，且最大扩容空间可为所有的机器内存。所以一定要配置元数据空间参数，且 MetaspaceSize 和 MaxMetaspaceSize 最好相等，从而从根源上杜绝 Full GC 扩容。</p>
@@ -362,6 +362,9 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理之垃圾收集/" rel="bookmark">Java 虚拟机原理之垃圾收集</a></div>
+    </li>
+    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理之对象创建和回收/" rel="bookmark">Java 虚拟机原理之对象创建与回收</a></div>
     </li>
     <li class="popular-posts-item">
@@ -372,9 +375,6 @@
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/12/23/一文彻底掌握Java-IO类库/" rel="bookmark">一文彻底掌握Java IO类库</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/16/深入理解Java文件输入输出流和文件描述符/" rel="bookmark">深入理解Java文件输入输出流和文件描述符</a></div>
     </li>
   </ul>
 
@@ -519,7 +519,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">41</span>
+          <span class="site-state-item-count">42</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -597,12 +597,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">421k</span>
+    <span title="站点总字数">422k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:23</span>
+    <span title="站点阅读时长">6:24</span>
 
 </div>
 

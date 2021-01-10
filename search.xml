@@ -1,9 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Java 虚拟机原理之垃圾收集</title>
+    <url>/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/</url>
+    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。</p>
+<a id="more"></a>
+
+<h2 id="垃圾收集算法"><a href="#垃圾收集算法" class="headerlink" title="垃圾收集算法"></a>垃圾收集算法</h2><ul>
+<li>标记清除算法<ul>
+<li>需要标记的对象非常多，效率一般不高</li>
+<li>内存容易导致空间碎片化问题</li>
+</ul>
+</li>
+<li>标记整理算法<ul>
+<li>在标记清除算法基础上，增加内存整理功能，避免碎片化的问题</li>
+<li>同样存在标记量大而效率不高的问题</li>
+</ul>
+</li>
+<li>标记复制算法<ul>
+<li>一般需要预留 Survivor 区域，导致空间利用率不高</li>
+<li>回收效率非常高</li>
+</ul>
+</li>
+<li>分代收集算法<ul>
+<li>常见的垃圾收集器都采用此法</li>
+</ul>
+</li>
+</ul>
+<h2 id="常见垃圾收集器"><a href="#常见垃圾收集器" class="headerlink" title="常见垃圾收集器"></a>常见垃圾收集器</h2><h3 id="经典垃圾收集器"><a href="#经典垃圾收集器" class="headerlink" title="经典垃圾收集器"></a>经典垃圾收集器</h3><ul>
+<li><p>新生代收集器</p>
+<ul>
+<li>Serial New 收集器（-XX:+UseSerialGC）<blockquote>
+<p>新生代单线程垃圾收集器。</p>
+</blockquote>
+</li>
+<li>Parallel 收集器（-XX:+UseParallelGC）：<blockquote>
+<p>也称为 Parallel Scavenge收集器，可以理解为 Serial New 收集器的多线程版本。该垃圾收集器可与 Serial Old 以及 Parallel Old 两款收集器搭配使用。</p>
+</blockquote>
+</li>
+<li>ParNew 收集器（-XX:+UseParNewGC）<blockquote>
+<p>该垃圾收集器专门开发来与 CMS 收集器搭配使用，当然也可以与 Serial Old 垃圾收集器使用。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>老年代收集器</p>
+<ul>
+<li>Serial Old 收集器（-XX:+UseSerialOldGC）</li>
+<li>Parallel Old 收集器（-XX:+UseParallelOldGC）<blockquote>
+<p>老年代并行垃圾收集器，仅与 Parallel 收集器搭配使用。</p>
+</blockquote>
+</li>
+<li>CMS 收集器（-XX:+UseConcMarkSweepGC）</li>
+</ul>
+</li>
+<li><p>跨代收集器</p>
+<ul>
+<li>G1 收集器（-XX:+UseG1GC）</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>注意，在 jdk1.8.0_161 中测试发现 -XX:+UseSerialOldGC 参数已经不可用。目前各个垃圾收集器之间的关系图如下：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png" alt="垃圾收集器之间的关系.png"><br>其中标红线表示 jdk1.8.0_161 之后推荐使用的搭配关系，还需要注意 CMS 可以退化为 Serial Old</p>
+</blockquote>
+<h3 id="低延迟垃圾收集器"><a href="#低延迟垃圾收集器" class="headerlink" title="低延迟垃圾收集器"></a>低延迟垃圾收集器</h3><ul>
+<li>Shenandoah 收集器</li>
+<li>ZGC 收集器</li>
+</ul>
+<h2 id="垃圾收集器底层算法"><a href="#垃圾收集器底层算法" class="headerlink" title="垃圾收集器底层算法"></a>垃圾收集器底层算法</h2><h3 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h3><h3 id="记忆集和卡表"><a href="#记忆集和卡表" class="headerlink" title="记忆集和卡表"></a>记忆集和卡表</h3>]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>JVM</tag>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Java 虚拟机原理之对象创建与回收</title>
     <url>/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/</url>
-    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。系列文章都将力求全面而概要地汇总核心知识点，并使知识点串联成面，以方便学习、备忘以及工作使用。本文将介绍第二部分——对象创建与回收。</p>
+    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第二部分——对象创建与回收。</p>
 <a id="more"></a>
 
 <h2 id="对象创建"><a href="#对象创建" class="headerlink" title="对象创建"></a>对象创建</h2><p>对象在 JVM 的创建过程可见下图：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2FJVM%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B.png" alt="JVM对象创建过程.png"></p>
@@ -237,7 +313,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
   <entry>
     <title>Java 虚拟机原理之内存划分</title>
     <url>/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/</url>
-    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。系列文章都将力求全面而概要地汇总核心知识点，并使知识点串联成面，以方便学习、备忘以及工作使用。本文将介绍第一部分——内存划分。</p>
+    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。</p>
 <a id="more"></a>
 
 <h2 id="JDK-体系架构"><a href="#JDK-体系架构" class="headerlink" title="JDK 体系架构"></a>JDK 体系架构</h2><p>先从宏观上来看 JVM 所处的位置，且看官方文档的<a href="https://docs.oracle.com/javase/8/docs/" target="_blank" rel="noopener">体系架构图</a>：</p>
@@ -248,7 +324,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
 <li>JDK（Java SE Development Kit）：Java 开发工具包，是在 JRE 基础上增加了开发 Java 程序所需要的各种工具包。</li>
 </ul>
 <p>因此本系列文章主要探讨最底层的 JVM 底层原理。</p>
-<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.svg" alt="JVM 内存模型图.svg"></p>
+<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg" alt="JVM 内存模型图.jpg"></p>
 <p>上图展示的是以下样例代码的内存模型：</p>
 <pre><code class="java">public class App {
 
@@ -274,7 +350,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
 </ul>
 <p>此外，直接内存也是非常重要一部分内存空间。 JVM 元数据空间以及 Java NIO 等都是用到直接内存。</p>
 <h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><p>JVM 提供了若干参数来控制上述各个区域的大小，如下图所示：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.svg" alt="JVM 内存模型与调优参数.svg"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg" alt="JVM 内存模型与调优参数.jpg"></p>
 <p>配置样例如：</p>
 <pre><code class="bash">java -Xmx6g -Xms6g -Xmn3g -Xss512K -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:SurvivorRatio=8 -XX:MetaspaceSize=64m ‐XX:MaxMetaspaceSize=128M -jar myapp.jar</code></pre>
 <p>需要注意，元数据空间在缺省参数的情况下，默认初始大小为21M，如果发生空间不足，会触发 Full GC 进行扩容，且最大扩容空间可为所有的机器内存。所以一定要配置元数据空间参数，且 MetaspaceSize 和 MaxMetaspaceSize 最好相等，从而从根源上杜绝 Full GC 扩容。</p>
@@ -7467,71 +7543,60 @@ public class NioEchoServer {
 <pre><code>2012-05-02T11:16:32.057+0200: [GC pause (young) 46M-&gt;35M(1332M), 0.0317225 secs]</code></pre><h3 id="认识G1日志"><a href="#认识G1日志" class="headerlink" title="认识G1日志"></a>认识G1日志</h3><p>为了认识GC日志，这个章节使用实际的GC日志输出定义一些术语。以下的例子展示了日志的输出，并且附带了术语的解释。</p>
 <p><em>注意:*</em> 了解更多信息请移步<a href="https://blogs.oracle.com/poonam/entry/understanding_g1_gc_logs" target="_blank" rel="noopener">Poonam Bajaj’s Blog post on G1 GC logs.</a></p>
 <h3 id="G1日志术语"><a href="#G1日志术语" class="headerlink" title="G1日志术语"></a>G1日志术语</h3><ul>
-<li>并行时间(Parallel Time)<br>```</li>
+<li><p>并行时间(Parallel Time)</p>
+<pre><code>  414.557: [GC pause (young), 0.03039600 secs] [Parallel Time: 22.9 ms]
+  [GC Worker Start (ms): 7096.0 7096.0 7096.1 7096.1 706.1 7096.1 7096.1 7096.1 7096.2 7096.2 7096.2 7096.2
+      Avg: 7096.1, Min: 7096.0, Max: 7096.2, Diff: 0.2]</code></pre><p>  Parallel Time - 暂停的主要并行部分的大体运行时间；<br>  Worker Start - workers开始的时间戳；<br>  <strong>注意:</strong> 这些日志都按照线程ID排序，并且每个条目都是一致的。</p>
+</li>
+<li><p>外部根扫描(External Root Scanning)</p>
+<pre><code>  [Ext Root Scanning (ms): 3.1 3.4 3.4 3.0 4.2 2.0 3.6 3.2 3.4 7.7 3.7 4.4
+      Avg: 3.8, Min: 2.0, Max: 7.7, Diff: 5.7]</code></pre><p>  External root scanning - 扫描外部根(例如指向堆空间的系统字典)所耗时间</p>
+</li>
+<li><p>更新RSet(Update Remembered Set)</p>
+<pre><code>  [Update RS (ms): 0.1 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 Avg: 0.0, Min: 0.0, Max: 0.1, Diff: 0.1]
+  [Processed Buffers : 26 0 0 0 0 0 0 0 0 0 0 0
+      Sum: 26, Avg: 2, Min: 0, Max: 26, Diff: 26]</code></pre><p>  Update Remembered Set - Any buffers that are completed but have not yet been processed by the concurrent refinement thread before the start of the pause have to be updated. Time depends on density of the cards. The more cards, the longer it will take.</p>
+</li>
+<li><p>扫描RSet(Scanning Remembered Sets)</p>
+<pre><code>  [Scan RS (ms): 0.4 0.2 0.1 0.3 0.0 0.0 0.1 0.2 0.0 0.1 0.0 0.0 Avg: 0.1, Min: 0.0, Max: 0.4, Diff: 0.3]F</code></pre><p>  Scanning Remembered Sets - Look for pointers that point into the Collection Set.</p>
+</li>
+<li><p>对象复制(Object Copy)</p>
+<pre><code>  [Object Copy (ms): 16.7 16.7 16.7 16.9 16.0 18.1 16.5 16.8 16.7 12.3 16.4 15.7 Avg: 16.3, Min: 12.3, Max:  18.1, Diff: 5.8]</code></pre><p>  Object copy – The time that each individual thread spent copying and evacuating objects.</p>
+</li>
+<li><p>Termination Time</p>
+<pre><code>  [Termination (ms): 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+  0.0 Avg: 0.0, Min: 0.0, Max: 0.0, Diff: 0.0] [Termination Attempts : 1 1 1 1 1 1 1 1 1 1 1 1 Sum: 12, Avg: 1, Min: 1, Max: 1, Diff: 0]</code></pre><p>  Termination time - When a worker thread is finished with its particular set of objects to copy and scan, it enters the termination protocol. It looks for work to steal and once it’s done with that work it again enters the termination protocol. Termination attempt counts all the attempts to steal work.</p>
+</li>
+<li><p>GC Worker End</p>
+<pre><code>  [GC Worker End (ms): 7116.4 7116.3 7116.4 7116.3 7116.4 7116.3 7116.4 7116.4 7116.4 7116.4 7116.3 7116.3
+      Avg: 7116.4, Min: 7116.3, Max: 7116.4, Diff:   0.1]
+  [GC Worker (ms): 20.4 20.3 20.3 20.2 20.3 20.2 20.2 20.2 20.3 20.2 20.1 20.1
+      Avg: 20.2, Min: 20.1, Max: 20.4, Diff: 0.3]</code></pre><p>  GC worker end time – Timestamp when the individual GC worker stops.</p>
+<p>  GC worker time – Time taken by individual GC worker thread.</p>
+</li>
+<li><p>GC Worker Other</p>
+<pre><code>  [GC Worker Other (ms): 2.6 2.6 2.7 2.7 2.7 2.7 2.7 2.8 2.8 2.8 2.8 2.8
+      Avg: 2.7, Min: 2.6, Max: 2.8, Diff: 0.2]</code></pre><p>  GC worker other – The time (for each GC thread) that can’t be attributed to the worker phases listed previously. Should be quite low. In the past, we have seen excessively high values and they have been attributed to bottlenecks in other parts of the JVM (e.g., increases in the Code Cache occupancy with Tiered).</p>
+</li>
+<li><p>Clear CT</p>
+<pre><code>  [Clear CT: 0.6 ms]</code></pre><p>  Time taken to clear the card table of RSet scanning meta-data</p>
+</li>
+<li><p>Other</p>
+<pre><code>  [Other: 6.8 ms]</code></pre><p>  Time taken for various other sequential phases of the GC pause.</p>
+</li>
+<li><p>CSet</p>
+<pre><code>  [Choose CSet: 0.1 ms]</code></pre><p>  Time taken finalizing the set of regions to collect. Usually very small; slightly longer when having to select old.</p>
+</li>
+<li><p>Ref Proc</p>
+<pre><code>  [Ref Proc: 4.4 ms]</code></pre><p>  Time spent processing soft, weak, etc. references deferred from the prior phases of the GC.</p>
+</li>
+<li><p>Ref Enq</p>
+<pre><code>  [Ref Enq: 0.1 ms]</code></pre><p>  Time spent placing soft, weak, etc. references on to the pending list.</p>
+</li>
+<li><p>Free CSet</p>
+<pre><code>  [Free CSet: 2.0 ms]</code></pre><p>  Time spent freeing the set of regions that have just been collected, including their remembered sets.</p>
+</li>
 </ul>
-<p>414.557: [GC pause (young), 0.03039600 secs] [Parallel Time: 22.9 ms]<br>[GC Worker Start (ms): 7096.0 7096.0 7096.1 7096.1 706.1 7096.1 7096.1 7096.1 7096.2 7096.2 7096.2 7096.2<br>       Avg: 7096.1, Min: 7096.0, Max: 7096.2, Diff: 0.2]</p>
-<pre><code>Parallel Time - 暂停的主要并行部分的大体运行时间；
-Worker Start - workers开始的时间戳；
-**注意:** 这些日志都按照线程ID排序，并且每个条目都是一致的。
-
-- 外部根扫描(External Root Scanning)
-</code></pre><p>[Ext Root Scanning (ms): 3.1 3.4 3.4 3.0 4.2 2.0 3.6 3.2 3.4 7.7 3.7 4.4<br>     Avg: 3.8, Min: 2.0, Max: 7.7, Diff: 5.7]</p>
-<pre><code>External root scanning - 扫描外部根(例如指向堆空间的系统字典)所耗时间
-
-- 更新RSet(Update Remembered Set)
-</code></pre><p>[Update RS (ms): 0.1 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 Avg: 0.0, Min: 0.0, Max: 0.1, Diff: 0.1]<br>   [Processed Buffers : 26 0 0 0 0 0 0 0 0 0 0 0<br>    Sum: 26, Avg: 2, Min: 0, Max: 26, Diff: 26]</p>
-<pre><code>
-Update Remembered Set - Any buffers that are completed but have not yet been processed by the concurrent refinement thread before the start of the pause have to be updated. Time depends on density of the cards. The more cards, the longer it will take.
-
-- 扫描RSet(Scanning Remembered Sets)
-</code></pre><p>[Scan RS (ms): 0.4 0.2 0.1 0.3 0.0 0.0 0.1 0.2 0.0 0.1 0.0 0.0 Avg: 0.1, Min: 0.0, Max: 0.4, Diff: 0.3]F</p>
-<pre><code>Scanning Remembered Sets - Look for pointers that point into the Collection Set.
-
-- 对象复制(Object Copy)
-</code></pre><p>[Object Copy (ms): 16.7 16.7 16.7 16.9 16.0 18.1 16.5 16.8 16.7 12.3 16.4 15.7 Avg: 16.3, Min: 12.3, Max:  18.1, Diff: 5.8]</p>
-<pre><code>
-Object copy – The time that each individual thread spent copying and evacuating objects.
-
-- Termination Time
-- </code></pre><p>[Termination (ms): 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0<br>0.0 Avg: 0.0, Min: 0.0, Max: 0.0, Diff: 0.0] [Termination Attempts : 1 1 1 1 1 1 1 1 1 1 1 1 Sum: 12, Avg: 1, Min: 1, Max: 1, Diff: 0]</p>
-<pre><code>Termination time - When a worker thread is finished with its particular set of objects to copy and scan, it enters the termination protocol. It looks for work to steal and once it&#39;s done with that work it again enters the termination protocol. Termination attempt counts all the attempts to steal work.
-
-- GC Worker End
-</code></pre><p>[GC Worker End (ms): 7116.4 7116.3 7116.4 7116.3 7116.4 7116.3 7116.4 7116.4 7116.4 7116.4 7116.3 7116.3<br>    Avg: 7116.4, Min: 7116.3, Max: 7116.4, Diff:   0.1]<br>[GC Worker (ms): 20.4 20.3 20.3 20.2 20.3 20.2 20.2 20.2 20.3 20.2 20.1 20.1<br>     Avg: 20.2, Min: 20.1, Max: 20.4, Diff: 0.3]</p>
-<pre><code>
-GC worker end time – Timestamp when the individual GC worker stops.
-
-GC worker time – Time taken by individual GC worker thread.
-
-- GC Worker Other
-</code></pre><p>[GC Worker Other (ms): 2.6 2.6 2.7 2.7 2.7 2.7 2.7 2.8 2.8 2.8 2.8 2.8<br>    Avg: 2.7, Min: 2.6, Max: 2.8, Diff: 0.2]</p>
-<pre><code>GC worker other – The time (for each GC thread) that can&#39;t be attributed to the worker phases listed previously. Should be quite low. In the past, we have seen excessively high values and they have been attributed to bottlenecks in other parts of the JVM (e.g., increases in the Code Cache occupancy with Tiered).
-
-- Clear CT
-</code></pre><p>[Clear CT: 0.6 ms]</p>
-<pre><code>Time taken to clear the card table of RSet scanning meta-data
-
-- Other
-</code></pre><p>[Other: 6.8 ms]</p>
-<pre><code>
-Time taken for various other sequential phases of the GC pause.
-
-- CSet
-- </code></pre><p>[Choose CSet: 0.1 ms]</p>
-<pre><code>Time taken finalizing the set of regions to collect. Usually very small; slightly longer when having to select old.
-
-- Ref Proc
-</code></pre><p>[Ref Proc: 4.4 ms]</p>
-<pre><code>Time spent processing soft, weak, etc. references deferred from the prior phases of the GC.
-
-- Ref Enq
-</code></pre><p>[Ref Enq: 0.1 ms]</p>
-<pre><code>Time spent placing soft, weak, etc. references on to the pending list.
-
-- Free CSet
-</code></pre><p>[Free CSet: 2.0 ms]</p>
-<p>```</p>
-<p>Time spent freeing the set of regions that have just been collected, including their remembered sets.</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在本文中，你已经浏览学习了Java JVM里的G1垃圾收集器。首先你学习为何堆和垃圾收集器是Java JVM的重要组成部分。然后回顾了CMS和G1垃圾收集器是如何工作的。接着学习了G1的命令行开关以及使用它们的最佳实践。最后学习了GC日志中的打印对象以及数据。</p>
 <p>在这个教程中，你学习了：</p>
 <ul>
