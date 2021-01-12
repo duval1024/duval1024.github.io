@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java 虚拟机原理 (三) 垃圾收集">
+<meta property="og:url" content="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/index.html">
+<meta property="og:site_name" content="杜瓦尔">
+<meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2Fcheck_gc_args">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png">
+<meta property="article:published_time" content="2021-01-09T14:50:07.000Z">
+<meta property="article:modified_time" content="2021-01-12T13:06:55.529Z">
+<meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="JVM">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="垃圾收集器">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png">
+
+<link rel="canonical" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Java 虚拟机原理 (三) 垃圾收集 | 杜瓦尔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">杜瓦尔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Java 虚拟机原理 (三) 垃圾收集
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-09 22:50:07" itemprop="dateCreated datePublished" datetime="2021-01-09T22:50:07+08:00">2021-01-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" class="post-meta-item leancloud_visitors" data-flag-title="Java 虚拟机原理 (三) 垃圾收集" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。</p>
+<a id="more"></a>
+
+<h1 id="垃圾收集算法"><a href="#垃圾收集算法" class="headerlink" title="垃圾收集算法"></a>垃圾收集算法</h1><ul>
+<li>标记清除算法<ul>
+<li>需要标记的对象非常多，效率一般不高</li>
+<li>内存容易导致空间碎片化问题</li>
+</ul>
+</li>
+<li>标记整理算法<ul>
+<li>在标记清除算法基础上，增加内存整理功能，避免碎片化的问题</li>
+<li>同样存在标记量大而效率不高的问题</li>
+</ul>
+</li>
+<li>标记复制算法<ul>
+<li>一般需要预留 Survivor 区域，导致空间利用率不高</li>
+<li>回收效率非常高</li>
+</ul>
+</li>
+<li>分代收集算法<ul>
+<li>常见的垃圾收集器都采用此法</li>
+</ul>
+</li>
+</ul>
+<h1 id="常见垃圾收集器"><a href="#常见垃圾收集器" class="headerlink" title="常见垃圾收集器"></a>常见垃圾收集器</h1><h2 id="经典垃圾收集器"><a href="#经典垃圾收集器" class="headerlink" title="经典垃圾收集器"></a>经典垃圾收集器</h2><ul>
+<li><p>新生代收集器</p>
+<ul>
+<li>Serial New 收集器（-XX:+UseSerialGC）<blockquote>
+<p>新生代单线程垃圾收集器。</p>
+</blockquote>
+</li>
+<li>Parallel 收集器（-XX:+UseParallelGC）：<blockquote>
+<p>也称为 Parallel Scavenge收集器，可以理解为 Serial New 收集器的多线程版本。该垃圾收集器可与 Serial Old 以及 Parallel Old 两款收集器搭配使用。</p>
+</blockquote>
+</li>
+<li>ParNew 收集器（-XX:+UseParNewGC）<blockquote>
+<p>该垃圾收集器专门开发来与 CMS 收集器搭配使用，当然也可以与 Serial Old 垃圾收集器使用。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>老年代收集器</p>
+<ul>
+<li>Serial Old 收集器（-XX:+UseSerialOldGC）</li>
+<li>Parallel Old 收集器（-XX:+UseParallelOldGC）<blockquote>
+<p>老年代并行垃圾收集器，仅与 Parallel 收集器搭配使用。</p>
+</blockquote>
+</li>
+<li>CMS 收集器（-XX:+UseConcMarkSweepGC）</li>
+</ul>
+</li>
+<li><p>跨代收集器</p>
+<ul>
+<li>G1 收集器（-XX:+UseG1GC）</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>注意，在 jdk1.8.0_161 中测试发现 -XX:+UseSerialOldGC 参数已经不可用。目前各个垃圾收集器之间的关系图如下：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png" alt="垃圾收集器之间的关系.png"><br>其中标红线表示 jdk1.8.0_161 之后推荐使用的搭配关系，此外 CMS 在并发失败的时候还会退化为 Serial Old。<br>从 JDK 源码也可以看出端倪:<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2Fcheck_gc_args" alt="check_gc_args"></p>
+</blockquote>
+<h3 id="CMS-垃圾收集器"><a href="#CMS-垃圾收集器" class="headerlink" title="CMS 垃圾收集器"></a>CMS 垃圾收集器</h3><h4 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h4><p> CMS (Concurrent Mark Sweep)是老年代垃圾收集器，内部使用标记清除算法。其一般与 ParNew 搭配使用，回收过程一般划分为以下几个阶段：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png" alt="CMS垃圾收集器回收阶段.png"></p>
+<ul>
+<li><strong>初始标记</strong>：快速标记 GC Roots 直接引用的对象，该阶段为 Stop The World 过程；</li>
+<li><strong>并发标记</strong>：从 GC Roots 直接引用对象出发遍历其他存活对象，该过程与用户线程并发运行，因此可能会有已被标记的对象状态发生变化。该过程持续时间会比较长，但不会 STW；</li>
+<li><strong>重新标记</strong>：修正并发标记阶段状态发生变动的对象，该阶段停顿时间会比初始标记稍长，但远比并发标记要短暂。另外，CMS 主要采用了三色标记的增量更新算法实现重新标记；</li>
+<li><strong>并发清理</strong>：清理未标记的对象，该阶段与用户线程并发运行。同时根据三色标记原理，该阶段新增对象都会被标记为黑色而不必清理。</li>
+</ul>
+<p>CMS 存在几个缺点：</p>
+<ul>
+<li>对 CPU 资源敏感，会与应用程序争抢 CPU 资源；</li>
+<li>并发标记和并发清理阶段会产生浮动垃圾，需要等待下一次 GC 过程才能回收；</li>
+<li>标记清除算法会产生大量空间碎片（但可通过 -XX:+UseCMSCompactAtFullCollection 参数让 JVM 清理后进行内存整理）；</li>
+<li>在并发标记和并发清理阶段，GC 线程与用户线程并发执行，此时如果再次触发 Full GC，会引起 “concurrent mode failure”，此时会进入 STW 状态，并退化为使用 Serial Old 垃圾收集器来回收。</li>
+</ul>
+<h4 id="常用调优参数："><a href="#常用调优参数：" class="headerlink" title="常用调优参数："></a>常用调优参数：</h4><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>参数含义</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>启用 CMS 收集器</td>
+<td>默认搭配 ParNew 新生代收集器</td>
+</tr>
+<tr>
+<td>-XX:ConcGCThreads</td>
+<td>并发的 GC 线程数量</td>
+<td>默认值（CPU核心数+3）/ 4</td>
+</tr>
+<tr>
+<td>-XX:+UseCMSCompactAtFullCollection</td>
+<td>Full GC 后做压缩整理以减少内存碎片</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:CMSFullGCsBeforeCompaction</td>
+<td>指定多少次 Full GC 后压缩整理一次</td>
+<td>默认值是0，表示每次 Full GC 都会压缩一次</td>
+</tr>
+<tr>
+<td>-XX:CMSInitiatingOccupancyFraction</td>
+<td>当老年代使用达到该比例会触发 Full GC</td>
+<td>默认值92（百分比）</td>
+</tr>
+<tr>
+<td>-XX:+</td>
+<td>表示仅使用设定的回收阈值(这里指CMSInitiatingOccupancyFraction)，如果不指定，JVM仅在第一次使用设定阈值，后续则自动调整，所以一般设置了回收阈值都会同时设置该值。</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+CMSScavengeBeforeRemark</td>
+<td>在 Full GC 前执行一次 Minor GC，目的是减少老年代对年轻代的引用，从而降低标记阶段的开销</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+CMSParallelInitialMarkEnabled</td>
+<td>表示在初始标记的时候多线程执行从而缩短 STW</td>
+<td></td>
+</tr>
+<tr>
+<td>-XX:+CMSParallelRemarkEnabled</td>
+<td>表示在重新标记的时候多线程执行从而缩短 STW</td>
+<td>默认开启</td>
+</tr>
+</tbody></table>
+<h4 id="GC-日志案例："><a href="#GC-日志案例：" class="headerlink" title="GC 日志案例："></a>GC 日志案例：</h4><blockquote>
+<p>运行参数： -Xms50m -Xmx50m -XX:+UseConcMarkSweepGC -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=128M -XX:+PrintGCDetails -XX:CMSInitiatingOccupancyFraction=92 -XX:+UseCMSInitiatingOccupancyOnly</p>
+</blockquote>
+<pre><code class="bash">## 初始标记
+[GC (CMS Initial Mark) [1 CMS-initial-mark: 30614K(34176K)] 34916K(49536K), 0.0015545 secs] [Times: user=0.01 sys=0.00, real=0.01 secs] 
+## 并发标记
+[CMS-concurrent-mark-start]
+[CMS-concurrent-mark: 0.014/0.014 secs] [Times: user=0.01 sys=0.00, real=0.01 secs] 
+[CMS-concurrent-preclean-start]
+[CMS-concurrent-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+[CMS-concurrent-abortable-preclean-start]
+[CMS-concurrent-abortable-preclean: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+## 重新标记（最终标记）
+[GC (CMS Final Remark) [YG occupancy: 4302 K (15360 K)][Rescan (parallel) , 0.0008078 secs][weak refs processing, 0.0004334 secs][class unloading, 0.0038316 secs][scrub symbol table, 0.0038272 secs][scrub string table, 0.0003411 secs][1 CMS-remark: 30614K(34176K)] 34916K(49536K), 0.0093542 secs] [Times: user=0.01 sys=0.00, real=0.01 secs] 
+## 并发清理
+[CMS-concurrent-sweep-start]
+[CMS-concurrent-sweep: 0.003/0.003 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+## 并发重置
+[CMS-concurrent-reset-start]
+[CMS-concurrent-reset: 0.000/0.000 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+</code></pre>
+<p>主要看点：</p>
+<ul>
+<li>初始标记耗时非常短（0.0015545 secs），触发阈值约是90%（30614/34176≈90%），这值比参数指定值92%略小，但在预期之内；</li>
+<li>并发标记阶段不会 STW，用时相对较长（0.014 secs）；</li>
+<li>重新标记阶段默认就是多线程（Rescan (parallel)），也就是说 CMSParallelRemarkEnabled 默认开启；</li>
+</ul>
+<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><p>G1 的内容比较多，我单独写了一些文章来分析：</p>
+<h2 id="低延迟垃圾收集器"><a href="#低延迟垃圾收集器" class="headerlink" title="低延迟垃圾收集器"></a>低延迟垃圾收集器</h2><ul>
+<li>Shenandoah 收集器</li>
+<li>ZGC 收集器</li>
+</ul>
+<h1 id="垃圾收集器底层算法"><a href="#垃圾收集器底层算法" class="headerlink" title="垃圾收集器底层算法"></a>垃圾收集器底层算法</h1><h2 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h2><h2 id="记忆集和卡表"><a href="#记忆集和卡表" class="headerlink" title="记忆集和卡表"></a>记忆集和卡表</h2><h1 id="常用垃圾收集器公共参数"><a href="#常用垃圾收集器公共参数" class="headerlink" title="常用垃圾收集器公共参数"></a>常用垃圾收集器公共参数</h1><ul>
+<li><p>以下两个命令结合起来可以大致推敲 JVM 默认参数：</p>
+<pre><code>  java -XX:+PrintFlagsInitial ${pid}
+
+  jinfo ${pid}</code></pre></li>
+<li><p>以下列举常用的一些公共参数：</p>
+<p>  |参数|参数含义|默认值|<br>  |–|–|–|–|<br>  ||||</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理 (四) G1垃圾收集器深入</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/12/28/一文彻底掌握-Java-类加载机制/" rel="bookmark">一文彻底掌握 Java 类加载机制</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杜瓦尔
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" title="Java 虚拟机原理 (三) 垃圾收集">https://blog.duval.top/2021/01/09/Java-虚拟机原理-3-垃圾收集/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/JVM/" rel="tag"><i class="fa fa-tag"></i> JVM</a>
+              <a href="/tags/Java/" rel="tag"><i class="fa fa-tag"></i> Java</a>
+              <a href="/tags/%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 垃圾收集器</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/01/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-2-%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/" rel="prev" title="Java 虚拟机原理 (二) 对象创建与回收">
+      <i class="fa fa-chevron-left"></i> Java 虚拟机原理 (二) 对象创建与回收
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" rel="next" title="Java 虚拟机原理 (四) G1垃圾收集器深入">
+      Java 虚拟机原理 (四) G1垃圾收集器深入 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#垃圾收集算法"><span class="nav-number">1.</span> <span class="nav-text">垃圾收集算法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常见垃圾收集器"><span class="nav-number">2.</span> <span class="nav-text">常见垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#经典垃圾收集器"><span class="nav-number">2.1.</span> <span class="nav-text">经典垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CMS-垃圾收集器"><span class="nav-number">2.1.1.</span> <span class="nav-text">CMS 垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#简介"><span class="nav-number">2.1.1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#常用调优参数："><span class="nav-number">2.1.1.2.</span> <span class="nav-text">常用调优参数：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#GC-日志案例："><span class="nav-number">2.1.1.3.</span> <span class="nav-text">GC 日志案例：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#G1-垃圾收集器"><span class="nav-number">2.1.2.</span> <span class="nav-text">G1 垃圾收集器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#低延迟垃圾收集器"><span class="nav-number">2.2.</span> <span class="nav-text">低延迟垃圾收集器</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#垃圾收集器底层算法"><span class="nav-number">3.</span> <span class="nav-text">垃圾收集器底层算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#三色标记"><span class="nav-number">3.1.</span> <span class="nav-text">三色标记</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#记忆集和卡表"><span class="nav-number">3.2.</span> <span class="nav-text">记忆集和卡表</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常用垃圾收集器公共参数"><span class="nav-number">4.</span> <span class="nav-text">常用垃圾收集器公共参数</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">414k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">6:17</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

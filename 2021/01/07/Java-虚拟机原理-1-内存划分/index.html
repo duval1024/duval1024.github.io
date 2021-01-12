@@ -60,23 +60,25 @@
   };
 </script>
 
-  <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。">
+  <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Java 虚拟机原理之垃圾收集">
-<meta property="og:url" content="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/index.html">
+<meta property="og:title" content="Java 虚拟机原理 (一) 内存划分">
+<meta property="og:url" content="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。">
+<meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png">
-<meta property="article:published_time" content="2021-01-09T10:24:32.000Z">
-<meta property="article:modified_time" content="2021-01-10T10:22:53.619Z">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg">
+<meta property="article:published_time" content="2021-01-07T14:56:07.000Z">
+<meta property="article:modified_time" content="2021-01-12T13:01:22.423Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="Java">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
 
-<link rel="canonical" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+<link rel="canonical" href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/">
 
 
 <script id="page-configurations">
@@ -88,7 +90,7 @@
   };
 </script>
 
-  <title>Java 虚拟机原理之垃圾收集 | 杜瓦尔</title>
+  <title>Java 虚拟机原理 (一) 内存划分 | 杜瓦尔</title>
   
 
 
@@ -223,7 +225,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -236,7 +238,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Java 虚拟机原理之垃圾收集
+          Java 虚拟机原理 (一) 内存划分
         </h1>
 
         <div class="post-meta">
@@ -246,7 +248,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-01-09 18:24:32" itemprop="dateCreated datePublished" datetime="2021-01-09T18:24:32+08:00">2021-01-09</time>
+              <time title="创建时间：2021-01-07 22:56:07" itemprop="dateCreated datePublished" datetime="2021-01-07T22:56:07+08:00">2021-01-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -261,7 +263,7 @@
             </span>
 
           
-            <span id="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" class="post-meta-item leancloud_visitors" data-flag-title="Java 虚拟机原理之垃圾收集" title="阅读次数">
+            <span id="/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/" class="post-meta-item leancloud_visitors" data-flag-title="Java 虚拟机原理 (一) 内存划分" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -276,8 +278,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" itemprop="commentCount"></span>
+    <a title="valine" href="/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -287,7 +289,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>868</span>
+              <span>1.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -306,71 +308,51 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。</p>
+        <p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。</p>
 <a id="more"></a>
 
-<h2 id="垃圾收集算法"><a href="#垃圾收集算法" class="headerlink" title="垃圾收集算法"></a>垃圾收集算法</h2><ul>
-<li>标记清除算法<ul>
-<li>需要标记的对象非常多，效率一般不高</li>
-<li>内存容易导致空间碎片化问题</li>
-</ul>
-</li>
-<li>标记整理算法<ul>
-<li>在标记清除算法基础上，增加内存整理功能，避免碎片化的问题</li>
-<li>同样存在标记量大而效率不高的问题</li>
-</ul>
-</li>
-<li>标记复制算法<ul>
-<li>一般需要预留 Survivor 区域，导致空间利用率不高</li>
-<li>回收效率非常高</li>
-</ul>
-</li>
-<li>分代收集算法<ul>
-<li>常见的垃圾收集器都采用此法</li>
-</ul>
-</li>
-</ul>
-<h2 id="常见垃圾收集器"><a href="#常见垃圾收集器" class="headerlink" title="常见垃圾收集器"></a>常见垃圾收集器</h2><h3 id="经典垃圾收集器"><a href="#经典垃圾收集器" class="headerlink" title="经典垃圾收集器"></a>经典垃圾收集器</h3><ul>
-<li><p>新生代收集器</p>
+<h2 id="JDK-体系架构"><a href="#JDK-体系架构" class="headerlink" title="JDK 体系架构"></a>JDK 体系架构</h2><p>先从宏观上来看 JVM 所处的位置，且看官方文档的<a href="https://docs.oracle.com/javase/8/docs/" target="_blank" rel="noopener">体系架构图</a>：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="JDK体系架构图.png"></p>
 <ul>
-<li>Serial New 收集器（-XX:+UseSerialGC）<blockquote>
-<p>新生代单线程垃圾收集器。</p>
-</blockquote>
-</li>
-<li>Parallel 收集器（-XX:+UseParallelGC）：<blockquote>
-<p>也称为 Parallel Scavenge收集器，可以理解为 Serial New 收集器的多线程版本。该垃圾收集器可与 Serial Old 以及 Parallel Old 两款收集器搭配使用。</p>
-</blockquote>
-</li>
-<li>ParNew 收集器（-XX:+UseParNewGC）<blockquote>
-<p>该垃圾收集器专门开发来与 CMS 收集器搭配使用，当然也可以与 Serial Old 垃圾收集器使用。</p>
-</blockquote>
-</li>
+<li>JVM（Java Virtual Machine）：处于整个体系最底层，直接与不同的操作系统打交道，因此针对不同的系统有相应的 JVM 实现。Java 程序正是借助 JVM 实现了“一处编写处处运行“的跨平台能力；</li>
+<li>JRE（Java SE Runtime Environment）：Java 运行时环境，是在 JVM 基础上增加 Java 基础类库。Java 程序可以运行在 JRE 之上；</li>
+<li>JDK（Java SE Development Kit）：Java 开发工具包，是在 JRE 基础上增加了开发 Java 程序所需要的各种工具包。</li>
 </ul>
-</li>
-<li><p>老年代收集器</p>
+<p>因此本系列文章主要探讨最底层的 JVM 底层原理。</p>
+<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg" alt="JVM 内存模型图.jpg"></p>
+<p>上图展示的是以下样例代码的内存模型：</p>
+<pre><code class="java">public class App {
+
+    private int plus() {
+        int a = 1;
+        int b = 1;
+        int c = a + b;
+        return c;
+    }
+
+    public static void main(String[] args) {
+        App obj = new App();
+        System.out.println(obj.plus());
+    }
+}</code></pre>
+<p>JVM 运行时数据区域包括以下五部分：</p>
 <ul>
-<li>Serial Old 收集器（-XX:+UseSerialOldGC）</li>
-<li>Parallel Old 收集器（-XX:+UseParallelOldGC）<blockquote>
-<p>老年代并行垃圾收集器，仅与 Parallel 收集器搭配使用。</p>
-</blockquote>
-</li>
-<li>CMS 收集器（-XX:+UseConcMarkSweepGC）</li>
+<li>程序计数器：每个线程都会有独立的程序计数器，用于记录当前程序运行到的位置，以便线程切换时能够恢复到当前运行位置；</li>
+<li>Java 虚拟机栈：即是图中线程内部的 Java 线程栈。每个线程也都拥有自己的线程栈。线程栈遵循先进后出（FILO）原则，内部包含多个栈帧。每一个栈帧由局部变量表、操作数栈、动态链接以及方法出口等构成；</li>
+<li>本地方法栈：与虚拟机栈类似，但保存的是 native 方法调用栈；</li>
+<li>堆：运行时数据区域中最大的一部分，是大部分对象保存的地方。JVM 常常使用分代收集算法回收该区域；</li>
+<li>方法区：JDK8 里变更为元空间（metaspace），直接保存在直接内存中（注意直接内存不属于 JVM 运行时数据区域）。方法区主要保存类信息、运行时常量池、静态变量、即时编译器编译后的代码等数据。</li>
 </ul>
-</li>
-<li><p>跨代收集器</p>
-<ul>
-<li>G1 收集器（-XX:+UseG1GC）</li>
+<p>此外，直接内存也是非常重要一部分内存空间。 JVM 元数据空间以及 Java NIO 等都是用到直接内存。</p>
+<h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><p>JVM 提供了若干参数来控制上述各个区域的大小，如下图所示：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg" alt="JVM 内存模型与调优参数.jpg"></p>
+<p>配置样例如：</p>
+<pre><code class="bash">java -Xmx6g -Xms6g -Xmn3g -Xss512K -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:SurvivorRatio=8 -XX:MetaspaceSize=64m ‐XX:MaxMetaspaceSize=128M -jar myapp.jar</code></pre>
+<p>需要注意，元数据空间在缺省参数的情况下，默认初始大小为21M，如果发生空间不足，会触发 Full GC 进行扩容，且最大扩容空间可为所有的机器内存。所以一定要配置元数据空间参数，且 MetaspaceSize 和 MaxMetaspaceSize 最好相等，从而从根源上杜绝 Full GC 扩容。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://juejin.cn/post/6844903592374042637" target="_blank" rel="noopener">JVM内存模型</a>：该文将 Java 内存模型介绍得非常具体详细。</li>
 </ul>
-</li>
-</ul>
-<blockquote>
-<p>注意，在 jdk1.8.0_161 中测试发现 -XX:+UseSerialOldGC 参数已经不可用。目前各个垃圾收集器之间的关系图如下：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png" alt="垃圾收集器之间的关系.png"><br>其中标红线表示 jdk1.8.0_161 之后推荐使用的搭配关系，还需要注意 CMS 可以退化为 Serial Old</p>
-</blockquote>
-<h3 id="低延迟垃圾收集器"><a href="#低延迟垃圾收集器" class="headerlink" title="低延迟垃圾收集器"></a>低延迟垃圾收集器</h3><ul>
-<li>Shenandoah 收集器</li>
-<li>ZGC 收集器</li>
-</ul>
-<h2 id="垃圾收集器底层算法"><a href="#垃圾收集器底层算法" class="headerlink" title="垃圾收集器底层算法"></a>垃圾收集器底层算法</h2><h3 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h3><h3 id="记忆集和卡表"><a href="#记忆集和卡表" class="headerlink" title="记忆集和卡表"></a>记忆集和卡表</h3>
+
     </div>
 
     
@@ -380,19 +362,19 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理之内存划分/" rel="bookmark">Java 虚拟机原理之内存划分</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理之对象创建和回收/" rel="bookmark">Java 虚拟机原理之对象创建与回收</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/28/一文彻底掌握-Java-类加载机制/" rel="bookmark">一文彻底掌握 Java 类加载机制</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理 (四) G1垃圾收集器深入</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/23/一文彻底掌握Java-IO类库/" rel="bookmark">一文彻底掌握Java IO类库</a></div>
+      <div class="popular-posts-title"><a href="/2020/12/28/一文彻底掌握-Java-类加载机制/" rel="bookmark">一文彻底掌握 Java 类加载机制</a></div>
     </li>
   </ul>
 
@@ -430,7 +412,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" title="Java 虚拟机原理之垃圾收集">https://blog.duval.top/2021/01/09/Java-虚拟机原理之垃圾收集/</a>
+    <a href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/" title="Java 虚拟机原理 (一) 内存划分">https://blog.duval.top/2021/01/07/Java-虚拟机原理-1-内存划分/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -452,10 +434,13 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/" rel="prev" title="Java 虚拟机原理之对象创建与回收">
-      <i class="fa fa-chevron-left"></i> Java 虚拟机原理之对象创建与回收
+    <a href="/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" rel="prev" title="一文彻底掌握 Java 类加载机制">
+      <i class="fa fa-chevron-left"></i> 一文彻底掌握 Java 类加载机制
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2021/01/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-2-%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/" rel="next" title="Java 虚拟机原理 (二) 对象创建与回收">
+      Java 虚拟机原理 (二) 对象创建与回收 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -518,7 +503,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#垃圾收集算法"><span class="nav-number">1.</span> <span class="nav-text">垃圾收集算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#常见垃圾收集器"><span class="nav-number">2.</span> <span class="nav-text">常见垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#经典垃圾收集器"><span class="nav-number">2.1.</span> <span class="nav-text">经典垃圾收集器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#低延迟垃圾收集器"><span class="nav-number">2.2.</span> <span class="nav-text">低延迟垃圾收集器</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#垃圾收集器底层算法"><span class="nav-number">3.</span> <span class="nav-text">垃圾收集器底层算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#三色标记"><span class="nav-number">3.1.</span> <span class="nav-text">三色标记</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#记忆集和卡表"><span class="nav-number">3.2.</span> <span class="nav-text">记忆集和卡表</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#JDK-体系架构"><span class="nav-number">1.</span> <span class="nav-text">JDK 体系架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-内存模型"><span class="nav-number">2.</span> <span class="nav-text">JVM 内存模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-参数"><span class="nav-number">3.</span> <span class="nav-text">JVM 参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -545,7 +530,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-count">37</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -612,12 +597,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">422k</span>
+    <span title="站点总字数">414k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:24</span>
+    <span title="站点阅读时长">6:17</span>
 
 </div>
 

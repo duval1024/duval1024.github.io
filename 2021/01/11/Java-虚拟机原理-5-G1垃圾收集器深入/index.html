@@ -60,25 +60,24 @@
   };
 </script>
 
-  <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。">
+  <meta name="description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Java 虚拟机原理之内存划分">
-<meta property="og:url" content="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/index.html">
+<meta property="og:title" content="Java 虚拟机原理 (四) G1垃圾收集器深入">
+<meta property="og:url" content="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。">
+<meta property="og:description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg">
-<meta property="article:published_time" content="2021-01-07T14:56:07.000Z">
-<meta property="article:modified_time" content="2021-01-09T10:50:00.753Z">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg">
+<meta property="article:published_time" content="2021-01-10T17:00:07.000Z">
+<meta property="article:modified_time" content="2021-01-12T13:06:25.835Z">
 <meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="垃圾回收器">
 <meta property="article:tag" content="JVM">
-<meta property="article:tag" content="Java">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
 
-<link rel="canonical" href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/">
+<link rel="canonical" href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
 
 <script id="page-configurations">
@@ -90,7 +89,7 @@
   };
 </script>
 
-  <title>Java 虚拟机原理之内存划分 | 杜瓦尔</title>
+  <title>Java 虚拟机原理 (四) G1垃圾收集器深入 | 杜瓦尔</title>
   
 
 
@@ -225,7 +224,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -238,7 +237,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Java 虚拟机原理之内存划分
+          Java 虚拟机原理 (四) G1垃圾收集器深入
         </h1>
 
         <div class="post-meta">
@@ -248,7 +247,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-01-07 22:56:07" itemprop="dateCreated datePublished" datetime="2021-01-07T22:56:07+08:00">2021-01-07</time>
+              <time title="创建时间：2021-01-11 01:00:07" itemprop="dateCreated datePublished" datetime="2021-01-11T01:00:07+08:00">2021-01-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -263,7 +262,7 @@
             </span>
 
           
-            <span id="/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/" class="post-meta-item leancloud_visitors" data-flag-title="Java 虚拟机原理之内存划分" title="阅读次数">
+            <span id="/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" class="post-meta-item leancloud_visitors" data-flag-title="Java 虚拟机原理 (四) G1垃圾收集器深入" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -278,8 +277,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/" itemprop="commentCount"></span>
+    <a title="valine" href="/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -289,14 +288,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.4k</span>
+              <span>3.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
+              <span>3 分钟</span>
             </span>
 
         </div>
@@ -308,49 +307,67 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。</p>
+        <p>深入了解G1垃圾收集器背后的核心原理。</p>
 <a id="more"></a>
 
-<h2 id="JDK-体系架构"><a href="#JDK-体系架构" class="headerlink" title="JDK 体系架构"></a>JDK 体系架构</h2><p>先从宏观上来看 JVM 所处的位置，且看官方文档的<a href="https://docs.oracle.com/javase/8/docs/" target="_blank" rel="noopener">体系架构图</a>：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJDK%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="JDK体系架构图.png"></p>
+<h2 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h2><p>CMS收集器使用了Incremental Update算法，而G1收集器使用的是SATB算法。这两者背后的思想都使用了三色标记算法，标记算法如下：</p>
 <ul>
-<li>JVM（Java Virtual Machine）：处于整个体系最底层，直接与不同的操作系统打交道，因此针对不同的系统有相应的 JVM 实现。Java 程序正是借助 JVM 实现了“一处编写处处运行“的跨平台能力；</li>
-<li>JRE（Java SE Runtime Environment）：Java 运行时环境，是在 JVM 基础上增加 Java 基础类库。Java 程序可以运行在 JRE 之上；</li>
-<li>JDK（Java SE Development Kit）：Java 开发工具包，是在 JRE 基础上增加了开发 Java 程序所需要的各种工具包。</li>
+<li>黑色(black):自己已经被标记，且字段全部标记完毕的对象；</li>
+<li>灰色(gray): 自己已经被标记，但尚有字段未被标记的对象（collector正在访问的对象）；</li>
+<li>白色(white):尚未标记对象。</li>
 </ul>
-<p>因此本系列文章主要探讨最底层的 JVM 底层原理。</p>
-<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E5%9B%BE.jpg" alt="JVM 内存模型图.jpg"></p>
-<p>上图展示的是以下样例代码的内存模型：</p>
-<pre><code class="java">public class App {
+<p><strong>注意：</strong> 标记结束后，被标记的对象是存活对象，没有被标记的对象会被回收。</p>
+<p>在并行GC阶段，应用线程和GC形成并行，所以有可能同时发生以下两种情况：</p>
+<ul>
+<li>1.mutator把一个白对象的引用存到黑对象的字段里；</li>
+<li>2.某个白对象失去所有能从灰对象到达它的引用路径（直接或间接）。</li>
+</ul>
+<p>黑对象持有了指向白对象的引用。根据定义，collector已经不会再去遍历黑对象的字段，所以发现不了这里还有一个活引用指向这个白对象。如果还有某个灰对象持有直接或间接引用能到达这个白对象，那就没关系；如果从灰对象出发的所有引用到这个白对象的路径都不幸被切断了，那这个白对象就要被漏扫描了。</p>
+<p>所以如果同时发生以上两种情况，会导致对象漏标而被回收掉。</p>
+<p>Incremental Update是CMS收集器针对上述问题而采用的算法。该算法的做法是：只要在write barrier里发现要有一个白对象的引用被赋值到一个黑对象的字段里，那就把这个白对象变成灰色的（例如说标记并压到marking stack上，或者是记录在类似mod-union table里）。这样就强力杜绝了上述第一种情况的发生。</p>
+<p>而SATB的做法是把标记开始时的逻辑快照里所有的活对象都看作时活的。具体做法是在write barrier里把所有旧的引用所指向的对象都变成非白的（已经黑灰就不用管，还是白的就变成灰的）。</p>
+<h2 id="SATB"><a href="#SATB" class="headerlink" title="SATB"></a>SATB</h2><p>SATB（snapshot at the beginning)是G1并发理论的基础，用于维护确保回收过程的正确性。从名字上理解，就是GC在开始的时候先对活着的对象保存一个快照；</p>
+<p>接下来，在GC过程中新分配的对象都是活的。</p>
+<p>很容易知道哪些对象是一次GC开始之后新分配的：每个region记录着两个top-at-mark-start（TAMS）指针，分别为prevTAMS和nextTAMS。并发标记开始时候Top指针和NextTAMS指针是重合的（如下图所示），并发阶段分配的对象对位于[Next TAMS，Top]区间。这个区间内的对象默认都是存活的，这也叫做隐式标记。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png" alt="g1gc-tams.png"></p>
+<p>但如果在Next TAMS之前有一个白色对象A被一个灰色对象B作为字段而引用，在并发标记扫描到这个字段之前，被赋值为null，那么B–&gt;A的引用关系被切断，可能会导致白色对象A被漏标。</p>
+<p>G1为了解决这个问题，在引用关系修改之前，插入一层pre-write barrier。pre-write barrier会把每次引用关系变化时旧的引用值记录下来。这些引用值会被放置到satb mark queue中，在下一次的并发标记阶段，会依次处理satb mark queue中的对象，确保这部分对象在本轮GC是存活的。</p>
+<pre><code class="c++">void G1SATBCardTableModRefBS::enqueue(oop pre_val) {
+  // Nulls should have been already filtered.
+  assert(pre_val-&gt;is_oop(true), &quot;Error&quot;);
 
-    private int plus() {
-        int a = 1;
-        int b = 1;
-        int c = a + b;
-        return c;
-    }
-
-    public static void main(String[] args) {
-        App obj = new App();
-        System.out.println(obj.plus());
-    }
+  if (!JavaThread::satb_mark_queue_set().is_active()) return;
+  Thread* thr = Thread::current();
+  if (thr-&gt;is_Java_thread()) {
+    JavaThread* jt = (JavaThread*)thr;
+    jt-&gt;satb_mark_queue().enqueue(pre_val);
+  } else {
+    MutexLockerEx x(Shared_SATB_Q_lock, Mutex::_no_safepoint_check_flag);
+    JavaThread::satb_mark_queue_set().shared_satb_queue()-&gt;enqueue(pre_val);
+  }
+}
+</code></pre>
+<p>但这很可能有对象在snapshot中是活的，但随着并发GC的进行它可能本来已经死了，但SATB还是会让它活过这次GC。这就导致所谓的浮动垃圾。</p>
+<h2 id="RSet"><a href="#RSet" class="headerlink" title="RSet"></a>RSet</h2><p> <strong>该章节摘录自<a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></strong></p>
+<p>全称是Remembered Set，是辅助GC过程的一种结构，典型的空间换时间工具，和Card Table有些类似。还有一种数据结构也是辅助GC的：Collection Set（CSet），它记录了GC要收集的Region集合，集合里的Region可以是任意年代的。在GC的时候，对于old-&gt;young和old-&gt;old的跨代对象引用，只要扫描对应的CSet中的RSet即可。 逻辑上说每个Region都有一个RSet，RSet记录了其他Region中的对象引用本Region中对象的关系，属于points-into结构（谁引用了我的对象）。而Card Table则是一种points-out（我引用了谁的对象）的结构，每个Card 覆盖一定范围的Heap（一般为512Bytes）。G1的RSet是在Card Table的基础上实现的：每个Region会记录下别的Region有指向自己的指针，并标记这些指针分别在哪些Card的范围内。 这个RSet其实是一个Hash Table，Key是别的Region的起始地址，Value是一个集合，里面的元素是Card Table的Index。</p>
+<p>下图表示了RSet、Card和Region的关系（<a href="http://www.infoq.com/articles/tuning-tips-G1-GC" target="_blank" rel="noopener">出处</a>）：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg" alt="Remembered Sets.jpg"></p>
+<p>上图中有三个Region，每个Region被分成了多个Card，在不同Region中的Card会相互引用，Region1中的Card中的对象引用了Region2中的Card中的对象，蓝色实线表示的就是points-out的关系，而在Region2的RSet中，记录了Region1的Card，即红色虚线表示的关系，这就是points-into。 而维系RSet中的引用关系靠post-write barrier和Concurrent refinement threads来维护，操作伪代码如下（<a href="http://hllvm.group.iteye.com/group/topic/44381" target="_blank" rel="noopener">出处</a>）：</p>
+<pre><code class="c++">void oop_field_store(oop* field, oop new_value) {
+  pre_write_barrier(field);             // pre-write barrier: for maintaining SATB invariant
+  *field = new_value;                   // the actual store
+  post_write_barrier(field, new_value); // post-write barrier: for tracking cross-region reference
 }</code></pre>
-<p>JVM 运行时数据区域包括以下五部分：</p>
+<p>post-write barrier记录了跨Region的引用更新，更新日志缓冲区则记录了那些包含更新引用的Cards。一旦缓冲区满了，Post-write barrier就停止服务了，会由Concurrent refinement threads处理这些缓冲区日志。 RSet究竟是怎么辅助GC的呢？在做YGC的时候，只需要选定young generation region的RSet作为根集，这些RSet记录了old-&gt;young的跨代引用，避免了扫描整个old generation。 而mixed gc的时候，old generation中记录了old-&gt;old的RSet，young-&gt;old的引用由扫描全部young generation region得到，这样也不用扫描全部old generation region。所以RSet的引入大大减少了GC的工作量。</p>
+<p><strong>学习资料</strong></p>
 <ul>
-<li>程序计数器：每个线程都会有独立的程序计数器，用于记录当前程序运行到的位置，以便线程切换时能够恢复到当前运行位置；</li>
-<li>Java 虚拟机栈：即是图中线程内部的 Java 线程栈。每个线程也都拥有自己的线程栈。线程栈遵循先进后出（FILO）原则，内部包含多个栈帧。每一个栈帧由局部变量表、操作数栈、动态链接以及方法出口等构成；</li>
-<li>本地方法栈：与虚拟机栈类似，但保存的是 native 方法调用栈；</li>
-<li>堆：运行时数据区域中最大的一部分，是大部分对象保存的地方。JVM 常常使用分代收集算法回收该区域；</li>
-<li>方法区：JDK8 里变更为元空间（metaspace），直接保存在直接内存中（注意直接内存不属于 JVM 运行时数据区域）。方法区主要保存类信息、运行时常量池、静态变量、即时编译器编译后的代码等数据。</li>
-</ul>
-<p>此外，直接内存也是非常重要一部分内存空间。 JVM 元数据空间以及 Java NIO 等都是用到直接内存。</p>
-<h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><p>JVM 提供了若干参数来控制上述各个区域的大小，如下图所示：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86%2FJVM%20%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0.jpg" alt="JVM 内存模型与调优参数.jpg"></p>
-<p>配置样例如：</p>
-<pre><code class="bash">java -Xmx6g -Xms6g -Xmn3g -Xss512K -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:SurvivorRatio=8 -XX:MetaspaceSize=64m ‐XX:MaxMetaspaceSize=128M -jar myapp.jar</code></pre>
-<p>需要注意，元数据空间在缺省参数的情况下，默认初始大小为21M，如果发生空间不足，会触发 Full GC 进行扩容，且最大扩容空间可为所有的机器内存。所以一定要配置元数据空间参数，且 MetaspaceSize 和 MaxMetaspaceSize 最好相等，从而从根源上杜绝 Full GC 扩容。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li><a href="https://juejin.cn/post/6844903592374042637" target="_blank" rel="noopener">JVM内存模型</a>：该文将 Java 内存模型介绍得非常具体详细。</li>
+<li><a href="https://github.com/authorNari/g1gc-impl-book" target="_blank" rel="noopener">彻底解剖G1GC</a></li>
+<li><a href="https://tech.meituan.com/2016/09/23/g1.html" target="_blank" rel="noopener">Java Hotspot G1 GC的一些关键技术</a></li>
+<li><a href="https://hllvm-group.iteye.com/group/topic/44381" target="_blank" rel="noopener">RednaxelaFX的论坛回复帖</a></li>
+<li><a href="http://fleurer.github.io/2018/07/11/note-on-g1gc-barriers/" target="_blank" rel="noopener">F叔的学习笔记</a></li>
+<li><a href="https://www.oracle.com/technical-resources/articles/java/g1gc.html" target="_blank" rel="noopener">Garbage First Garbage Collector Tuning</a></li>
+<li><a href="http://book.douban.com/subject/6809987/" target="_blank" rel="noopener">The Garbage Collection Handbook</a></li>
+<li><a href="https://www.jianshu.com/p/9e70097807ba" target="_blank" rel="noopener">G1垃圾收集器之SATB</a></li>
 </ul>
 
     </div>
@@ -362,19 +379,19 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理之垃圾收集/" rel="bookmark">Java 虚拟机原理之垃圾收集</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理之对象创建和回收/" rel="bookmark">Java 虚拟机原理之对象创建与回收</a></div>
+      <div class="popular-posts-title"><a href="/2020/04/24/G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理——G1底层原理</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/28/一文彻底掌握-Java-类加载机制/" rel="bookmark">一文彻底掌握 Java 类加载机制</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/23/一文彻底掌握Java-IO类库/" rel="bookmark">一文彻底掌握Java IO类库</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
     </li>
   </ul>
 
@@ -412,7 +429,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/" title="Java 虚拟机原理之内存划分">https://blog.duval.top/2021/01/07/Java-虚拟机原理之内存划分/</a>
+    <a href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" title="Java 虚拟机原理 (四) G1垃圾收集器深入">https://blog.duval.top/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -425,8 +442,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
+              <a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 垃圾回收器</a>
               <a href="/tags/JVM/" rel="tag"><i class="fa fa-tag"></i> JVM</a>
-              <a href="/tags/Java/" rel="tag"><i class="fa fa-tag"></i> Java</a>
           </div>
 
         
@@ -434,13 +451,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" rel="prev" title="一文彻底掌握 Java 类加载机制">
-      <i class="fa fa-chevron-left"></i> 一文彻底掌握 Java 类加载机制
+    <a href="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" rel="prev" title="Java 虚拟机原理 (三) 垃圾收集">
+      <i class="fa fa-chevron-left"></i> Java 虚拟机原理 (三) 垃圾收集
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/" rel="next" title="Java 虚拟机原理之对象创建与回收">
-      Java 虚拟机原理之对象创建与回收 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -503,7 +517,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#JDK-体系架构"><span class="nav-number">1.</span> <span class="nav-text">JDK 体系架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-内存模型"><span class="nav-number">2.</span> <span class="nav-text">JVM 内存模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-参数"><span class="nav-number">3.</span> <span class="nav-text">JVM 参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#三色标记"><span class="nav-number">1.</span> <span class="nav-text">三色标记</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SATB"><span class="nav-number">2.</span> <span class="nav-text">SATB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RSet"><span class="nav-number">3.</span> <span class="nav-text">RSet</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -530,7 +544,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">36</span>
+        <span class="site-state-item-count">37</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -597,12 +611,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">422k</span>
+    <span title="站点总字数">414k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:24</span>
+    <span title="站点阅读时长">6:17</span>
 
 </div>
 
