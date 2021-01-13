@@ -89,7 +89,7 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FCopying%3ACleanup%20Phase.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8%2FAfter%20Copying%3ACleanup%20Phase.png">
 <meta property="article:published_time" content="2021-01-10T13:40:07.000Z">
-<meta property="article:modified_time" content="2021-01-12T13:09:04.967Z">
+<meta property="article:modified_time" content="2021-01-13T11:15:08.000Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="垃圾回收器">
@@ -314,7 +314,7 @@
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
+              <span>13 分钟</span>
             </span>
 
         </div>
@@ -471,28 +471,28 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>(1)初始标记(stop the world)</td>
-<td>stop the world。这个过程发生在young gc，用于标记那些引用了老年代对象的Suvivor区块(根区块 root regions)</td>
+<td>(1)初始标记<br>(Stop the World Event)</td>
+<td>stop the world。这个过程发生在 young gc，用于标记那些引用了老年代对象的 Suvivor 区块(根区块 root regions)</td>
 </tr>
 <tr>
-<td>(2)扫描根区块(root regions)</td>
-<td>扫描那些应用了老年代的跟区块。这个阶段是和应用线程并行执行。这个阶段必须在一次young gc发生之前完成。</td>
+<td>(2)扫描根区块</td>
+<td>扫描那些引用了老年代的 Suvivor 区块（根区块）。这个阶段是和应用线程并行执行。这个阶段必须在下一次 young gc 发生之前完成。</td>
 </tr>
 <tr>
 <td>(3)并发标记</td>
 <td>在全堆范围内寻找存活对象。这个阶段也是和应用线程并行执行。这个阶段可以被年轻代垃圾收集过程所打断</td>
 </tr>
 <tr>
-<td>(4)重新标记(stop the world)</td>
-<td>完成堆中存活对象的标记。这个阶段使用了一个叫SATB(snapshot-at-the-beginning)的算法，该算法比CMS收集器所用算法快非常多。</td>
+<td>(4)重新标记<br>(Stop the World Event)</td>
+<td>完成堆中存活对象的标记。这个阶段使用了一个叫 SATB(snapshot-at-the-beginning) 的算法，该算法比 CMS 收集器所用算法快非常多。</td>
 </tr>
 <tr>
-<td>(5)并发清理(stop the world and cocurrent)</td>
-<td>1)核算存活对象和完全空闲区块的记录数据（stop the world);   2)擦除RSets(stop the world);  3)重置空区块，并且添加进空闲区块列表（并发）。</td>
+<td>(5)并发清理<br>(Stop the World Event and Concurrent)</td>
+<td>1)核算存活对象和完全空闲区块的记录数据（stop the world);   2)擦除 RSets(stop the world);  3)重置空区块，并且添加进空闲区块列表（并发）。</td>
 </tr>
 <tr>
-<td>(6)复制(stop the world)</td>
-<td>这是一个stop the world过程，过程中会疏散或者复制存活对象那到新的未使用区块上。这过程可以发生在年轻代区块中，GC日志中显示为[GC pause (young)]，或者同时发生在年轻代和老年代区块中，而GC日志中显示为[GC Pause (mixed)]</td>
+<td>(*)复制<br>(Stop the World Event)</td>
+<td>这是会发生多次的 STW 过程，过程中会疏散或者复制存活对象那到新的未使用区块上。复制过程可以发生在年轻代区块中，GC日志中显示为 [GC pause (young)]，或者同时发生在年轻代和老年代区块中，而GC日志中显示为 [GC Pause (mixed)]</td>
 </tr>
 </tbody></table>
 <h3 id="逐步分析G1的老年代收集过程"><a href="#逐步分析G1的老年代收集过程" class="headerlink" title="逐步分析G1的老年代收集过程"></a>逐步分析G1的老年代收集过程</h3><p>经过以上的各阶段的简单介绍后，我们来看看他们在G1收集器的老年代回收过程中是如何相互影响的。</p>
@@ -537,7 +537,7 @@
 <li>G1再也不能够按需要扩增或者收缩年轻代大小。因为大小已经被固定下来而不能做任何更改。</li>
 </ul>
 <h4 id="响应时间指标"><a href="#响应时间指标" class="headerlink" title="响应时间指标"></a><strong>响应时间指标</strong></h4><p>与其使用平均响应时间（ART)作为一个指标去设置XX:MaxGCPauseMillis=N，不如考虑设置一个值，使得90%或更多时间满足这个停顿目标。这意味着90%的用户发起请求后得到应答的时间不会超过这个目标。请记住，这个停顿时间只是一个目标，而不能保证总是能满足它。</p>
-<h4 id="什么是疏散失败-Evacuation-Failure"><a href="#什么是疏散失败-Evacuation-Failure" class="headerlink" title="什么是疏散失败?(Evacuation Failure)"></a><strong>什么是疏散失败?(Evacuation Failure)</strong></h4><p>当JVM对幸存对象回收或者晋升对象的时候发生堆内存耗尽，会触发一次晋升失败。堆空间不能再扩增，因为它已经处于最大值。这个是通过参数XX:+PrintGCDetails控制在GC日志里输出，日志内容形如：<strong>to-space overflow</strong>。这个过程的代价非常昂贵！</p>
+<h4 id="什么是疏散失败-Evacuation-Failure"><a href="#什么是疏散失败-Evacuation-Failure" class="headerlink" title="什么是疏散失败?(Evacuation Failure)"></a><strong>什么是疏散失败?(Evacuation Failure)</strong></h4><p>当JVM对幸存对象进行回收或者在晋升对象到老年代的时候发生堆内存耗尽，将会触发一次晋升失败。此时堆空间不能再扩增，因为它已经处于最大值。当指定参数XX:+PrintGCDetails的时候，这种晋升失败的情况在日志里体现为：<strong>to-space overflow</strong>。而且这个过程会付出昂贵代价！</p>
 <ul>
 <li><p>GC必须继续下去，所以必须得释放出空间；</p>
 </li>
@@ -726,13 +726,13 @@
       <div class="popular-posts-title"><a href="/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理 (五) G1垃圾收集器深入</a></div>
     </li>
     <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
+    </li>
+    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
@@ -958,12 +958,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">425k</span>
+    <span title="站点总字数">432k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:26</span>
+    <span title="站点阅读时长">6:32</span>
 
 </div>
 

@@ -222,28 +222,28 @@
 </tr>
 </thead>
 <tbody><tr>
-<td>(1)初始标记(stop the world)</td>
-<td>stop the world。这个过程发生在young gc，用于标记那些引用了老年代对象的Suvivor区块(根区块 root regions)</td>
+<td>(1)初始标记<br>(Stop the World Event)</td>
+<td>stop the world。这个过程发生在 young gc，用于标记那些引用了老年代对象的 Suvivor 区块(根区块 root regions)</td>
 </tr>
 <tr>
-<td>(2)扫描根区块(root regions)</td>
-<td>扫描那些应用了老年代的跟区块。这个阶段是和应用线程并行执行。这个阶段必须在一次young gc发生之前完成。</td>
+<td>(2)扫描根区块</td>
+<td>扫描那些引用了老年代的 Suvivor 区块（根区块）。这个阶段是和应用线程并行执行。这个阶段必须在下一次 young gc 发生之前完成。</td>
 </tr>
 <tr>
 <td>(3)并发标记</td>
 <td>在全堆范围内寻找存活对象。这个阶段也是和应用线程并行执行。这个阶段可以被年轻代垃圾收集过程所打断</td>
 </tr>
 <tr>
-<td>(4)重新标记(stop the world)</td>
-<td>完成堆中存活对象的标记。这个阶段使用了一个叫SATB(snapshot-at-the-beginning)的算法，该算法比CMS收集器所用算法快非常多。</td>
+<td>(4)重新标记<br>(Stop the World Event)</td>
+<td>完成堆中存活对象的标记。这个阶段使用了一个叫 SATB(snapshot-at-the-beginning) 的算法，该算法比 CMS 收集器所用算法快非常多。</td>
 </tr>
 <tr>
-<td>(5)并发清理(stop the world and cocurrent)</td>
-<td>1)核算存活对象和完全空闲区块的记录数据（stop the world);   2)擦除RSets(stop the world);  3)重置空区块，并且添加进空闲区块列表（并发）。</td>
+<td>(5)并发清理<br>(Stop the World Event and Concurrent)</td>
+<td>1)核算存活对象和完全空闲区块的记录数据（stop the world);   2)擦除 RSets(stop the world);  3)重置空区块，并且添加进空闲区块列表（并发）。</td>
 </tr>
 <tr>
-<td>(6)复制(stop the world)</td>
-<td>这是一个stop the world过程，过程中会疏散或者复制存活对象那到新的未使用区块上。这过程可以发生在年轻代区块中，GC日志中显示为[GC pause (young)]，或者同时发生在年轻代和老年代区块中，而GC日志中显示为[GC Pause (mixed)]</td>
+<td>(*)复制<br>(Stop the World Event)</td>
+<td>这是会发生多次的 STW 过程，过程中会疏散或者复制存活对象那到新的未使用区块上。复制过程可以发生在年轻代区块中，GC日志中显示为 [GC pause (young)]，或者同时发生在年轻代和老年代区块中，而GC日志中显示为 [GC Pause (mixed)]</td>
 </tr>
 </tbody></table>
 <h3 id="逐步分析G1的老年代收集过程"><a href="#逐步分析G1的老年代收集过程" class="headerlink" title="逐步分析G1的老年代收集过程"></a>逐步分析G1的老年代收集过程</h3><p>经过以上的各阶段的简单介绍后，我们来看看他们在G1收集器的老年代回收过程中是如何相互影响的。</p>
@@ -288,7 +288,7 @@
 <li>G1再也不能够按需要扩增或者收缩年轻代大小。因为大小已经被固定下来而不能做任何更改。</li>
 </ul>
 <h4 id="响应时间指标"><a href="#响应时间指标" class="headerlink" title="响应时间指标"></a><strong>响应时间指标</strong></h4><p>与其使用平均响应时间（ART)作为一个指标去设置XX:MaxGCPauseMillis=N，不如考虑设置一个值，使得90%或更多时间满足这个停顿目标。这意味着90%的用户发起请求后得到应答的时间不会超过这个目标。请记住，这个停顿时间只是一个目标，而不能保证总是能满足它。</p>
-<h4 id="什么是疏散失败-Evacuation-Failure"><a href="#什么是疏散失败-Evacuation-Failure" class="headerlink" title="什么是疏散失败?(Evacuation Failure)"></a><strong>什么是疏散失败?(Evacuation Failure)</strong></h4><p>当JVM对幸存对象回收或者晋升对象的时候发生堆内存耗尽，会触发一次晋升失败。堆空间不能再扩增，因为它已经处于最大值。这个是通过参数XX:+PrintGCDetails控制在GC日志里输出，日志内容形如：<strong>to-space overflow</strong>。这个过程的代价非常昂贵！</p>
+<h4 id="什么是疏散失败-Evacuation-Failure"><a href="#什么是疏散失败-Evacuation-Failure" class="headerlink" title="什么是疏散失败?(Evacuation Failure)"></a><strong>什么是疏散失败?(Evacuation Failure)</strong></h4><p>当JVM对幸存对象进行回收或者在晋升对象到老年代的时候发生堆内存耗尽，将会触发一次晋升失败。此时堆空间不能再扩增，因为它已经处于最大值。当指定参数XX:+PrintGCDetails的时候，这种晋升失败的情况在日志里体现为：<strong>to-space overflow</strong>。而且这个过程会付出昂贵代价！</p>
 <ul>
 <li><p>GC必须继续下去，所以必须得释放出空间；</p>
 </li>
@@ -632,12 +632,181 @@
 <li>并发标记阶段不会 STW，用时相对较长（0.014 secs）；</li>
 <li>重新标记阶段默认就是多线程（Rescan (parallel)），也就是说 CMSParallelRemarkEnabled 默认开启；</li>
 </ul>
-<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><p>G1 的内容比较多，我单独写了一些文章来分析：</p>
+<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
+<p>下边直接来看 G1 的垃圾回收阶段图：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="G1垃圾收集阶段图.png"></p>
+<p>具体各个阶段总结如下：</p>
+<table>
+<thead>
+<tr>
+<th>回收阶段</th>
+<th>是否 STW</th>
+<th>过程</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>年轻代收集 (young gc)</td>
+<td>是（收集过程中复制移动动作是一个 STW 过程）</td>
+<td>1.使用复制算法，从 eden 区将存活对象转移到 survivor区；<br>2.如果对象超过了老化阈值，则会被晋升到老年代区块中。</td>
+</tr>
+<tr>
+<td>初始标记（initial-mark)</td>
+<td>是</td>
+<td>1.当老年代占堆比重达到 IHOP 阈值（缺省45%），则会触发并发标记周期，并进入初始标记阶段；<br>2.初始标记过程是伴随着一次年轻代收集同时完成的；<br>3.该过程主要是标记那些引用了老年代对象的 Survivor 区块（也就是根区块）</td>
+</tr>
+<tr>
+<td>并发根区块扫描 (concurrent-root-scan)</td>
+<td>否</td>
+<td>1.扫描那些引用了老年代的 Suvivor 区块（根区块）并标记他们所引用的对象。<br>2.这个阶段是和应用线程并行执行。这个阶段必须在下一次 young gc 发生之前完成。</td>
+</tr>
+<tr>
+<td>并发标记 (concurrent-mark)</td>
+<td>否</td>
+<td>1.在全堆范围内寻找存活对象；<br>2.该过程与应用线程并行执行；<br>3.这个阶段可以被年轻代垃圾收集过程所打断（也就是中间可以穿插多个 young gc）</td>
+</tr>
+<tr>
+<td>重新标记 (remark)</td>
+<td>是</td>
+<td>1.最终完成堆中所有存活对象的标记；<br>2.这个阶段使用了一个叫SATB(snapshot-at-the-beginning)的算法，该算法比CMS收集器所用算法快非常多。</td>
+</tr>
+<tr>
+<td>并发清理 (cleanup)</td>
+<td>是（重置空区块阶段(3)为并发操作）</td>
+<td>1.清算存活对象以及空区块 (STW)；<br>2.擦除 RSets (STW)；<br>3.重置空区块，并添加进空闲区块列表；4.该阶段还会决定是否进入空间回收周期。</td>
+</tr>
+<tr>
+<td>空间回收周期（space reclamation</td>
+<td>是</td>
+<td>1.该过程会疏散或者复制存活对象那到新的未使用区块上；<br>2.这过程可以包含多次 young gc，可以发生在年轻代区块中，GC日志中显示为[GC pause (young)]，或者同时发生在年轻代和老年代区块中，而GC日志中显示为[GC Pause (mixed)]；<br>3.当G1判断不再值得回收老年代区块以获取更多空间的时候，便会结束该阶段，并进入下一个年轻代收集循环。</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>注意！当 G1 在回收存活对象或者是晋升对象到老年代的时候发生堆空间不足，将会触发晋升失败。此时，G1将进入 STW，并使用单线程来进行 Full GC。如果调优到位的话，你的应用应该避免Full GC发生。</p>
+</blockquote>
+<p>综上，G1 垃圾收集模式分为三种：</p>
+<ul>
+<li><strong>Young GC</strong>：当 G1 评估当前年轻代的回收时间接近 -XX:MaxGCPauseMillis 指定值的时候，会触发 Young GC；</li>
+<li><strong>Mixed GC</strong>：当 老年代占有率达到 -XX:InitiatingHeapOccupancyPercent 指定值的时候，会触发并发周期。而并发清理阶段阶段会判断是否需要进入空间回收周期。在空间回收周期内，会根据期望的GC停顿时间以及区块的回收价值等来决定是否进行以及进行多少次 Mixed GC；</li>
+<li><strong>Full GC</strong>：STW，单线程收集过程。</li>
+</ul>
+<h4 id="GC-日志案例：-1"><a href="#GC-日志案例：-1" class="headerlink" title="GC 日志案例："></a>GC 日志案例：</h4><ul>
+<li><p>案例一</p>
+<blockquote>
+<p>CommandLine flags: -XX:G1NewSizePercent=20 -XX:+HeapDumpOnOutOfMemoryError -XX:InitialHeapSize=3221225472 -XX:MaxGCPauseMillis=500 -XX:MaxHeapSize=5872025600 -XX:-OmitStackTraceInFastThrow -XX:+PrintGC -XX:+PrintGCDateStamps -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UnlockExperimentalVMOptions -XX:+UseCompressedClassPointers -XX:+UseCompressedOops -XX:+UseG1GC </p>
+</blockquote>
+<pre><code class="bash">## Young GC（以下同，略去详细内容）
+2021-01-08T04:12:09.331+0800: 1172604.919: [GC pause (G1 Evacuation Pause) (young), 0.0184242 secs]
+  [Parallel Time: 15.1 ms, GC Workers: 4]
+      [GC Worker Start (ms): Min: 1172604919.7, Avg: 1172604919.8, Max: 1172604919.8, Diff: 0.1]
+      [Ext Root Scanning (ms): Min: 1.4, Avg: 1.7, Max: 2.6, Diff: 1.2, Sum: 6.9]
+      [Update RS (ms): Min: 6.8, Avg: 7.4, Max: 7.8, Diff: 1.0, Sum: 29.8]
+        [Processed Buffers: Min: 11, Avg: 18.2, Max: 27, Diff: 16, Sum: 73]
+      [Scan RS (ms): Min: 0.4, Avg: 0.6, Max: 0.6, Diff: 0.2, Sum: 2.2]
+      [Code Root Scanning (ms): Min: 0.0, Avg: 0.1, Max: 0.1, Diff: 0.1, Sum: 0.3]
+      [Object Copy (ms): Min: 4.9, Avg: 5.0, Max: 5.1, Diff: 0.2, Sum: 19.9]
+      [Termination (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.0]
+        [Termination Attempts: Min: 1, Avg: 1.0, Max: 1, Diff: 0, Sum: 4]
+      [GC Worker Other (ms): Min: 0.1, Avg: 0.1, Max: 0.1, Diff: 0.1, Sum: 0.4]
+      [GC Worker Total (ms): Min: 14.8, Avg: 14.9, Max: 15.0, Diff: 0.2, Sum: 59.5]
+      [GC Worker End (ms): Min: 1172604934.6, Avg: 1172604934.6, Max: 1172604934.7, Diff: 0.1]
+  [Code Root Fixup: 0.0 ms]
+  [Code Root Purge: 0.0 ms]
+  [Clear CT: 0.5 ms]
+  [Other: 2.8 ms]
+      [Choose CSet: 0.0 ms]
+      [Ref Proc: 0.3 ms]
+      [Ref Enq: 0.0 ms]
+      [Redirty Cards: 0.1 ms]
+      [Humongous Register: 0.2 ms]
+      [Humongous Reclaim: 0.0 ms]
+      [Free CSet: 1.9 ms]
+  [Eden: 2498.0M(2498.0M)-&gt;0.0B(2496.0M) Survivors: 6144.0K-&gt;6144.0K Heap: 5011.5M(5576.0M)-&gt;2513.8M(5576.0M)]
+[Times: user=0.06 sys=0.00, real=0.02 secs] 
+## 初始标记 initial-mark
+2021-01-08T04:12:18.958+0800: 1172614.546: [GC pause (G1 Evacuation Pause) (young) (initial-mark), 0.0199455 secs]
+  ### ......
+  [Eden: 2496.0M(2496.0M)-&gt;0.0B(2492.0M) Survivors: 6144.0K-&gt;8192.0K Heap: 5009.8M(5576.0M)-&gt;2515.0M(5576.0M)]
+[Times: user=0.05 sys=0.02, real=0.02 secs] 
+## 并发根节点扫描
+2021-01-08T04:12:18.979+0800: 1172614.567: [GC concurrent-root-region-scan-start]
+2021-01-08T04:12:19.004+0800: 1172614.592: [GC concurrent-root-region-scan-end, 0.0256504 secs]
+## 并发标记
+2021-01-08T04:12:19.004+0800: 1172614.592: [GC concurrent-mark-start]
+2021-01-08T04:12:19.214+0800: 1172614.802: [GC concurrent-mark-end, 0.2101424 secs]
+## 重新标记
+2021-01-08T04:12:19.215+0800: 1172614.803: [GC remark 2021-01-08T04:12:19.215+0800: 1172614.803: [Finalize Marking, 0.0003026 secs] 2021-01-08T04:12:19.215+0800: 1172614.803: [GC ref-proc, 0.7285039 secs] 2021-01-08T04:12:19.944+0800: 1172615.532: [Unloading, 0.0301928 secs], 0.7619789 secs]
+[Times: user=0.95 sys=0.02, real=0.77 secs] 
+## 清理阶段
+2021-01-08T04:12:19.978+0800: 1172615.566: [GC cleanup 2575M-&gt;2567M(5576M), 0.0076275 secs]
+[Times: user=0.00 sys=0.00, real=0.01 secs] 
+2021-01-08T04:12:19.986+0800: 1172615.574: [GC concurrent-cleanup-start]
+2021-01-08T04:12:19.986+0800: 1172615.574: [GC concurrent-cleanup-end, 0.0000396 secs]
+## 空间收集阶段的 young gc
+2021-01-08T04:12:28.168+0800: 1172623.756: [GC pause (G1 Evacuation Pause) (young), 0.0249811 secs]
+   ### ......
+  [Eden: 2492.0M(2492.0M)-&gt;0.0B(1110.0M) Survivors: 8192.0K-&gt;4096.0K Heap: 4999.0M(5576.0M)-&gt;2504.2M(5576.0M)]
+[Times: user=0.06 sys=0.03, real=0.02 secs] 
+## 空间收集阶段的 young gc（mixed)
+2021-01-08T04:12:31.149+0800: 1172626.737: [GC pause (G1 Evacuation Pause) (mixed), 0.0437074 secs]
+  ### ......
+  [Eden: 1110.0M(1110.0M)-&gt;0.0B(1108.0M) Survivors: 4096.0K-&gt;6144.0K Heap: 3614.2M(5576.0M)-&gt;2206.5M(5576.0M)]
+[Times: user=0.10 sys=0.04, real=0.04 secs] 
+## 空间收集阶段的 young gc（mixed)
+2021-01-08T04:12:34.734+0800: 1172630.322: [GC pause (G1 Evacuation Pause) (mixed), 0.0397893 secs]
+  ### ......
+  [Eden: 1108.0M(1108.0M)-&gt;0.0B(1108.0M) Survivors: 6144.0K-&gt;6144.0K Heap: 3314.5M(5576.0M)-&gt;1916.7M(5576.0M)]
+[Times: user=0.10 sys=0.04, real=0.04 secs] 
+## 空间收集阶段的 young gc（mixed)
+2021-01-08T04:12:39.836+0800: 1172635.424: [GC pause (G1 Evacuation Pause) (mixed), 0.0539989 secs]
+  ### ......
+  [Eden: 1108.0M(1108.0M)-&gt;0.0B(1110.0M) Survivors: 6144.0K-&gt;4096.0K Heap: 3024.7M(5576.0M)-&gt;1536.4M(5576.0M)]
+[Times: user=0.13 sys=0.05, real=0.05 secs] </code></pre>
+<ul>
+<li>案例二</li>
+</ul>
+<pre><code class="bash">## 大对象收集
+[GC pause (G1 Humongous Allocation) (young), 0.0022191 secs]
+ [Parallel Time: 1.3 ms, GC Workers: 4]
+    [GC Worker Start (ms): Min: 909912.8, Avg: 909913.1, Max: 909913.9, Diff: 1.1]
+    [Ext Root Scanning (ms): Min: 0.0, Avg: 0.3, Max: 0.4, Diff: 0.4, Sum: 1.1]
+    [Update RS (ms): Min: 0.0, Avg: 0.1, Max: 0.3, Diff: 0.3, Sum: 0.4]
+       [Processed Buffers: Min: 0, Avg: 2.2, Max: 3, Diff: 3, Sum: 9]
+    [Scan RS (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.0]
+    [Code Root Scanning (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.0]
+    [Object Copy (ms): Min: 0.0, Avg: 0.0, Max: 0.1, Diff: 0.1, Sum: 0.1]
+    [Termination (ms): Min: 0.0, Avg: 0.5, Max: 0.7, Diff: 0.7, Sum: 1.8]
+       [Termination Attempts: Min: 1, Avg: 1.0, Max: 1, Diff: 0, Sum: 4]
+    [GC Worker Other (ms): Min: 0.0, Avg: 0.0, Max: 0.0, Diff: 0.0, Sum: 0.1]
+    [GC Worker Total (ms): Min: 0.0, Avg: 0.9, Max: 1.2, Diff: 1.2, Sum: 3.5]
+    [GC Worker End (ms): Min: 909914.0, Avg: 909914.0, Max: 909914.1, Diff: 0.1]
+ [Code Root Fixup: 0.0 ms]
+ [Code Root Purge: 0.0 ms]
+ [Clear CT: 0.0 ms]
+ [Other: 0.9 ms]
+    [Choose CSet: 0.0 ms]
+    [Ref Proc: 0.8 ms]
+    [Ref Enq: 0.0 ms]
+    [Redirty Cards: 0.1 ms]
+    [Humongous Register: 0.0 ms]
+    [Humongous Reclaim: 0.0 ms]
+    [Free CSet: 0.0 ms]
+ [Eden: 0.0B(2048.0K)-&gt;0.0B(2048.0K) Survivors: 0.0B-&gt;0.0B Heap: 38.1M(50.0M)-&gt;38.1M(50.0M)]
+[Times: user=0.00 sys=0.01, real=0.00 secs] 
+## Full GC
+[Full GC (Allocation Failure)  38M-&gt;37M(50M), 0.0419625 secs]
+  [Eden: 0.0B(2048.0K)-&gt;0.0B(2048.0K) Survivors: 0.0B-&gt;0.0B Heap: 38.1M(50.0M)-&gt;37.9M(50.0M)], [Metaspace: 30407K-&gt;30407K(1077248K)]
+[Times: user=0.05 sys=0.00, real=0.04 secs] 
+[Full GC (Allocation Failure)  37M-&gt;37M(50M), 0.0346627 secs]
+  [Eden: 0.0B(2048.0K)-&gt;0.0B(2048.0K) Survivors: 0.0B-&gt;0.0B Heap: 37.9M(50.0M)-&gt;37.9M(50.0M)], [Metaspace: 30407K-&gt;30407K(1077248K)]
+[Times: user=0.05 sys=0.00, real=0.04 secs] 
+</code></pre>
+</li>
+</ul>
 <h2 id="低延迟垃圾收集器"><a href="#低延迟垃圾收集器" class="headerlink" title="低延迟垃圾收集器"></a>低延迟垃圾收集器</h2><ul>
 <li>Shenandoah 收集器</li>
 <li>ZGC 收集器</li>
 </ul>
-<h1 id="垃圾收集器底层算法"><a href="#垃圾收集器底层算法" class="headerlink" title="垃圾收集器底层算法"></a>垃圾收集器底层算法</h1><h2 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h2><h2 id="记忆集和卡表"><a href="#记忆集和卡表" class="headerlink" title="记忆集和卡表"></a>记忆集和卡表</h2><h1 id="常用垃圾收集器公共参数"><a href="#常用垃圾收集器公共参数" class="headerlink" title="常用垃圾收集器公共参数"></a>常用垃圾收集器公共参数</h1><ul>
+<h1 id="常用垃圾收集器公共参数"><a href="#常用垃圾收集器公共参数" class="headerlink" title="常用垃圾收集器公共参数"></a>常用垃圾收集器公共参数</h1><ul>
 <li><p>以下两个命令结合起来可以大致推敲 JVM 默认参数：</p>
 <pre><code>  java -XX:+PrintFlagsInitial ${pid}
 
@@ -646,13 +815,19 @@
 <p>  |参数|参数含义|默认值|<br>  |–|–|–|–|<br>  ||||</p>
 </li>
 </ul>
-]]></content>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><h2 id="G1-资料"><a href="#G1-资料" class="headerlink" title="G1 资料"></a>G1 资料</h2><ul>
+<li><a href="https://www.cnblogs.com/GrimMjx/p/12234564.html#_label2" target="_blank" rel="noopener">《搞懂G1垃圾收集器》</a></li>
+<li><a href="https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html" target="_blank" rel="noopener">《Getting Started with the G1 Garbage Collector》</a></li>
+<li><a href="https://www.infoq.com/articles/G1-One-Garbage-Collector-To-Rule-Them-All/" target="_blank" rel="noopener">《G1: One Garbage Collector To Rule Them All》</a></li>
+<li><a href="https://www.oracle.com/technical-resources/articles/java/g1gc.html" target="_blank" rel="noopener">《Garbage First Garbage Collector Tuning》</a></li>
+</ul>
+<h2 id="其他资料"><a href="#其他资料" class="headerlink" title="其他资料"></a>其他资料</h2>]]></content>
       <categories>
         <category>Java</category>
       </categories>
       <tags>
-        <tag>JVM</tag>
         <tag>Java</tag>
+        <tag>JVM</tag>
         <tag>垃圾收集器</tag>
       </tags>
   </entry>
@@ -886,14 +1061,14 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
         <category>Java</category>
       </categories>
       <tags>
-        <tag>JVM</tag>
         <tag>Java</tag>
+        <tag>JVM</tag>
       </tags>
   </entry>
   <entry>
     <title>Java 虚拟机原理 (一) 内存划分</title>
     <url>/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/</url>
-    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分——内存划分。</p>
+    <content><![CDATA[<p>Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第一部分:内存划分。</p>
 <a id="more"></a>
 
 <h2 id="JDK-体系架构"><a href="#JDK-体系架构" class="headerlink" title="JDK 体系架构"></a>JDK 体系架构</h2><p>先从宏观上来看 JVM 所处的位置，且看官方文档的<a href="https://docs.oracle.com/javase/8/docs/" target="_blank" rel="noopener">体系架构图</a>：</p>
@@ -942,8 +1117,8 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
         <category>Java</category>
       </categories>
       <tags>
-        <tag>JVM</tag>
         <tag>Java</tag>
+        <tag>JVM</tag>
       </tags>
   </entry>
   <entry>
@@ -4663,8 +4838,8 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -12691,8 +12866,8 @@ protected boolean createStreamingResultSet() {
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
