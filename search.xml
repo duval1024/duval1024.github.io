@@ -3758,8 +3758,8 @@ public class PermissionValidator {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Apollo</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>
@@ -12405,8 +12405,8 @@ hiveStatement.execute(sql);    </code></pre>
         <category>Azkaban</category>
       </categories>
       <tags>
-        <tag>Azkaban</tag>
         <tag>源码分析</tag>
+        <tag>Azkaban</tag>
       </tags>
   </entry>
   <entry>

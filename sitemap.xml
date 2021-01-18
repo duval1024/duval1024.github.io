@@ -319,7 +319,7 @@
 
   
   <url>
-    <loc>https://blog.duval.top/tags/Azkaban/</loc>
+    <loc>https://blog.duval.top/tags/Apollo/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -327,6 +327,20 @@
   
   <url>
     <loc>https://blog.duval.top/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.duval.top/tags/Azkaban/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.duval.top/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%BB%84%E4%BB%B6/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -354,13 +368,6 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/tags/Gradle/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://blog.duval.top/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -375,7 +382,7 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/tags/Apollo/</loc>
+    <loc>https://blog.duval.top/tags/Gradle/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -424,6 +431,20 @@
   </url>
   
   <url>
+    <loc>https://blog.duval.top/tags/MySQL/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.duval.top/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://blog.duval.top/tags/Maven/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -445,20 +466,6 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/tags/MySQL/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.duval.top/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://blog.duval.top/tags/Netty/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -467,13 +474,6 @@
   
   <url>
     <loc>https://blog.duval.top/tags/Redis/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.duval.top/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%BB%84%E4%BB%B6/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -515,6 +515,13 @@
   </url>
   
   <url>
+    <loc>https://blog.duval.top/tags/bugfix/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://blog.duval.top/tags/Azkaban%E6%8F%92%E4%BB%B6/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -550,13 +557,6 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/tags/%E8%A7%84%E5%88%99%E5%BC%95%E6%93%8E/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://blog.duval.top/tags/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -571,13 +571,20 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/tags/bugfix/</loc>
+    <loc>https://blog.duval.top/tags/%E8%A7%84%E5%88%99%E5%BC%95%E6%93%8E/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
 
+  
+  <url>
+    <loc>https://blog.duval.top/categories/Java/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
   
   <url>
     <loc>https://blog.duval.top/categories/Azkaban/</loc>
@@ -587,14 +594,14 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/categories/Drools/</loc>
+    <loc>https://blog.duval.top/categories/%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://blog.duval.top/categories/Java/</loc>
+    <loc>https://blog.duval.top/categories/Drools/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -615,13 +622,6 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/categories/%E6%9E%84%E5%BB%BA%E5%B7%A5%E5%85%B7/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://blog.duval.top/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -629,7 +629,7 @@
   </url>
   
   <url>
-    <loc>https://blog.duval.top/categories/%E8%B0%83%E5%BA%A6%E7%B3%BB%E7%BB%9F/</loc>
+    <loc>https://blog.duval.top/categories/%E6%9E%84%E5%BB%BA%E5%B7%A5%E5%85%B7/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -650,6 +650,13 @@
   </url>
   
   <url>
+    <loc>https://blog.duval.top/categories/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0/</loc>
+    <lastmod>2021-01-18</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://blog.duval.top/categories/%E5%B7%A5%E5%85%B7/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
@@ -658,13 +665,6 @@
   
   <url>
     <loc>https://blog.duval.top/categories/JAVA/</loc>
-    <lastmod>2021-01-18</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.duval.top/categories/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0/</loc>
     <lastmod>2021-01-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
