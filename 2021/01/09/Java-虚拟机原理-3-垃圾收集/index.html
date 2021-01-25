@@ -71,12 +71,13 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2Fcheck_gc_args">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png">
 <meta property="article:published_time" content="2021-01-09T14:50:07.000Z">
-<meta property="article:modified_time" content="2021-01-18T08:09:16.895Z">
+<meta property="article:modified_time" content="2021-01-22T03:03:47.593Z">
 <meta property="article:author" content="杜瓦尔">
-<meta property="article:tag" content="JVM">
 <meta property="article:tag" content="Java">
+<meta property="article:tag" content="JVM">
 <meta property="article:tag" content="垃圾收集器">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%A6%96%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.jpg">
@@ -373,7 +374,7 @@
 <p>注意，在 jdk1.8.0_161 中测试发现 -XX:+UseSerialOldGC 参数已经不可用。目前各个垃圾收集器之间的关系图如下：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png" alt="垃圾收集器之间的关系.png"><br>其中标红线表示 jdk1.8.0_161 之后推荐使用的搭配关系，此外 CMS 在并发失败的时候还会退化为 Serial Old。<br>从 JDK 源码也可以看出端倪:<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2Fcheck_gc_args" alt="check_gc_args"></p>
 </blockquote>
 <h3 id="CMS-垃圾收集器"><a href="#CMS-垃圾收集器" class="headerlink" title="CMS 垃圾收集器"></a>CMS 垃圾收集器</h3><h4 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h4><p> CMS (Concurrent Mark Sweep)是老年代垃圾收集器，内部使用标记清除算法。其一般与 ParNew 搭配使用，回收过程一般划分为以下几个阶段：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png" alt="CMS垃圾收集器回收阶段.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png" alt="CMS垃圾收集器回收阶段.png"><br> <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FCMS%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%9B%9E%E6%94%B6%E9%98%B6%E6%AE%B5.png" alt="CMS垃圾收集器回收阶段.png"></p>
 <ul>
 <li><strong>初始标记</strong>：快速标记 GC Roots 直接引用的对象，该阶段为 Stop The World 过程；</li>
 <li><strong>并发标记</strong>：从 GC Roots 直接引用对象出发遍历其他存活对象，该过程与用户线程并发运行，因此可能会有已被标记的对象状态发生变化。该过程持续时间会比较长，但不会 STW；</li>
@@ -508,7 +509,7 @@
 <tr>
 <td>并发清理 (cleanup)</td>
 <td>是（重置空区块阶段(3)为并发操作）</td>
-<td>1.清算存活对象以及空区块 (STW)；<br>2.擦除 RSets (STW)；<br>3.重置空区块，并添加进空闲区块列表；4.该阶段还会决定是否进入空间回收周期。</td>
+<td>1.清算存活对象以及空区块 (STW)；<br>2.擦除 RSets (STW)；<br>3.重置空区块，并添加进空闲区块列表；<br>4.该阶段还会决定是否进入空间回收周期。</td>
 </tr>
 <tr>
 <td>空间回收周期（space reclamation</td>
@@ -570,7 +571,7 @@
 </tr>
 <tr>
 <td>-XX:G1NewSizePercent=5<br>-XX:G1MaxNewSizePercent=60</td>
-<td>配置年轻代占比</td>
+<td>配置年轻代占比的最小值和最大值</td>
 <td>最小值默认为5%，最大值默认为60%</td>
 </tr>
 <tr>
@@ -825,13 +826,13 @@
       <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
+      <div class="popular-posts-title"><a href="/2020/12/28/一文彻底掌握-Java-类加载机制/" rel="bookmark">一文彻底掌握 Java 类加载机制</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/10/Java-虚拟机原理-4-G1垃圾收集器入门/" rel="bookmark">Java 虚拟机原理 (四) G1垃圾收集器入门</a></div>
+      <div class="popular-posts-title"><a href="/2020/12/23/一文彻底掌握Java-IO类库/" rel="bookmark">一文彻底掌握Java IO类库</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理 (五) G1垃圾收集器深入</a></div>
+      <div class="popular-posts-title"><a href="/2020/12/16/深入理解Java文件输入输出流和文件描述符/" rel="bookmark">深入理解Java文件输入输出流和文件描述符</a></div>
     </li>
   </ul>
 
@@ -882,8 +883,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/JVM/" rel="tag"><i class="fa fa-tag"></i> JVM</a>
               <a href="/tags/Java/" rel="tag"><i class="fa fa-tag"></i> Java</a>
+              <a href="/tags/JVM/" rel="tag"><i class="fa fa-tag"></i> JVM</a>
               <a href="/tags/%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 垃圾收集器</a>
           </div>
 
