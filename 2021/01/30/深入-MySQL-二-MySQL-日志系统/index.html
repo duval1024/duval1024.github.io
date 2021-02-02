@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -60,24 +60,24 @@
   };
 </script>
 
-  <meta name="description" content="工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。">
+  <meta name="description" content="日志系统日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。 后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。 因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。 binlog（归档">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入 MySQL (一) MySQL 体系结构">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:title" content="深入 MySQL (二) MySQL 日志系统">
+<meta property="og:url" content="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。">
+<meta property="og:description" content="日志系统日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。 后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。 因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。 binlog（归档">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg">
-<meta property="article:published_time" content="2021-02-01T14:50:38.000Z">
-<meta property="article:modified_time" content="2021-02-02T06:02:22.390Z">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png">
+<meta property="article:published_time" content="2021-01-30T04:00:39.000Z">
+<meta property="article:modified_time" content="2021-02-02T06:07:16.955Z">
 <meta property="article:author" content="杜瓦尔">
-<meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="数据库">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+<link rel="canonical" href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/">
 
 
 <script id="page-configurations">
@@ -89,7 +89,7 @@
   };
 </script>
 
-  <title>深入 MySQL (一) MySQL 体系结构 | 杜瓦尔</title>
+  <title>深入 MySQL (二) MySQL 日志系统 | 杜瓦尔</title>
   
 
 
@@ -224,7 +224,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -237,7 +237,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          深入 MySQL (一) MySQL 体系结构
+          深入 MySQL (二) MySQL 日志系统
         </h1>
 
         <div class="post-meta">
@@ -247,7 +247,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-02-01 22:50:38" itemprop="dateCreated datePublished" datetime="2021-02-01T22:50:38+08:00">2021-02-01</time>
+              <time title="创建时间：2021-01-30 12:00:39" itemprop="dateCreated datePublished" datetime="2021-01-30T12:00:39+08:00">2021-01-30</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -262,7 +262,7 @@
             </span>
 
           
-            <span id="/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (一) MySQL 体系结构" title="阅读次数">
+            <span id="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (二) MySQL 日志系统" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -277,8 +277,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="commentCount"></span>
+    <a title="valine" href="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -288,14 +288,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.6k</span>
+              <span>1.3k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
+              <span>1 分钟</span>
             </span>
 
         </div>
@@ -307,98 +307,56 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。</p>
-<a id="more"></a>
+        <a id="more"></a>
 
-<h1 id="MySQL-体系结构"><a href="#MySQL-体系结构" class="headerlink" title="MySQL 体系结构"></a>MySQL 体系结构</h1><p>MySQL主要划分为两个部分：Server 层和存储引擎层。</p>
-<p><strong>Server层</strong>：实现了大部分核心功能（内置函数、存储过程、触发器、视图等等），组成模块包括连接器、查询缓存、解析器、优化器以及执行器等等；<br><strong>存储引擎层</strong>：实现数据的存储和读取，向 Server 层提供操作数据的接口。支持插拔，可选的类型包括：InnoDB、MyISAM、Memory等。最常用的是 InnoDB，它从MySQL 5.5.8后成为默认存储引擎。</p>
-<p>下图展示 MySQL 官方文档提供的体系结构图：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png" alt="MySQL体系架构.png"></p>
-<p>下图展示的是简化后的 MySQL 的基本架构图。</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg" alt="MySQL架构图.jpg"></p>
-<h2 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h2><p>连接器就像是MySQL的“门神”，它负责跟客户端建立连接、获取权限、维持和管理连接。</p>
-<ul>
-<li><p>查看连接情况</p>
-<pre><code class="sql">  mysql&gt; show processlist;
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  | Id   | User | Host      | db   | Command | Time  | State    | Info             |
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  | 1530 | root | localhost | NULL | Sleep   | 44800 |          | NULL             |
-  | 1531 | root | localhost | qds  | Query   |     0 | starting | show processlist |
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  2 rows in set (0.03 sec)</code></pre>
+<h2 id="日志系统"><a href="#日志系统" class="headerlink" title="日志系统"></a>日志系统</h2><p>日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。</p>
+<p>后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。</p>
+<p>因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。</p>
+<h3 id="binlog（归档日志）"><a href="#binlog（归档日志）" class="headerlink" title="binlog（归档日志）"></a>binlog（归档日志）</h3><ul>
+<li>binlog是MySQL server层的逻辑日志，可以被所有存储引擎使用；</li>
+<li>binlog日志常用于数据备份和恢复；</li>
+<li>binlog可以是ROW 或 STATEMENT两种格式。ROW格式下binlog日志记录的是行数据变化前和变化后的内容；而STATEMENT格式下，binlog日志记录的是执行的SQL语句；</li>
+<li>仅凭binlog日志是不能确保MySQL crash-safe的；</li>
+<li>binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；</li>
+<li>重要主库推荐配置 <em>sync_binlog=1</em> ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；</li>
+</ul>
+<h3 id="redo-log（重做日志）"><a href="#redo-log（重做日志）" class="headerlink" title="redo log（重做日志）"></a>redo log（重做日志）</h3><ul>
+<li><p>WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；</p>
 </li>
-<li><p>连接空闲超时会自动断开，可以通过 wait_timeout 参数控制，默认8小时；</p>
+<li><p>redo log是InnoDB引擎特有的物理日志；</p>
 </li>
-<li><p>客户端不应频繁新建连接，尽量使用长连接；</p>
+<li><p>redo log记录的是某个数据页做了什么修改；</p>
 </li>
-<li><p>连接应该定时断开或者执行 mysql_reset_connection 重新初始化连接资源，避免占用过多内存；</p>
+<li><p>凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；</p>
 </li>
-<li><p>数据库账号权限的变更不会影响已建立的连接，只有该连接断开重连才会生效。常见的 JDBC 连接池都带有定时重连的功能，比如 HikariPool：</p>
-<pre><code class="java">  private PoolEntry createPoolEntry() {
-    try {
-       final PoolEntry poolEntry = newPoolEntry();
-       // 连接最大存活时间
-       final long maxLifetime = config.getMaxLifetime();
-       if (maxLifetime &gt; 0) {
-          // variance up to 2.5% of the maxlifetime
-          final long variance = maxLifetime &gt; 10_000 ? ThreadLocalRandom.current().nextLong( maxLifetime / 40 ) : 0;
-          final long lifetime = maxLifetime - variance;
-          // 定时任务检查连接是否空闲，空闲的连接将会被关闭
-          poolEntry.setFutureEol(houseKeepingExecutorService.schedule(new Runnable() {
-             @Override
-             public void run() {
-                softEvictConnection(poolEntry, &quot;(connection has passed maxLifetime)&quot;, false /* not owner */);
-             }
-          }, lifetime, MILLISECONDS));
-       }
-
-       LOGGER.debug(&quot;{} - Added connection {}&quot;, poolName, poolEntry.connection);
-       return poolEntry;
-    }
-    catch (Exception e) {
-       if (poolState == POOL_NORMAL) {
-          LOGGER.debug(&quot;{} - Cannot acquire connection from data source&quot;, poolName, e);
-       }
-       return null;
-    }
-  }</code></pre>
+<li><p>redo log日志是固定大小的循环写，超过文件大小会擦除老日志；</p>
+</li>
+<li><p>重要主库推荐配置 <em>innodb_flush_log_at_trx_commit=1</em> ，可以使得每次提交事务都会将buffer刷到磁盘，保证服务器崩溃的时候不会丢失数据；</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png" alt="redo log循环写.png"></p>
 </li>
 </ul>
-<h2 id="解析器"><a href="#解析器" class="headerlink" title="解析器"></a>解析器</h2><p>解析器有两个功能：</p>
+<h3 id="两阶段提交"><a href="#两阶段提交" class="headerlink" title="两阶段提交"></a>两阶段提交</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png" alt="两阶段提交.png"></p>
+<p>两阶段提交过程：</p>
 <ul>
-<li><strong>词法分析</strong>：将SQL语句数据库表列建立关联；</li>
-<li><strong>语法分析</strong>：检测SQL语句是否符合MySQL语法规则。</li>
+<li>1.新数据更新到内存；</li>
+<li>2.新数据写入redo log，并处于prepare状态；</li>
+<li>3.写入binlog；</li>
+<li>4.提交事务，使redo log 更新为commit状态。</li>
 </ul>
-<h2 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h2><p>优化器负责从不同的执行计划中选出效率最高的方案，包括决定表的连接顺序、选择哪个索引等等。此外还会涉及查询重写。</p>
-<h2 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h2><p>执行器主要是负责检查表权限，并且调用存储引擎的接口完成执行计划，写binlog日志等。</p>
-<h2 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h2><p>对于SELECT语句，在解析查询之前，服务器会先检查查询缓存。如果能在缓存中找到对应的查询，服务器可以直接返回缓存的结果，而不必进行解析、优化和执行等过程。</p>
+<p>crash-safe保障原理：</p>
+<ul>
+<li>如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；</li>
+<li>如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；</li>
+<li>如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；</li>
+<li>如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。</li>
+</ul>
+<p>binlog和redo log的联系：</p>
 <blockquote>
-<p>注意，频繁更新的表的查询缓存会频繁失效，不建议开启查询缓存。MySQL 8.0 版本后不再支持查询缓存。</p>
+<p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
 </blockquote>
-<h2 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h2><p>MySQL 支持多种存储引擎，用户在新建表的时候可以自定义指定该表采用的存储引擎。用户也可以根据 MySQL 提供的接口定义，实现自定义的存储引擎。</p>
-<p>最常用的第三方存储引擎是 InnoDB。在MySQL 5.5.8后，它成为默认存储引擎。</p>
-<h3 id="InnoDB-存储引擎"><a href="#InnoDB-存储引擎" class="headerlink" title="InnoDB 存储引擎"></a>InnoDB 存储引擎</h3><p>InnoDB 主要特点是：</p>
-<ul>
-<li>支持行锁、支持外键，并支持非锁定的读；</li>
-<li>每张表数据单独保存到一个独立的 idb 文件中；</li>
-<li>通过多版本并发控制（MVCC）来实现高并发特性，并且实现 SQL 标准的4种事务隔离级别，默认为可重复读；</li>
-<li>使用间隙锁（next-key locking）来避免幻读现象产生；</li>
-<li>每张表的主键都采用聚簇索引，如果没有显式指定主键，则默认自动生成一个6字节的 row_id 作为主键。</li>
-</ul>
-<h3 id="MyISAM-存储引擎"><a href="#MyISAM-存储引擎" class="headerlink" title="MyISAM 存储引擎"></a>MyISAM 存储引擎</h3><p>MyISAM 主要特点是：</p>
-<ul>
-<li>MySQL 5.5.8 版本之前的默认存储引擎；</li>
-<li>不支持事务；</li>
-<li>不支持行锁，只支持表锁；</li>
-<li>支持全文索引；</li>
-<li>存储引擎表由 MYD 和 MYI 组成，MYD 用来存放数据文件，MYI 用来存放索引文件。</li>
-</ul>
-<h3 id="其他存储引擎"><a href="#其他存储引擎" class="headerlink" title="其他存储引擎"></a>其他存储引擎</h3><p>NDB 存储引擎、Memory 存储引擎、Archive 存储引擎、Federated 存储引擎、Maria 存储引擎等等。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li><a href="https://time.geekbang.org/column/intro/100020801" target="_blank" rel="noopener">MySQL实战45讲</a>: 非常适合入门的MySQL学习资料；</li>
-<li>《高性能MySQL》</li>
-<li>《MySQL技术内幕（InnoDB存储引擎）》</li>
+<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><ul>
+<li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
+<li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
 </ul>
 
     </div>
@@ -410,10 +368,13 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/10/07/MySQL底层原理笔记/" rel="bookmark">MySQL底层原理笔记</a></div>
+    </li>
+    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2017/03/30/MySQL的limit优化和流式查询/" rel="bookmark">MySQL的Limit优化和流式查询</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/10/07/MySQL底层原理笔记/" rel="bookmark">MySQL底层原理笔记</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/29/深入MySQL-一-MySQL-体系结构/" rel="bookmark">深入 MySQL (一) MySQL 体系结构</a></div>
     </li>
   </ul>
 
@@ -451,7 +412,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" title="深入 MySQL (一) MySQL 体系结构">https://duval1024.gitee.io/2021/02/01/深入MySQL-一-MySQL-体系结构/</a>
+    <a href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/" title="深入 MySQL (二) MySQL 日志系统">https://blog.duval.top/2021/01/30/深入-MySQL-二-MySQL-日志系统/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -464,8 +425,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
               <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
           </div>
 
         
@@ -473,8 +434,8 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" rel="prev" title="Java 虚拟机原理 (五) G1垃圾收集器深入">
-      <i class="fa fa-chevron-left"></i> Java 虚拟机原理 (五) G1垃圾收集器深入
+    <a href="/2021/01/29/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="prev" title="深入 MySQL (一) MySQL 体系结构">
+      <i class="fa fa-chevron-left"></i> 深入 MySQL (一) MySQL 体系结构
     </a></div>
       <div class="post-nav-item"></div>
     </div>
@@ -539,7 +500,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL-体系结构"><span class="nav-number">1.</span> <span class="nav-text">MySQL 体系结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#连接器"><span class="nav-number">1.1.</span> <span class="nav-text">连接器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解析器"><span class="nav-number">1.2.</span> <span class="nav-text">解析器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化器"><span class="nav-number">1.3.</span> <span class="nav-text">优化器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行器"><span class="nav-number">1.4.</span> <span class="nav-text">执行器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查询缓存"><span class="nav-number">1.5.</span> <span class="nav-text">查询缓存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#存储引擎"><span class="nav-number">1.6.</span> <span class="nav-text">存储引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB-存储引擎"><span class="nav-number">1.6.1.</span> <span class="nav-text">InnoDB 存储引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MyISAM-存储引擎"><span class="nav-number">1.6.2.</span> <span class="nav-text">MyISAM 存储引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他存储引擎"><span class="nav-number">1.6.3.</span> <span class="nav-text">其他存储引擎</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">1.7.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志系统"><span class="nav-number">1.</span> <span class="nav-text">日志系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#binlog（归档日志）"><span class="nav-number">1.1.</span> <span class="nav-text">binlog（归档日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#redo-log（重做日志）"><span class="nav-number">1.2.</span> <span class="nav-text">redo log（重做日志）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#两阶段提交"><span class="nav-number">1.3.</span> <span class="nav-text">两阶段提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#延伸阅读"><span class="nav-number">1.4.</span> <span class="nav-text">延伸阅读</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -555,7 +516,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-count">44</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -633,12 +594,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">436k</span>
+    <span title="站点总字数">437k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:36</span>
+    <span title="站点阅读时长">6:37</span>
 
 </div>
 

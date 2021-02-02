@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,14 +63,14 @@
   <meta name="description" content="热爱技术，认真生活，专心养猪">
 <meta property="og:type" content="website">
 <meta property="og:title" content="杜瓦尔">
-<meta property="og:url" content="https://duval1024.gitee.io/index.html">
+<meta property="og:url" content="https://blog.duval.top/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="热爱技术，认真生活，专心养猪">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:author" content="杜瓦尔">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://duval1024.gitee.io/">
+<link rel="canonical" href="https://blog.duval.top/">
 
 
 <script id="page-configurations">
@@ -217,7 +217,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -231,7 +231,7 @@
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
           
-            <a href="/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" class="post-title-link" itemprop="url">深入 MySQL (一) MySQL 体系结构</a>
+            <a href="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/" class="post-title-link" itemprop="url">深入 MySQL (二) MySQL 日志系统</a>
         </h1>
 
         <div class="post-meta">
@@ -241,7 +241,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-02-01 22:50:38" itemprop="dateCreated datePublished" datetime="2021-02-01T22:50:38+08:00">2021-02-01</time>
+              <time title="创建时间：2021-01-30 12:00:39" itemprop="dateCreated datePublished" datetime="2021-01-30T12:00:39+08:00">2021-01-30</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -256,7 +256,151 @@
             </span>
 
           
-            <span id="/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (一) MySQL 体系结构" title="阅读次数">
+            <span id="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (二) MySQL 日志系统" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <a id="more"></a>
+
+<h2 id="日志系统"><a href="#日志系统" class="headerlink" title="日志系统"></a>日志系统</h2><p>日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。</p>
+<p>后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。</p>
+<p>因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。</p>
+<h3 id="binlog（归档日志）"><a href="#binlog（归档日志）" class="headerlink" title="binlog（归档日志）"></a>binlog（归档日志）</h3><ul>
+<li>binlog是MySQL server层的逻辑日志，可以被所有存储引擎使用；</li>
+<li>binlog日志常用于数据备份和恢复；</li>
+<li>binlog可以是ROW 或 STATEMENT两种格式。ROW格式下binlog日志记录的是行数据变化前和变化后的内容；而STATEMENT格式下，binlog日志记录的是执行的SQL语句；</li>
+<li>仅凭binlog日志是不能确保MySQL crash-safe的；</li>
+<li>binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；</li>
+<li>重要主库推荐配置 <em>sync_binlog=1</em> ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；</li>
+</ul>
+<h3 id="redo-log（重做日志）"><a href="#redo-log（重做日志）" class="headerlink" title="redo log（重做日志）"></a>redo log（重做日志）</h3><ul>
+<li><p>WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；</p>
+</li>
+<li><p>redo log是InnoDB引擎特有的物理日志；</p>
+</li>
+<li><p>redo log记录的是某个数据页做了什么修改；</p>
+</li>
+<li><p>凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；</p>
+</li>
+<li><p>redo log日志是固定大小的循环写，超过文件大小会擦除老日志；</p>
+</li>
+<li><p>重要主库推荐配置 <em>innodb_flush_log_at_trx_commit=1</em> ，可以使得每次提交事务都会将buffer刷到磁盘，保证服务器崩溃的时候不会丢失数据；</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png" alt="redo log循环写.png"></p>
+</li>
+</ul>
+<h3 id="两阶段提交"><a href="#两阶段提交" class="headerlink" title="两阶段提交"></a>两阶段提交</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png" alt="两阶段提交.png"></p>
+<p>两阶段提交过程：</p>
+<ul>
+<li>1.新数据更新到内存；</li>
+<li>2.新数据写入redo log，并处于prepare状态；</li>
+<li>3.写入binlog；</li>
+<li>4.提交事务，使redo log 更新为commit状态。</li>
+</ul>
+<p>crash-safe保障原理：</p>
+<ul>
+<li>如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；</li>
+<li>如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；</li>
+<li>如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；</li>
+<li>如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。</li>
+</ul>
+<p>binlog和redo log的联系：</p>
+<blockquote>
+<p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
+</blockquote>
+<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><ul>
+<li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
+<li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+
+
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/29/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/01/29/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" class="post-title-link" itemprop="url">深入 MySQL (一) MySQL 体系结构</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-29 22:50:38" itemprop="dateCreated datePublished" datetime="2021-01-29T22:50:38+08:00">2021-01-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/01/29/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (一) MySQL 体系结构" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -298,7 +442,7 @@
             </div>
           
             <div class="post-button">
-              <a class="btn" href="/2021/02/01/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/#more" rel="contents">
+              <a class="btn" href="/2021/01/29/%E6%B7%B1%E5%85%A5MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -324,7 +468,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -431,7 +575,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -538,7 +682,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -645,7 +789,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-2-%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-2-%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%92%8C%E5%9B%9E%E6%94%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -752,7 +896,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/07/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-1-%E5%86%85%E5%AD%98%E5%88%92%E5%88%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -859,7 +1003,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -966,7 +1110,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -1073,7 +1217,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -1176,113 +1320,6 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
-      <meta itemprop="name" content="杜瓦尔">
-      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="杜瓦尔">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" class="post-title-link" itemprop="url">抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-12-15 17:26:29" itemprop="dateCreated datePublished" datetime="2020-12-15T17:26:29+08:00">2020-12-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index">
-                    <span itemprop="name">抓虫笔记</span>
-                  </a>
-                </span>
-            </span>
-
-          
-            <span id="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" class="post-meta-item leancloud_visitors" data-flag-title="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>7.3k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>7 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。</p>
-          <!--noindex-->
-          
-          
-            <div class="out-img-topic">
-              <img src=https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E5%85%AC%E5%85%B1%E7%94%A8%E5%9B%BE/bugfix%E9%A6%96%E9%A1%B5%E5%9B%BE.png class="img-topic" />
-            </div>
-          
-            <div class="post-button">
-              <a class="btn" href="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-
-
-  </article>
-  
-  
-  
-
   </div>
 
   
@@ -1355,7 +1392,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-count">44</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1433,12 +1470,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">436k</span>
+    <span title="站点总字数">437k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:36</span>
+    <span title="站点阅读时长">6:37</span>
 
 </div>
 
