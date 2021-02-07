@@ -154,8 +154,8 @@
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -223,8 +223,8 @@
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -323,8 +323,8 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -402,8 +402,8 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -509,8 +509,8 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -1146,7 +1146,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 <li>并发标记阶段不会 STW，用时相对较长（0.014 secs）；</li>
 <li>重新标记阶段默认就是多线程（Rescan (parallel)），也就是说 CMSParallelRemarkEnabled 默认开启；</li>
 </ul>
-<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" target="_blank" rel="noopener">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
+<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
 <p>下边直接来看 G1 的垃圾回收阶段图：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="G1垃圾收集阶段图.png"></p>
 <p>具体各个阶段总结如下：</p>
@@ -1509,7 +1509,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2F%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%9B%9E%E6%94%B6%E4%BB%A5%E5%8F%8A%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" alt="对象创建与回收思维导图"></p>
 <h2 id="对象创建"><a href="#对象创建" class="headerlink" title="对象创建"></a>对象创建</h2><p>对象在 JVM 的创建过程可见下图：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2FJVM%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B.png" alt="JVM对象创建过程.png"></p>
 <h3 id="类加载检查"><a href="#类加载检查" class="headerlink" title="类加载检查"></a>类加载检查</h3><p>虚拟机遇到一条new指令时，首先将去检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并且检查这个<br>符号引用代表的类是否已被加载、解析和初始化过。如果没有，那必须先执行相应的类加载过程。</p>
-<h3 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h3><p>这部分之前已经探讨过，参见<a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">《一文彻底掌握 Java 类加载机制》</a>。</p>
+<h3 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h3><p>这部分之前已经探讨过，参见<a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">《一文彻底掌握 Java 类加载机制》</a>。</p>
 <p>简单来说，就是类对象的加载、连接（验证-&gt;准备-&gt;解析）和初始化（&lt;clinit&gt;方法)等过程。</p>
 <h3 id="分配内存"><a href="#分配内存" class="headerlink" title="分配内存"></a>分配内存</h3><h4 id="分配方法"><a href="#分配方法" class="headerlink" title="分配方法"></a>分配方法</h4><p>类加载完毕后，类的新对象所需要的内存大小已经确定。这时候可以为新对象在堆中分配空间。分配空间的算法在不同的垃圾收集器中实现不一样。常见有以下两种解决方案：</p>
 <ul>
@@ -1723,7 +1723,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://juejin.cn/post/6844903957836333063" target="_blank" rel="noopener">《Java 对象创建过程。init 方法和 clinit方法》</a></li>
 <li><a href="http://youngforzy.top/2017/10/26/JVM%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">《JVM之对象创建过程》</a></li>
-<li><a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">《一文彻底掌握 Java 类加载机制》</a></li>
+<li><a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">《一文彻底掌握 Java 类加载机制》</a></li>
 <li><a href="https://ifeve.com/jvm%E4%BC%98%E5%8C%96%E4%B9%8B%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90%E5%8F%8A%E9%94%81%E6%B6%88%E9%99%A4/" target="_blank" rel="noopener">《JVM优化之逃逸分析及锁消除》</a></li>
 </ul>
 ]]></content>
@@ -1834,7 +1834,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
     public synchronized void reset() throws IOException {/***/}
     public boolean markSupported() {/***/}</code></pre>
 <p>InputStream 实现了 Closeable 接口，并且内部只有一个抽象方法 read， 所有实现类都强制要求实现该方法。其他方法提供了非常扼要的默认实现，实现类可以酌情覆盖实现。</p>
-<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" target="_blank" rel="noopener">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
+<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
 <p>简单来说，FileInputStream 内部通过文件描述符 FileDescriptor 和系统文件关联起来，并通过 native 方法调用系统 API 读写文件。</p>
 <h4 id="FilterInputStream"><a href="#FilterInputStream" class="headerlink" title="FilterInputStream"></a>FilterInputStream</h4><p>FilterInputStream 采用装饰器模式，内部包装了一个 InputStream 对象，并且继承了 InputStream 并覆写全部方法，但方法内容都是单纯地调用内部包装的 InputStream 对象。如下：</p>
 <pre><code class="java">public
@@ -3613,7 +3613,7 @@ public class SecurityLdapConfiguration extends GeneralSecurityConfiguration {
 <p>通过深入学习原理，我们可以大大提高对Spring Security的掌握程度，真正做到融会贯通、得心应手。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#servlet-architecture" target="_blank" rel="noopener">官方文档9-11章节</a>：非常清晰的文档</li>
-<li><a href="https://blog.duval.top/" target="_blank" rel="noopener">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
+<li><a href="https://blog.duval.top/">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
 </ul>
 ]]></content>
       <categories>
@@ -5156,7 +5156,7 @@ protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBea
     }
 }
 </code></pre>
-<h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/" target="_blank" rel="noopener">《再读Spring源码之二 FactoryBean》</a></p>
+<h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">《再读Spring源码之二 FactoryBean》</a></p>
 ]]></content>
       <categories>
         <category>Spring</category>
@@ -5164,382 +5164,6 @@ protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBea
       <tags>
         <tag>源码分析</tag>
         <tag>Spring</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>MySQL底层原理笔记</title>
-    <url>/2020/10/07/MySQL%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86%E7%AC%94%E8%AE%B0/</url>
-    <content><![CDATA[<p>工作中常常用到MySQL，但对MySQL底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习MySQL底层知识，并产出一些备忘笔记。本文主要介绍MySQLt体系结构。</p>
-<a id="more"></a>
-
-<h2 id="MySQL基本架构"><a href="#MySQL基本架构" class="headerlink" title="MySQL基本架构"></a>MySQL基本架构</h2><p>MySQL主要划分为两个部分：server和存储引擎。</p>
-<p><strong>Server层</strong>：实现了大部分核心功能（内置函数、存储过程、触发器、视图等等），组成模块包括连接器、查询缓存、解析器、优化器以及执行器等等；<br><strong>存储引擎层</strong>：实现数据的存储和读取，向Server层提供操作数据的接口。支持插拔，可选的类型包括：InnoDB、MyISAM、Memory等。最常用的是InnoDB，它从MySQL 5.5.5后成为默认版本。</p>
-<p>下图展示的是MySQL的基本架构图。</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg" alt="MySQL架构图.jpg"></p>
-<h3 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h3><p>连接器就像是MySQL的“门神”，它负责跟客户端建立连接、获取权限、维持和管理连接。</p>
-<ul>
-<li><p>查看连接情况</p>
-<pre><code class="sql">  mysql&gt; show processlist;
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  | Id   | User | Host      | db   | Command | Time  | State    | Info             |
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  | 1530 | root | localhost | NULL | Sleep   | 44800 |          | NULL             |
-  | 1531 | root | localhost | qds  | Query   |     0 | starting | show processlist |
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  2 rows in set (0.03 sec)</code></pre>
-</li>
-<li><p>连接空闲超时会自动断开，可以通过wait_timeout参数控制，默认8小时；</p>
-</li>
-<li><p>客户端不应频繁新建连接，尽量使用长连接；</p>
-</li>
-<li><p>连接应该定时断开或者执行mysql_reset_connection重新初始化连接资源，避免占用过多内存。</p>
-</li>
-</ul>
-<h3 id="解析器"><a href="#解析器" class="headerlink" title="解析器"></a>解析器</h3><p>解析器有两个功能：</p>
-<ul>
-<li><strong>词法分析</strong>：将SQL语句数据库表列建立关联；</li>
-<li><strong>语法分析</strong>：检测SQL语句是否符合MySQL语法规则。</li>
-</ul>
-<h3 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h3><p>优化器负责从不同的执行计划中选出效率最高的方案，包括决定表的连接顺序、选择哪个索引等等。此外还会涉及查询重写。</p>
-<h3 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h3><p>执行器主要是负责检查表权限，并且调用存储引擎的接口完成执行计划，写binlog日志等。</p>
-<h3 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h3><p>对于SELECT语句，在解析查询之前，服务器会先检查查询缓存。如果能在缓存中找到对应的查询，服务器可以直接返回缓存的结果，而不必进行解析、优化和执行等过程。</p>
-<p>注意，频繁更新的表的查询缓存会频繁失效，不建议开启查询缓存。MySQL 8.0 版本后不再支持查询缓存。</p>
-<h2 id="日志系统"><a href="#日志系统" class="headerlink" title="日志系统"></a>日志系统</h2><p>日志系统可以分为两块，binlog和redo log。在MySQL初期，默认存储引擎是MyISAM，但它并没有crash-safe能力，所以server层的binlog仅用于归档。</p>
-<p>后来另外一个公司开发了InnoDB引擎，它借助redo log日志实现了crash-safe能力。</p>
-<p>因此由于历史原因，现在的MySQL日志系统由binlog和redo log两部分组成。</p>
-<h3 id="binlog（归档日志）"><a href="#binlog（归档日志）" class="headerlink" title="binlog（归档日志）"></a>binlog（归档日志）</h3><ul>
-<li>binlog是MySQL server层的逻辑日志，可以被所有存储引擎使用；</li>
-<li>binlog日志常用于数据备份和恢复；</li>
-<li>binlog可以是ROW 或 STATEMENT两种格式。ROW格式下binlog日志记录的是行数据变化前和变化后的内容；而STATEMENT格式下，binlog日志记录的是执行的SQL语句；</li>
-<li>仅凭binlog日志是不能确保MySQL crash-safe的；</li>
-<li>binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；</li>
-<li>重要主库推荐配置 <em>sync_binlog=1</em> ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；</li>
-</ul>
-<h3 id="redo-log（重做日志）"><a href="#redo-log（重做日志）" class="headerlink" title="redo log（重做日志）"></a>redo log（重做日志）</h3><ul>
-<li><p>WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；</p>
-</li>
-<li><p>redo log是InnoDB引擎特有的物理日志；</p>
-</li>
-<li><p>redo log记录的是某个数据页做了什么修改；</p>
-</li>
-<li><p>凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；</p>
-</li>
-<li><p>redo log日志是固定大小的循环写，超过文件大小会擦除老日志；</p>
-</li>
-<li><p>重要主库推荐配置 <em>innodb_flush_log_at_trx_commit=1</em> ，可以使得每次提交事务都会将buffer刷到磁盘，保证服务器崩溃的时候不会丢失数据；</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png" alt="redo log循环写.png"></p>
-</li>
-</ul>
-<h3 id="两阶段提交"><a href="#两阶段提交" class="headerlink" title="两阶段提交"></a>两阶段提交</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png" alt="两阶段提交.png"></p>
-<p>两阶段提交过程：</p>
-<ul>
-<li>1.新数据更新到内存；</li>
-<li>2.新数据写入redo log，并处于prepare状态；</li>
-<li>3.写入binlog；</li>
-<li>4.提交事务，使redo log 更新为commit状态。</li>
-</ul>
-<p>crash-safe保障原理：</p>
-<ul>
-<li>如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；</li>
-<li>如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；</li>
-<li>如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；</li>
-<li>如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。</li>
-</ul>
-<p>binlog和redo log的联系：</p>
-<blockquote>
-<p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
-</blockquote>
-<h3 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><ul>
-<li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
-<li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
-</ul>
-<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><h3 id="ACID概念"><a href="#ACID概念" class="headerlink" title="ACID概念"></a>ACID概念</h3><p>ACID（Atomicity、Consistency、Isolation、Durability，即原子性、一致性、隔离性、持久性）</p>
-<h3 id="隔离性和隔离级别"><a href="#隔离性和隔离级别" class="headerlink" title="隔离性和隔离级别"></a>隔离性和隔离级别</h3><p>SQL标准里定义了四种事务隔离级别：</p>
-<ul>
-<li><strong>读未提交</strong>：一个事务还没提交时，它做的变更就能被别的事务看到；</li>
-<li><strong>读提交</strong>：一个事务提交之后，它做的变更才会被其他事务看到；</li>
-<li><strong>可重复读</strong>：一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的；</li>
-<li><strong>串行化</strong>：对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。</li>
-</ul>
-<p>四种隔离级别区别：</p>
-<table>
-<thead>
-<tr>
-<th>隔离级别</th>
-<th>脏读可能性</th>
-<th>不可重复读可能性</th>
-<th>幻读可能性</th>
-<th>加锁读</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>读未提交</td>
-<td>Y</td>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-</tr>
-<tr>
-<td>读提交</td>
-<td>N</td>
-<td>Y</td>
-<td>Y</td>
-<td>N</td>
-</tr>
-<tr>
-<td>可重复读</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-<td>N</td>
-</tr>
-<tr>
-<td>串行化</td>
-<td>N</td>
-<td>N</td>
-<td>N</td>
-<td>Y</td>
-</tr>
-</tbody></table>
-<h3 id="MySQL中的事务"><a href="#MySQL中的事务" class="headerlink" title="MySQL中的事务"></a>MySQL中的事务</h3><p>MySQL提供了两种事务型存储引擎：InnoDB和NDB Cluster，而MyISAM并不支持事务。</p>
-<h4 id="MVCC与事务隔离实现"><a href="#MVCC与事务隔离实现" class="headerlink" title="MVCC与事务隔离实现"></a>MVCC与事务隔离实现</h4><p>四种隔离级别的在InnoDB实现：</p>
-<ul>
-<li><strong>读未提交</strong>：直接返回记录上的最新值，没有视图概念；</li>
-<li><strong>读提交</strong>：在每个SQL语句开始执行的时候创建视图；</li>
-<li><strong>可重复读</strong>：在事务启动时创建视图，整个事务存在期间都用这个视图；（注意，InnoDB利用MVCC已经在可重复读隔离级别下避免了幻读问题！！注意和上边的表格内容区分清楚！！！）</li>
-<li><strong>串行化</strong>：隔离级别下直接用加锁的方式来避免并行访问。</li>
-<li><blockquote>
-<p>这个所谓的视图其实是通过多版本并发控制（MVCC）来实现。（详情见《高性能MySQL》第三版 1.4 多版本并发控制）</p>
-</blockquote>
-</li>
-</ul>
-<h4 id="事务的启动"><a href="#事务的启动" class="headerlink" title="事务的启动"></a>事务的启动</h4><p>事务启动方式：</p>
-<ul>
-<li>1.显式启动事务语句， begin 或 start transaction。配套的提交语句是 commit，回滚语句是 rollback。</li>
-<li>2.set autocommit=0，这个命令会将这个线程的自动提交关掉（注意，仅影响当前线程。）。这意味着如果你只执行一个 select 语句，这个事务就启动了，而且并不会自动提交。这个事务持续存在直到你主动执行 commit 或 rollback 语句，或者断开连接。一般建议总是使用 set autocommit=1, 然后通过显式语句的方式来启动事务。</li>
-</ul>
-<p>长事务会导致数据库空间，并且占用所资源，生产中应该尽量避免长事务。查询长事务方法：</p>
-<pre><code class="sql">// 查询超过60秒的事务
-select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx_started))&gt;60</code></pre>
-<h4 id="查看修改事务隔离级别"><a href="#查看修改事务隔离级别" class="headerlink" title="查看修改事务隔离级别"></a>查看修改事务隔离级别</h4><p>MySQL默认的事务隔离级别是可重复读（REPEATABLE READ）。</p>
-<p>可以通过sql查看MySQL事务隔离级别：</p>
-<pre><code class="sql">show variables like &quot;%isolation%&quot;;</code></pre>
-<p>MySQL提供了SET TRANSACTION语句，该语句可以改变单个会话或全局的事务隔离级别。语法格式如下：</p>
-<pre><code class="sql">SET [SESSION | GLOBAL] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE}</code></pre>
-<p>其中，SESSION 和 GLOBAL 关键字用来指定修改的事务隔离级别的范围：</p>
-<ul>
-<li>SESSION：表示修改的事务隔离级别将应用于当前 session（当前 cmd 窗口）内的所有事务；</li>
-<li>GLOBAL：表示修改的事务隔离级别将应用于所有 session（全局）中的所有事务，且当前已经存在的 session (包括当前session）不受影响；</li>
-<li>如果省略 SESSION 和 GLOBAL，表示修改的事务隔离级别将应用于当前 session 内的下一个还未开始的事务。</li>
-</ul>
-<p>任何用户都能改变会话的事务隔离级别，但是只有拥有 SUPER 权限的用户才能改变全局的事务隔离级别。</p>
-<h4 id="其他注意"><a href="#其他注意" class="headerlink" title="其他注意"></a>其他注意</h4><ul>
-<li>更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”（current read）。具体见：<a href="https://time.geekbang.org/column/article/70562" target="_blank" rel="noopener">08 | 事务到底是隔离的还是不隔离的？
-</a></li>
-</ul>
-<h3 id="延伸阅读-1"><a href="#延伸阅读-1" class="headerlink" title="延伸阅读"></a>延伸阅读</h3><p>-<a href="https://juejin.im/post/6874330052461330446" target="_blank" rel="noopener">理解MySQL的锁机制和事务原理</a></p>
-<h2 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h2><h3 id="常见索引模型"><a href="#常见索引模型" class="headerlink" title="常见索引模型"></a>常见索引模型</h3><table>
-<thead>
-<tr>
-<th>模型</th>
-<th>优点</th>
-<th>缺点</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>哈希表</td>
-<td>等值查询和范围查询都非常高效</td>
-<td>插入数据成本高，只适合静态数据存储引擎</td>
-</tr>
-<tr>
-<td>二叉搜索树</td>
-<td>查询和插入都很高效</td>
-<td>树高过大，实际生产中要多次读取磁盘，查询效率不高</td>
-</tr>
-<tr>
-<td>N叉树</td>
-<td>查询和插入都高效、且树高较低</td>
-<td>–</td>
-</tr>
-</tbody></table>
-<h3 id="InnoDB索引模型"><a href="#InnoDB索引模型" class="headerlink" title="InnoDB索引模型"></a>InnoDB索引模型</h3><ul>
-<li><p>InnoDB使用B+树索引模型，每一个索引都是一棵独立的B+树；</p>
-</li>
-<li><p>主键索引的叶子节点存的是<strong>整行数据</strong>。在 InnoDB 里，主键索引也被称为聚簇索引（clustered index）。注意B+树的节点都对应着InnoDB的一个数据页，默认大小16K。也就是说叶子节点里包含着多行数据；</p>
-</li>
-<li><p>非主键索引的叶子节点内容是<strong>主键的值</strong>。在 InnoDB 里，非主键索引也被称为二级索引（secondary index）。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png" alt="InnoDB索引模型图.png"></p>
-</li>
-<li><p><strong>页分裂</strong>：插入新数据的时候，B+树节点所在的数据页满了之后，节点会发生分裂，需要申请新的数据页来保存新节点，这个过程叫做页分裂。  –&gt; 页分裂会使得空间利用率下降，并降低性能。</p>
-</li>
-<li><p><strong>页大小</strong>：InnoDB页大小（innodb_page_size）默认值为16kb，可以通过调整页大小来间接改变B+树分叉数量</p>
-</li>
-<li><p><strong>自增主键</strong>：考虑到页分裂的性能影响，使用自增主键要比其他业务字段作为主键ID要更优。因为自增主键的每次插入一条新记录，都是追加操作，都不涉及到挪动其他记录，也不会触发叶子节点的分裂。</p>
-</li>
-<li><p><strong>不必使用自增主键的场景</strong>：如果该表只有一个索引，且该索引为唯一索引，则适合让该索引直接作为主键索引。这样子可以避免生成两棵索引树以节省空间，并且避免回表以增加查询性能。</p>
-</li>
-<li><p><strong>回表</strong> ：使用非主键索引查询数据的时候，如果所查数据包含了主键以外的数据，则需要回到主键索引进行二次查询，这个过程称为回表。  –&gt; 因此应该尽量使用主键索引查询。</p>
-</li>
-<li><p><strong>覆盖索引</strong>：当二级索引已经“覆盖”了查询需求的时候，该索引可称为覆盖索引。使用覆盖索引可以回表操作，减少搜索B+树的次数。因此，可以为高频查询建立覆盖索引。</p>
-</li>
-<li><p><strong>最左前缀原则</strong>：只要查询条件能够满足联合索引的最左前缀，则可以使用该联合索引来加速检索。因此，建立联合索引时候，需要合理安排字段顺序，充分利用最左前缀原则来减少索引数量。</p>
-</li>
-<li><p><strong>索引下推优化（index condition pushdown)</strong>：MySQL5.6之后引入了索引下推，可以在索引遍历过程中，对索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数。</p>
-</li>
-<li><p><strong>Change Buffer</strong>:当对二级索引数据页进行变更，而这些数据页又不在buffer pool中的时候，会使用Change Buffer来缓存这些变更。这些INSERT, UPDATE, 或者 DELETE 操作（DML）带来的变更会在这些数据页被其他读操作加载进缓存的时候被合并。简单来讲，Change Buffer是用来”懒合并”，将非必需的磁盘读写延后。因此适合写多读少的业务情景。另外，唯一索引无法使用ChangeBuffer，因此一般推荐优先使用普通索引。</p>
-</li>
-</ul>
-<h3 id="MySQL误判索引解决办法"><a href="#MySQL误判索引解决办法" class="headerlink" title="MySQL误判索引解决办法"></a>MySQL误判索引解决办法</h3><ul>
-<li>对于由于索引统计信息不准确导致的问题，你可以用 analyze table 来解决；例如，使用delete来删除数据，会导致统计信息不准。</li>
-<li>对于其他优化器误判的情况，你可以在应用端用 force index 来强行指定索引，也可以通过修改语句来引导优化器，还可以通过增加或者删除索引来绕过这个问题。</li>
-</ul>
-<h2 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h2><ul>
-<li>根据加锁的范围，MySQL 里面的锁大致可以分成全局锁、表级锁和行锁三类。其中全局锁和表锁都是Server层支持的，而行锁是引擎层实现的，InnoDB支持行锁，而MyISAM不支持行锁。</li>
-</ul>
-<h3 id="全局锁"><a href="#全局锁" class="headerlink" title="全局锁"></a>全局锁</h3><ul>
-<li>加全局锁办法：<em>flush table with read lock；</em> （解锁使用<em>unlock table;</em>)会使得整个数据库实例处于只读状态。一般用在MySIAM引擎下进行全库逻辑备份，而在InnoDB下一般不采用这种办法，应该使用mysqldump –single-transaction 通过事务来获得一致性视图，而不用加全局锁。</li>
-<li>不要使用 <em>set global readonly=true；</em> 来加全局锁。因为readonly值会被用在其他用途，并且当客户端发生异常，readonly值会持久化到数据库上，导致数据库锁不能释放。读锁之间不互斥，因此你可以有多个线程同时对一张表增删改查。读写锁之间、写锁之间是互斥的，用来保证变更表结构操作的安全性。因此，如果有两个线程要同时给一个表加字段，其中一个要等另一个执行完才能开始执行。</li>
-</ul>
-<h3 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h3><ul>
-<li>MySQL支持表锁，一般使用 <em>lock tables [tablename] read/write</em> 进行加锁。该命令的加锁会对所有的线程生效。</li>
-<li>MDL（metadata lock)是另一类表锁，不需要显式使用，在访问一个表的时候会被自动加上。在 MySQL 5.5 版本中引入了 MDL，当对一个表做增删改查操作的时候，加 MDL 读锁；当要对表做结构变更操作的时候，加 MDL 写锁。因此，MDL锁作用是防止增删改数据（DML)和加字段等修改表结构的操作（DDL）互相冲突。</li>
-</ul>
-<h3 id="行锁"><a href="#行锁" class="headerlink" title="行锁"></a>行锁</h3><ul>
-<li>在 InnoDB 事务中，行锁是在需要的时候才加上的，但并不是不需要了就立刻释放，而是要等到事务结束时才释放。这个就是两阶段锁协议。因此，如果你的事务中需要锁多个行，要把最可能造成锁冲突、最可能影响并发度的锁尽量往后放。</li>
-<li>行锁的算法可以分为三种：Record Lock（单行记录上的锁）、Gap Lock(间隙锁，锁定一个范围不包含记录本身)和Next-Key Lock(锁定一个范围并包含记录本身)。具体参考：<a href="https://juejin.im/post/6844903735500472333" target="_blank" rel="noopener">MySQL探秘(七):InnoDB行锁算法</a></li>
-<li>InnoDB通过给索引项加锁来实现行锁，如果没有索引，则通过隐藏的聚簇索引来对记录加锁。如果操作不通过索引条件检索数据，InnoDB 则对表中的所有记录加锁，实际效果就和表锁一样。</li>
-<li>当查询的索引是唯一索引(不存在两个数据行具有完全相同的键值)时，InnoDB存储引擎会将Next-Key Lock降级为Record Lock，即只锁住索引本身，而不是范围。如果是范围查询，则边界的Next-Key Lock也有可能不会降级。<a href="https://time.geekbang.org/column/article/75659" target="_blank" rel="noopener">21 | 为什么我只改一行的语句，锁这么多？</a></li>
-<li>InnoDB对于辅助索引使用Next-Key Lock锁，也就是说不仅会锁住辅助索引值所在的范围以及记录本身，还会将其下一键值加上Gap LOCK。</li>
-<li>Next-Key Lock本质是Record Lock + Gap Lock；</li>
-<li>Next-Key Lock是前开后闭区间</li>
-</ul>
-<h3 id="加锁原则"><a href="#加锁原则" class="headerlink" title="加锁原则"></a>加锁原则</h3><p>两个“原则”、两个“优化”和一个“bug”。</p>
-<ul>
-<li>原则 1：加锁的基本单位是 next-key lock。希望你还记得，next-key lock 是前开后闭区间。</li>
-<li>原则 2：查找过程中访问到的对象才会加锁。</li>
-<li>优化 1：索引上的等值查询，给唯一索引加锁的时候，next-key lock 退化为行锁。</li>
-<li>优化 2：索引上的等值查询，向右遍历时且最后一个值不满足等值条件的时候，next-key lock 退化为间隙锁。</li>
-<li>一个 bug：唯一索引上的范围查询会访问到不满足条件的第一个值为止。</li>
-</ul>
-<h3 id="意向排他锁"><a href="#意向排他锁" class="headerlink" title="意向排他锁"></a>意向排他锁</h3><ul>
-<li>InnoDB支持多粒度锁，允许行锁和表锁共存。而意向锁属于一种表锁，意向锁互相之间不会排斥，但意向锁和表级的X锁存在互斥关系。具体参考：<a href="https://juejin.im/post/6844903666332368909" target="_blank" rel="noopener">详解 MySql InnoDB 中意向锁的作用</a></li>
-</ul>
-<h3 id="死锁检测策略"><a href="#死锁检测策略" class="headerlink" title="死锁检测策略"></a>死锁检测策略</h3><ul>
-<li><p>一种策略是，直接进入等待，直到超时。这个超时时间可以通过参数 innodb_lock_wait_timeout 来设置。</p>
-</li>
-<li><p>另一种策略是，发起死锁检测，发现死锁后，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行。将参数 innodb_deadlock_detect 设置为 on，表示开启这个逻辑。但注意，如果打开死锁检测，事务执行过程中发生阻塞，都会进行检测，从而CPU性能损耗。</p>
-</li>
-<li><p>尽管会带来性能损耗，但正常来说都应该开启死锁检测。</p>
-</li>
-<li><p>减少死锁的主要方向，就是控制访问相同资源的并发事务量。</p>
-</li>
-</ul>
-<h2 id="问题汇总"><a href="#问题汇总" class="headerlink" title="问题汇总"></a>问题汇总</h2><ul>
-<li><p>1.如何避免长事务对业务的影响？</p>
-<blockquote>
-<p> 这个问题，我们可以从应用开发端和数据库端来看。</p>
-<ul>
-<li>首先，从应用开发端来看：确认是否使用了 set autocommit=0。这个确认工作可以在测试环境中开展，把 MySQL 的 general_log 开起来，然后随便跑一个业务逻辑，通过 general_log 的日志来确认。一般框架如果会设置这个值，也就会提供参数来控制行为，你的目标就是把它改成 1。</li>
-<li>确认是否有不必要的只读事务。有些框架会习惯不管什么语句先用 begin/commit 框起来。我见过有些是业务并没有这个需要，但是也把好几个 select 语句放到了事务中。这种只读事务可以去掉。</li>
-<li>业务连接数据库的时候，根据业务本身的预估，通过 SET MAX_EXECUTION_TIME 命令，来控制每个语句执行的最长时间，避免单个语句意外执行太长时间。</li>
-</ul>
-</blockquote>
-<blockquote>
-<p> 其次，从数据库端来看：</p>
-<ul>
-<li>监控 information_schema.Innodb_trx 表，设置长事务阈值，超过就报警 / 或者 kill；</li>
-<li>Percona 的 pt-kill 这个工具不错，推荐使用；</li>
-<li>在业务功能测试阶段要求输出所有的 general_log，分析日志行为提前发现问题；</li>
-<li>如果使用的是 MySQL  5.6 或者更新版本，把 innodb_undo_tablespaces 设置成 2（或更&gt;大的值）。如果真的出现大事务导致回滚段过大，这样设置后清理起来更方便。</li>
-</ul>
-</blockquote>
-</li>
-<li><p>2.如果针对InnoDB表进行索引重建，对二级索引执行：</p>
-<pre><code class="sql">  alter table T drop index k;
-  alter table T add index(k);</code></pre>
-<p>  以及对主键索引执行：</p>
-<pre><code class="sql">  alter table T drop primary key;
-  alter table T add primary key(id);</code></pre>
-<p>  这两者有啥异同，或者存在什么问题？</p>
-<blockquote>
-<ul>
-<li>索引可能因为删除或页分裂，而使得数据页存在空洞，重建索引会重新创建一个新的索引，把数据按顺序插入，这样页面的利用率最高，也就是索引更紧凑、更省空间。</li>
-<li>对二级索引使用该SQL重建是可行的合理的。</li>
-<li>对于主键索引，无论是删除主键还是新建主键，都会导致整个表发生重建。而应该使用<em>alter table T engine=InnoDB；</em> 语句进行主键重建。</li>
-</ul>
-</blockquote>
-</li>
-</ul>
-<ul>
-<li><p>3.字段k上有二级索引，现有如下两个功能相同的SQL语句，哪个更优：</p>
-<pre><code class="sql">  select * from T where k in(1,2,3,4,5)
-  select * from T where k between 1 and 5</code></pre>
-<blockquote>
-<p>SQL1需要搜索5次，并回表5次；SQL2只需要搜索1次，并回表5次。SQL充分利用了B+树叶子节点顺序排序的特点，可以加速范围查询。</p>
-</blockquote>
-</li>
-<li><p>4.如何解决热点行更新导致的性能问题？</p>
-<blockquote>
-<ul>
-<li>1、如果你能确保这个业务一定不会出现死锁，可以临时把死锁检测关闭掉。一般不建议采用</li>
-<li>2、控制并发度，对应相同行的更新，在进入引擎之前排队。这样在InnoDB内部就不会有大量的死锁检测工作了。</li>
-<li>3、将热更新的行数据拆分成逻辑上的多行来减少锁冲突，但是业务复杂度可能会大大提高。</li>
-</ul>
-</blockquote>
-</li>
-<li><p>5.MySQL出现抖动原因</p>
-<blockquote>
-<p>很有可能在刷脏页。刷脏页触发原因有：</p>
-<ul>
-<li>redo log写满；</li>
-<li>内存不足（其实是buffer pool）的时候淘汰了脏页；</li>
-<li>MySQL在认为空闲的时段，会自行刷脏页；</li>
-<li>MySQL关闭前会刷脏页；<br>刷脏页的策略调优：</li>
-<li>磁盘能力。能力越大，脏页刷的越快。参数：innodb_io_capacity；</li>
-<li>脏页比例上限。参数innodb_max_dirty_pages_pct，默认值:75%。生产中应该调控innodb_io_capacity使得脏页比例不要接近innodb_max_dirty_pages_pct 。查看脏页比例方法：<pre><code class="sql">  set global show_compatibility_56=on;
- select VARIABLE_VALUE into @a from global_status where VARIABLE_NAME = &#39;Innodb_buffer_pool_pages_dirty&#39;;
- select VARIABLE_VALUE into @b from global_status where VARIABLE_NAME = &#39;Innodb_buffer_pool_pages_total&#39;;
- select @a/@b;</code></pre>
-</li>
-<li>刷相邻脏页。机械磁盘建议打开（1），SSD磁盘可以关闭（0）。参数：innodb_flush_neighbors</li>
-</ul>
-</blockquote>
-</li>
-<li><p>6.删除了数据，但是表文件没有缩小？</p>
-<blockquote>
-<p>表数据既可以存在共享表空间里，也可以是单独的文件。这个行为是由参数 innodb_file_per_table 控制的：</p>
-<ul>
-<li>这个参数设置为 OFF 表示的是，表的数据放在系统共享表空间，也就是跟数据字典放在一起，此时drop表不会回收表空间。</li>
-<li>这个参数设置为 ON 表示的是，每个 InnoDB 表数据存储在一个以 .ibd 为后缀的文件中，此时drop表会回收表空间。</li>
-</ul>
-</blockquote>
-<blockquote>
-<p>删除数据记录不一定回收空间，一般只是标记为可复用，此时数据页会留下空洞的，等待新的数据插入复用这些空洞。</p>
-<p>主动回收表空间的方法：</p>
-<ul>
-<li>使用alter table t engine = InnoDB；该命令会使用Online DDL重建新表（MySQL5.6+），因此可以在业务低峰期执行。；</li>
-<li>使用analyze table t 。该命令会对表的索引信息做重新统计，没有修改数据，这个过程中加了 MDL 读锁；</li>
-<li>使用optimize table t 相当于重建表+重新统计索引信息。</li>
-</ul>
-</blockquote>
-</li>
-<li><p>7.count效率</p>
-<blockquote>
-<p>按照效率排序的话，count(字段)&lt;count(主键 id)&lt;count(1)≈count(*)</p>
-</blockquote>
-</li>
-</ul>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li><a href="https://time.geekbang.org/column/intro/100020801" target="_blank" rel="noopener">MySQL实战45讲</a>: 非常适合入门的MySQL学习资料；</li>
-<li>《高性能MySQL》</li>
-<li>《MySQL技术内幕（InnoDB存储引擎）》</li>
-</ul>
-]]></content>
-      <categories>
-        <category>数据库</category>
-      </categories>
-      <tags>
-        <tag>MySQL</tag>
-        <tag>数据库</tag>
       </tags>
   </entry>
   <entry>
@@ -5772,7 +5396,7 @@ public Student getStudent() throws Exception {
   <entry>
     <title>再读Spring源码之一 Spring如何对付循环引用</title>
     <url>/2020/08/21/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80-Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8/</url>
-    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" target="_blank" rel="noopener">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
+    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
 <a id="more"></a>
 
 <h2 id="Bean循环依赖"><a href="#Bean循环依赖" class="headerlink" title="Bean循环依赖"></a>Bean循环依赖</h2><p>spring框架的bean可以互相依赖，因此，可能存在循环依赖的情况，例如：</p>
@@ -6166,9 +5790,9 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
 <h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h3 id="链式结构"><a href="#链式结构" class="headerlink" title="链式结构"></a>链式结构</h3><p>我们先来回忆下在<a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">《Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)》</a>提到过来的handler链式结构：</p>
@@ -6525,12 +6149,12 @@ protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List&lt;Object&gt;
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
-<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/" target="_blank" rel="noopener">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
+<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
 <ul>
 <li>ByteBuffer底层实现包含四个关键字段，并满足大小关系：mark &lt;= position &lt;= limit &lt;= capacity；</li>
 <li>ByteBuffer存在写模式和读模式两种状态，内部方法可以触发状态切换，比如flip方法从写状态切换为读状态；</li>
@@ -7316,9 +6940,9 @@ c.t.n.u.UnsafeBenchmark.unsafeMethod    thrpt        4  3141320463.164 ± 120448
 </ul>
 <p>续写章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33</em></p>
 <h2 id="Future和Promise的关系"><a href="#Future和Promise的关系" class="headerlink" title="Future和Promise的关系"></a>Future<V>和Promise<V>的关系</h2><p>Netty内部的io.netty.util.concurrent.Future<V> 继承自java.util.concurrent.Future<V>，而Promise<V>是前者的一个特殊实现。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%9B%9B%20Promise%20%E4%B8%8E%20Future%3A%20%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86%2FFuture%E5%92%8CPromise%E7%B1%BB%E5%9B%BE.png" alt="Future和Promise类图.png"></p>
@@ -8635,7 +8259,7 @@ public class NioEchoServer {
 ......</code></pre>
 <p>上边的列表打印出来了这个JAVA进程的线程号(PID)、CPU占用（%CPU)等信息。呵！可以看到PID为2971和2972的线程排在前边，两个都几乎占了一个CPU核心！想必就是死循环了吧!</p>
 <h2 id="问题诊断"><a href="#问题诊断" class="headerlink" title="问题诊断"></a>问题诊断</h2><p>既然明确了是这两个线程的问题，那就把这两个线程找出来，看看代码逻辑便知。</p>
-<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/" target="_blank" rel="noopener">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
+<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
 <p>这两个线程的PID从<a href="https://tool.oschina.net/hexconvert" target="_blank" rel="noopener">十进制转化为十六进制</a>，分别是b9b和b9c，然后用这两个值去jstack结果里边查找一下，便有如下结果：</p>
 <pre><code class="bash">[prod@xxxxxxxxxxxx xxxx-xxxxxxxxx-service]$ jstack 2652 |egrep -A 8 &quot;b9b|b9c&quot;
 &quot;Pool-Default-schedule-0&quot; #26 prio=5 os_prio=0 tid=0x00007f9eb243e000 nid=0xb9c runnable [0x00007f9e1dff6000]
@@ -8813,7 +8437,7 @@ inline jint     Atomic::cmpxchg    (jint     exchange_value, volatile jint*     
 
 <p>正式开始前先废话一下：</p>
 <div style="margin-top: -20px;"><div class="fold_hider"><div class="close hider_title"><span style="color:gray;font-size:12px">点击显/隐</span></div></div><div class="fold">
-<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
+<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
 <p>我明白直接研究Spring的核心机制，不应该从RestfultWeb入手，因为那样子其实是从Spring boot层面开始阅读源码了。</p>
 <p>可以阅读这篇文章<a href="https://www.jianshu.com/p/42620a0a2c33" target="_blank" rel="noopener">《Spring,Spring MVC及Spring Boot区别》</a>大致了解。</p>
 <p>所以直接按照书上介绍的内容去啃源码就对了。另外提一下就是书上的Spring版本要比现在的版本老了，但是核心思想一样的，底层的源码改动不大，可以正常阅读。</p>
@@ -13566,8 +13190,8 @@ protected boolean createStreamingResultSet() {
         <category>数据库</category>
       </categories>
       <tags>
-        <tag>MySQL</tag>
         <tag>数据库</tag>
+        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>

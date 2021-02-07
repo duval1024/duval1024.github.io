@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="从一个实际生产问题出发，教你如何排查Java进程CPU占用过高。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="抓虫笔记-Java进程CPU占用过高">
-<meta property="og:url" content="https://duval1024.gitee.io/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/index.html">
+<meta property="og:url" content="https://blog.duval.top/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="从一个实际生产问题出发，教你如何排查Java进程CPU占用过高。">
 <meta property="og:locale" content="zh_CN">
@@ -75,7 +75,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98--Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/QDS%E9%9B%86%E7%BE%A4%E5%88%86%E5%8F%91%E8%B4%9F%E8%BD%BD.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/">
+<link rel="canonical" href="https://blog.duval.top/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/">
 
 
 <script id="page-configurations">
@@ -222,7 +222,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -325,7 +325,7 @@
 ......</code></pre>
 <p>上边的列表打印出来了这个JAVA进程的线程号(PID)、CPU占用（%CPU)等信息。呵！可以看到PID为2971和2972的线程排在前边，两个都几乎占了一个CPU核心！想必就是死循环了吧!</p>
 <h2 id="问题诊断"><a href="#问题诊断" class="headerlink" title="问题诊断"></a>问题诊断</h2><p>既然明确了是这两个线程的问题，那就把这两个线程找出来，看看代码逻辑便知。</p>
-<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/" target="_blank" rel="noopener">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
+<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
 <p>这两个线程的PID从<a href="https://tool.oschina.net/hexconvert" target="_blank" rel="noopener">十进制转化为十六进制</a>，分别是b9b和b9c，然后用这两个值去jstack结果里边查找一下，便有如下结果：</p>
 <pre><code class="bash">[prod@xxxxxxxxxxxx xxxx-xxxxxxxxx-service]$ jstack 2652 |egrep -A 8 &quot;b9b|b9c&quot;
 &quot;Pool-Default-schedule-0&quot; #26 prio=5 os_prio=0 tid=0x00007f9eb243e000 nid=0xb9c runnable [0x00007f9e1dff6000]
@@ -398,7 +398,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/" title="抓虫笔记-Java进程CPU占用过高">https://duval1024.gitee.io/2020/02/11/抓虫笔记-Java进程CPU占用过高/</a>
+    <a href="https://blog.duval.top/2020/02/11/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-Java%E8%BF%9B%E7%A8%8BCPU%E5%8D%A0%E7%94%A8%E8%BF%87%E9%AB%98/" title="抓虫笔记-Java进程CPU占用过高">https://blog.duval.top/2020/02/11/抓虫笔记-Java进程CPU占用过高/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -504,7 +504,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-count">47</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -582,12 +582,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">445k</span>
+    <span title="站点总字数">435k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:44</span>
+    <span title="站点阅读时长">6:36</span>
 
 </div>
 
