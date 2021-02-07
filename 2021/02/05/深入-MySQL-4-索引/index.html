@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -60,24 +60,23 @@
   };
 </script>
 
-  <meta name="description" content="工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。">
+  <meta name="description" content="本文我们将探讨 MySQL 索引的重要概念以及实现原理。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入 MySQL (一) MySQL 体系结构">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:title" content="深入 MySQL (四) 索引">
+<meta property="og:url" content="https://blog.duval.top/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。">
+<meta property="og:description" content="本文我们将探讨 MySQL 索引的重要概念以及实现原理。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg">
-<meta property="article:published_time" content="2021-01-29T14:50:38.000Z">
-<meta property="article:modified_time" content="2021-02-06T08:01:27.090Z">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png">
+<meta property="article:published_time" content="2021-02-05T14:17:16.000Z">
+<meta property="article:modified_time" content="2021-02-07T06:19:40.035Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+<link rel="canonical" href="https://blog.duval.top/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/">
 
 
 <script id="page-configurations">
@@ -89,7 +88,7 @@
   };
 </script>
 
-  <title>深入 MySQL (一) MySQL 体系结构 | 杜瓦尔</title>
+  <title>深入 MySQL (四) 索引 | 杜瓦尔</title>
   
 
 
@@ -224,7 +223,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -237,7 +236,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          深入 MySQL (一) MySQL 体系结构
+          深入 MySQL (四) 索引
         </h1>
 
         <div class="post-meta">
@@ -247,7 +246,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-01-29 22:50:38" itemprop="dateCreated datePublished" datetime="2021-01-29T22:50:38+08:00">2021-01-29</time>
+              <time title="创建时间：2021-02-05 22:17:16" itemprop="dateCreated datePublished" datetime="2021-02-05T22:17:16+08:00">2021-02-05</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -262,7 +261,7 @@
             </span>
 
           
-            <span id="/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (一) MySQL 体系结构" title="阅读次数">
+            <span id="/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (四) 索引" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -277,8 +276,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" itemprop="commentCount"></span>
+    <a title="valine" href="/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -288,14 +287,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.6k</span>
+              <span>1.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
+              <span>1 分钟</span>
             </span>
 
         </div>
@@ -307,98 +306,62 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。</p>
+        <p>本文我们将探讨 MySQL 索引的重要概念以及实现原理。</p>
 <a id="more"></a>
 
-<h1 id="MySQL-体系结构"><a href="#MySQL-体系结构" class="headerlink" title="MySQL 体系结构"></a>MySQL 体系结构</h1><p>MySQL主要划分为两个部分：Server 层和存储引擎层。</p>
-<p><strong>Server层</strong>：实现了大部分核心功能（内置函数、存储过程、触发器、视图等等），组成模块包括连接器、查询缓存、解析器、优化器以及执行器等等；<br><strong>存储引擎层</strong>：实现数据的存储和读取，向 Server 层提供操作数据的接口。支持插拔，可选的类型包括：InnoDB、MyISAM、Memory等。最常用的是 InnoDB，它从MySQL 5.5.8后成为默认存储引擎。</p>
-<p>下图展示 MySQL 官方文档提供的体系结构图：</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png" alt="MySQL体系架构.png"></p>
-<p>下图展示的是简化后的 MySQL 的基本架构图。</p>
-<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fmysql%E6%9E%B6%E6%9E%84%E5%9B%BE.jpg" alt="MySQL架构图.jpg"></p>
-<h2 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h2><p>连接器就像是MySQL的“门神”，它负责跟客户端建立连接、获取权限、维持和管理连接。</p>
-<ul>
-<li><p>查看连接情况</p>
-<pre><code class="sql">  mysql&gt; show processlist;
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  | Id   | User | Host      | db   | Command | Time  | State    | Info             |
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  | 1530 | root | localhost | NULL | Sleep   | 44800 |          | NULL             |
-  | 1531 | root | localhost | qds  | Query   |     0 | starting | show processlist |
-  +------+------+-----------+------+---------+-------+----------+------------------+
-  2 rows in set (0.03 sec)</code></pre>
+<h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><h2 id="常见索引模型"><a href="#常见索引模型" class="headerlink" title="常见索引模型"></a>常见索引模型</h2><table>
+<thead>
+<tr>
+<th>模型</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>哈希表</td>
+<td>等值查询和范围查询都非常高效</td>
+<td>插入数据成本高，只适合静态数据存储引擎</td>
+</tr>
+<tr>
+<td>二叉搜索树</td>
+<td>查询和插入都很高效</td>
+<td>树高过大，实际生产中要多次读取磁盘，查询效率不高</td>
+</tr>
+<tr>
+<td>N叉树</td>
+<td>查询和插入都高效、且树高较低</td>
+<td>–</td>
+</tr>
+</tbody></table>
+<h2 id="InnoDB索引模型"><a href="#InnoDB索引模型" class="headerlink" title="InnoDB索引模型"></a>InnoDB索引模型</h2><ul>
+<li><p>InnoDB使用B+树索引模型，每一个索引都是一棵独立的B+树；</p>
 </li>
-<li><p>连接空闲超时会自动断开，可以通过 wait_timeout 参数控制，默认8小时；</p>
+<li><p>主键索引的叶子节点存的是<strong>整行数据</strong>。在 InnoDB 里，主键索引也被称为聚簇索引（clustered index）。注意B+树的节点都对应着InnoDB的一个数据页，默认大小16K。也就是说叶子节点里包含着多行数据；</p>
 </li>
-<li><p>客户端不应频繁新建连接，尽量使用长连接；</p>
+<li><p>非主键索引的叶子节点内容是<strong>主键的值</strong>。在 InnoDB 里，非主键索引也被称为二级索引（secondary index）。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2FInnoDB%E7%B4%A2%E5%BC%95%E6%A8%A1%E5%9E%8B%E5%9B%BE.png" alt="InnoDB索引模型图.png"></p>
 </li>
-<li><p>连接应该定时断开或者执行 mysql_reset_connection 重新初始化连接资源，避免占用过多内存；</p>
+<li><p><strong>页分裂</strong>：插入新数据的时候，B+树节点所在的数据页满了之后，节点会发生分裂，需要申请新的数据页来保存新节点，这个过程叫做页分裂。  –&gt; 页分裂会使得空间利用率下降，并降低性能。</p>
 </li>
-<li><p>数据库账号权限的变更不会影响已建立的连接，只有该连接断开重连才会生效。常见的 JDBC 连接池都带有定时重连的功能，比如 HikariPool：</p>
-<pre><code class="java">  private PoolEntry createPoolEntry() {
-    try {
-       final PoolEntry poolEntry = newPoolEntry();
-       // 连接最大存活时间
-       final long maxLifetime = config.getMaxLifetime();
-       if (maxLifetime &gt; 0) {
-          // variance up to 2.5% of the maxlifetime
-          final long variance = maxLifetime &gt; 10_000 ? ThreadLocalRandom.current().nextLong( maxLifetime / 40 ) : 0;
-          final long lifetime = maxLifetime - variance;
-          // 定时任务检查连接是否空闲，空闲的连接将会被关闭
-          poolEntry.setFutureEol(houseKeepingExecutorService.schedule(new Runnable() {
-             @Override
-             public void run() {
-                softEvictConnection(poolEntry, &quot;(connection has passed maxLifetime)&quot;, false /* not owner */);
-             }
-          }, lifetime, MILLISECONDS));
-       }
-
-       LOGGER.debug(&quot;{} - Added connection {}&quot;, poolName, poolEntry.connection);
-       return poolEntry;
-    }
-    catch (Exception e) {
-       if (poolState == POOL_NORMAL) {
-          LOGGER.debug(&quot;{} - Cannot acquire connection from data source&quot;, poolName, e);
-       }
-       return null;
-    }
-  }</code></pre>
+<li><p><strong>页大小</strong>：InnoDB页大小（innodb_page_size）默认值为16kb，可以通过调整页大小来间接改变B+树分叉数量</p>
+</li>
+<li><p><strong>自增主键</strong>：考虑到页分裂的性能影响，使用自增主键要比其他业务字段作为主键ID要更优。因为自增主键的每次插入一条新记录，都是追加操作，都不涉及到挪动其他记录，也不会触发叶子节点的分裂。</p>
+</li>
+<li><p><strong>不必使用自增主键的场景</strong>：如果该表只有一个索引，且该索引为唯一索引，则适合让该索引直接作为主键索引。这样子可以避免生成两棵索引树以节省空间，并且避免回表以增加查询性能。</p>
+</li>
+<li><p><strong>回表</strong> ：使用非主键索引查询数据的时候，如果所查数据包含了主键以外的数据，则需要回到主键索引进行二次查询，这个过程称为回表。  –&gt; 因此应该尽量使用主键索引查询。</p>
+</li>
+<li><p><strong>覆盖索引</strong>：当二级索引已经“覆盖”了查询需求的时候，该索引可称为覆盖索引。使用覆盖索引可以回表操作，减少搜索B+树的次数。因此，可以为高频查询建立覆盖索引。</p>
+</li>
+<li><p><strong>最左前缀原则</strong>：只要查询条件能够满足联合索引的最左前缀，则可以使用该联合索引来加速检索。因此，建立联合索引时候，需要合理安排字段顺序，充分利用最左前缀原则来减少索引数量。</p>
+</li>
+<li><p><strong>索引下推优化（index condition pushdown)</strong>：MySQL5.6之后引入了索引下推，可以在索引遍历过程中，对索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数。</p>
+</li>
+<li><p><strong>Change Buffer</strong>:当对二级索引数据页进行变更，而这些数据页又不在buffer pool中的时候，会使用Change Buffer来缓存这些变更。这些INSERT, UPDATE, 或者 DELETE 操作（DML）带来的变更会在这些数据页被其他读操作加载进缓存的时候被合并。简单来讲，Change Buffer是用来”懒合并”，将非必需的磁盘读写延后。因此适合写多读少的业务情景。另外，唯一索引无法使用ChangeBuffer，因此一般推荐优先使用普通索引。</p>
 </li>
 </ul>
-<h2 id="解析器"><a href="#解析器" class="headerlink" title="解析器"></a>解析器</h2><p>解析器有两个功能：</p>
-<ul>
-<li><strong>词法分析</strong>：将SQL语句数据库表列建立关联；</li>
-<li><strong>语法分析</strong>：检测SQL语句是否符合MySQL语法规则。</li>
-</ul>
-<h2 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h2><p>优化器负责从不同的执行计划中选出效率最高的方案，包括决定表的连接顺序、选择哪个索引等等。此外还会涉及查询重写。</p>
-<h2 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h2><p>执行器主要是负责检查表权限，并且调用存储引擎的接口完成执行计划，写binlog日志等。</p>
-<h2 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h2><p>对于SELECT语句，在解析查询之前，服务器会先检查查询缓存。如果能在缓存中找到对应的查询，服务器可以直接返回缓存的结果，而不必进行解析、优化和执行等过程。</p>
-<blockquote>
-<p>注意，频繁更新的表的查询缓存会频繁失效，不建议开启查询缓存。MySQL 8.0 版本后不再支持查询缓存。</p>
-</blockquote>
-<h2 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h2><p>MySQL 支持多种存储引擎，用户在新建表的时候可以自定义指定该表采用的存储引擎。用户也可以根据 MySQL 提供的接口定义，实现自定义的存储引擎。</p>
-<p>最常用的第三方存储引擎是 InnoDB。在MySQL 5.5.8后，它成为默认存储引擎。</p>
-<h3 id="InnoDB-存储引擎"><a href="#InnoDB-存储引擎" class="headerlink" title="InnoDB 存储引擎"></a>InnoDB 存储引擎</h3><p>InnoDB 主要特点是：</p>
-<ul>
-<li>支持行锁、支持外键，并支持非锁定的读；</li>
-<li>每张表数据单独保存到一个独立的 idb 文件中；</li>
-<li>通过多版本并发控制（MVCC）来实现高并发特性，并且实现 SQL 标准的4种事务隔离级别，默认为可重复读；</li>
-<li>使用间隙锁（next-key locking）来避免幻读现象产生；</li>
-<li>每张表的主键都采用聚簇索引，如果没有显式指定主键，则默认自动生成一个6字节的 row_id 作为主键。</li>
-</ul>
-<h3 id="MyISAM-存储引擎"><a href="#MyISAM-存储引擎" class="headerlink" title="MyISAM 存储引擎"></a>MyISAM 存储引擎</h3><p>MyISAM 主要特点是：</p>
-<ul>
-<li>MySQL 5.5.8 版本之前的默认存储引擎；</li>
-<li>不支持事务；</li>
-<li>不支持行锁，只支持表锁；</li>
-<li>支持全文索引；</li>
-<li>存储引擎表由 MYD 和 MYI 组成，MYD 用来存放数据文件，MYI 用来存放索引文件。</li>
-</ul>
-<h3 id="其他存储引擎"><a href="#其他存储引擎" class="headerlink" title="其他存储引擎"></a>其他存储引擎</h3><p>NDB 存储引擎、Memory 存储引擎、Archive 存储引擎、Federated 存储引擎、Maria 存储引擎等等。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
-<li><a href="https://time.geekbang.org/column/intro/100020801" target="_blank" rel="noopener">MySQL实战45讲</a>: 非常适合入门的MySQL学习资料；</li>
-<li>《高性能MySQL》</li>
-<li>《MySQL技术内幕（InnoDB存储引擎）》</li>
+<h2 id="MySQL误判索引解决办法"><a href="#MySQL误判索引解决办法" class="headerlink" title="MySQL误判索引解决办法"></a>MySQL误判索引解决办法</h2><ul>
+<li>对于由于索引统计信息不准确导致的问题，你可以用 analyze table 来解决；例如，使用delete来删除数据，会导致统计信息不准。</li>
+<li>对于其他优化器误判的情况，你可以在应用端用 force index 来强行指定索引，也可以通过修改语句来引导优化器，还可以通过增加或者删除索引来绕过这个问题。</li>
 </ul>
 
     </div>
@@ -416,7 +379,13 @@
       <div class="popular-posts-title"><a href="/2020/10/07/MySQL底层原理笔记/" rel="bookmark">MySQL底层原理笔记</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/30/深入-MySQL-二-MySQL-文件系统/" rel="bookmark">深入 MySQL (二) MySQL 文件系统</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/29/深入-MySQL-1-体系结构/" rel="bookmark">深入 MySQL (一) 体系结构</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/04/深入-MySQL-3-事务/" rel="bookmark">深入 MySQL (三) 事务</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/06/深入-MySQL-5-锁/" rel="bookmark">深入 MySQL (五) 锁</a></div>
     </li>
   </ul>
 
@@ -454,7 +423,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" title="深入 MySQL (一) MySQL 体系结构">https://duval1024.gitee.io/2021/01/29/深入-MySQL-一-MySQL-体系结构/</a>
+    <a href="https://blog.duval.top/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/" title="深入 MySQL (四) 索引">https://blog.duval.top/2021/02/05/深入-MySQL-4-索引/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -476,12 +445,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" rel="prev" title="Java 虚拟机原理 (五) G1垃圾收集器深入">
-      <i class="fa fa-chevron-left"></i> Java 虚拟机原理 (五) G1垃圾收集器深入
+    <a href="/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/" rel="prev" title="深入 MySQL (三) 事务">
+      <i class="fa fa-chevron-left"></i> 深入 MySQL (三) 事务
     </a></div>
       <div class="post-nav-item">
-    <a href="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" rel="next" title="深入 MySQL (二) MySQL 文件系统">
-      深入 MySQL (二) MySQL 文件系统 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/02/06/%E6%B7%B1%E5%85%A5-MySQL-5-%E9%94%81/" rel="next" title="深入 MySQL (五) 锁">
+      深入 MySQL (五) 锁 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -545,7 +514,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL-体系结构"><span class="nav-number">1.</span> <span class="nav-text">MySQL 体系结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#连接器"><span class="nav-number">1.1.</span> <span class="nav-text">连接器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解析器"><span class="nav-number">1.2.</span> <span class="nav-text">解析器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#优化器"><span class="nav-number">1.3.</span> <span class="nav-text">优化器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行器"><span class="nav-number">1.4.</span> <span class="nav-text">执行器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查询缓存"><span class="nav-number">1.5.</span> <span class="nav-text">查询缓存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#存储引擎"><span class="nav-number">1.6.</span> <span class="nav-text">存储引擎</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#InnoDB-存储引擎"><span class="nav-number">1.6.1.</span> <span class="nav-text">InnoDB 存储引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MyISAM-存储引擎"><span class="nav-number">1.6.2.</span> <span class="nav-text">MyISAM 存储引擎</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他存储引擎"><span class="nav-number">1.6.3.</span> <span class="nav-text">其他存储引擎</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">1.7.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#索引"><span class="nav-number">1.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#常见索引模型"><span class="nav-number">1.1.</span> <span class="nav-text">常见索引模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#InnoDB索引模型"><span class="nav-number">1.2.</span> <span class="nav-text">InnoDB索引模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL误判索引解决办法"><span class="nav-number">1.3.</span> <span class="nav-text">MySQL误判索引解决办法</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -561,7 +530,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">44</span>
+          <span class="site-state-item-count">48</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -639,12 +608,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">438k</span>
+    <span title="站点总字数">445k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:38</span>
+    <span title="站点阅读时长">6:44</span>
 
 </div>
 

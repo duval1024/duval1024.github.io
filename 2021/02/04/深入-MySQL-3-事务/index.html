@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -60,24 +60,21 @@
   };
 </script>
 
-  <meta name="description" content="本文介绍 MySQL 的几个重要的日志文件以及两阶段提交的原理。">
+  <meta name="description" content="从前文，我们了解到有一部分存储引擎是支持事务的。本文我们将探讨事务的重要概念以及实现原理。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深入 MySQL (二) MySQL 文件系统">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:title" content="深入 MySQL (三) 事务">
+<meta property="og:url" content="https://blog.duval.top/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/index.html">
 <meta property="og:site_name" content="杜瓦尔">
-<meta property="og:description" content="本文介绍 MySQL 的几个重要的日志文件以及两阶段提交的原理。">
+<meta property="og:description" content="从前文，我们了解到有一部分存储引擎是支持事务的。本文我们将探讨事务的重要概念以及实现原理。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
-<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%BA%8C%29%20MySQL%20%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png">
-<meta property="article:published_time" content="2021-01-30T04:00:39.000Z">
-<meta property="article:modified_time" content="2021-02-06T08:02:03.082Z">
+<meta property="article:published_time" content="2021-02-04T14:20:54.000Z">
+<meta property="article:modified_time" content="2021-02-07T06:19:29.634Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+<link rel="canonical" href="https://blog.duval.top/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/">
 
 
 <script id="page-configurations">
@@ -89,7 +86,7 @@
   };
 </script>
 
-  <title>深入 MySQL (二) MySQL 文件系统 | 杜瓦尔</title>
+  <title>深入 MySQL (三) 事务 | 杜瓦尔</title>
   
 
 
@@ -224,7 +221,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -237,7 +234,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          深入 MySQL (二) MySQL 文件系统
+          深入 MySQL (三) 事务
         </h1>
 
         <div class="post-meta">
@@ -247,7 +244,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-01-30 12:00:39" itemprop="dateCreated datePublished" datetime="2021-01-30T12:00:39+08:00">2021-01-30</time>
+              <time title="创建时间：2021-02-04 22:20:54" itemprop="dateCreated datePublished" datetime="2021-02-04T22:20:54+08:00">2021-02-04</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -262,7 +259,7 @@
             </span>
 
           
-            <span id="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (二) MySQL 文件系统" title="阅读次数">
+            <span id="/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (三) 事务" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -277,8 +274,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" itemprop="commentCount"></span>
+    <a title="valine" href="/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -307,73 +304,94 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>本文介绍 MySQL 的几个重要的日志文件以及两阶段提交的原理。</p>
+        <p>从前文，我们了解到有一部分存储引擎是支持事务的。本文我们将探讨事务的重要概念以及实现原理。</p>
 <a id="more"></a>
 
-<h2 id="binlog（二进制日志）"><a href="#binlog（二进制日志）" class="headerlink" title="binlog（二进制日志）"></a>binlog（二进制日志）</h2><ul>
-<li>binlog 是MySQL Server 层的逻辑日志，可以被所有存储引擎使用；</li>
-<li>binlog 日志常用于数据恢复、复制以及审计；</li>
-<li>binlog 可以是 ROW、 STATEMENT、MIXED 三种格式：<ul>
-<li>ROW 格式下 binlog 日志记录的是每个数据行变化前和变化后的内容，因此占用空间相对较大；</li>
-<li>STATEMENT格式 下，binlog 日志记录的是执行的 SQL 语句；</li>
-<li>MIXED 格式下，默认采用 STATEMENT 格式，某些情况下会选择性地采用 ROW 格式；</li>
-</ul>
-</li>
-<li>仅凭 binlog 日志是不能确保MySQL crash-safe的；</li>
-<li>binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；</li>
-<li>重要主库推荐配置 <em>sync_binlog=1</em> ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；此外，如果是 Innodb 引擎，还需要配置 innodb_support_xa 为 1，才能确保二进制日志与 InnoDB 存储数据文件的同步（也就是下文的两阶段提交确保不丢失数据）。</li>
-</ul>
-<h2 id="redo-log（重做日志）"><a href="#redo-log（重做日志）" class="headerlink" title="redo log（重做日志）"></a>redo log（重做日志）</h2><ul>
-<li><p>redo log是InnoDB引擎特有的物理日志；</p>
-</li>
-<li><p>WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；</p>
-</li>
-<li><p>redo log记录的是某个数据页做了什么修改；</p>
-</li>
-<li><p>凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；</p>
-</li>
-<li><p>redo log日志是固定大小的循环写，超过文件大小会擦除老日志；</p>
-<p>  <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png" alt="redo log循环写.png"></p>
-</li>
-<li><p>重做日志并不是直接写日志文件，而是先写一个重做日志缓冲（redo log buffer），然后再按照一定条件顺序写入日志文件。常见条件包括：</p>
+<h1 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h1><h2 id="ACID概念"><a href="#ACID概念" class="headerlink" title="ACID概念"></a>ACID概念</h2><p>ACID（Atomicity、Consistency、Isolation、Durability，即原子性、一致性、隔离性、持久性）</p>
+<h2 id="隔离性和隔离级别"><a href="#隔离性和隔离级别" class="headerlink" title="隔离性和隔离级别"></a>隔离性和隔离级别</h2><p>SQL标准里定义了四种事务隔离级别：</p>
 <ul>
-<li>主库配置 <em>innodb_flush_log_at_trx_commit=1</em> ，可以使得每次提交事务都会将 buffer 刷到日志文件，保证服务器崩溃的时候不会丢失数据；</li>
-<li>主线程每秒会将重做日志缓冲写入日志文件，不论事务是否已经提交。</li>
+<li><strong>读未提交</strong>：一个事务还没提交时，它做的变更就能被别的事务看到；</li>
+<li><strong>读提交</strong>：一个事务提交之后，它做的变更才会被其他事务看到；</li>
+<li><strong>可重复读</strong>：一个事务执行过程中看到的数据，总是跟这个事务在启动时看到的数据是一致的。当然在可重复读隔离级别下，未提交变更对其他事务也是不可见的；</li>
+<li><strong>串行化</strong>：对于同一行记录，“写”会加“写锁”，“读”会加“读锁”。当出现读写锁冲突的时候，后访问的事务必须等前一个事务执行完成，才能继续执行。</li>
 </ul>
-</li>
-</ul>
-<h2 id="undo-log-回滚日志"><a href="#undo-log-回滚日志" class="headerlink" title="undo log (回滚日志)"></a>undo log (回滚日志)</h2><ul>
-<li>回滚日志记录的是事务的行为，当事务由于某种原因执行失败或者用户手动回滚的时候，便可以通过回滚日志来恢复缓冲池数据至历史版本；</li>
-<li>回滚日志默认保存在共享表空间中（也就是 ibdata 文件中）；如果配置了 innodb_undo_tablespaces=N，则会保存到单独的undo001~undoN 文件中；</li>
-</ul>
-<h2 id="两阶段提交"><a href="#两阶段提交" class="headerlink" title="两阶段提交"></a>两阶段提交</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%BA%8C%29%20MySQL%20%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png" alt="两阶段提交.png"></p>
-<p>两阶段提交过程：</p>
+<p>四种隔离级别区别：</p>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏读可能性</th>
+<th>不可重复读可能性</th>
+<th>幻读可能性</th>
+<th>加锁读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>读未提交</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr>
+<td>读提交</td>
+<td>N</td>
+<td>Y</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr>
+<td>可重复读</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+<td>N</td>
+</tr>
+<tr>
+<td>串行化</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+</tbody></table>
+<h2 id="MySQL中的事务"><a href="#MySQL中的事务" class="headerlink" title="MySQL中的事务"></a>MySQL中的事务</h2><p>MySQL提供了两种事务型存储引擎：InnoDB 和 NDB Cluster，而MyISAM并不支持事务。</p>
+<h3 id="MVCC与事务隔离实现"><a href="#MVCC与事务隔离实现" class="headerlink" title="MVCC与事务隔离实现"></a>MVCC与事务隔离实现</h3><p>四种隔离级别的在InnoDB实现：</p>
 <ul>
-<li>1.新数据更新到内存；</li>
-<li>2.新数据写入redo log，并处于prepare状态；</li>
-<li>3.写入binlog；</li>
-<li>4.提交事务，使redo log 更新为commit状态。</li>
-</ul>
-<p>crash-safe保障原理：</p>
-<ul>
-<li>如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；</li>
-<li>如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；</li>
-<li>如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；</li>
-<li>如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。</li>
-</ul>
-<p>binlog和redo log的联系：</p>
-<blockquote>
-<p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
+<li><strong>读未提交</strong>：直接返回记录上的最新值，没有视图概念；</li>
+<li><strong>读提交</strong>：在每个SQL语句开始执行的时候创建视图；</li>
+<li><strong>可重复读</strong>：在事务启动时创建视图，整个事务存在期间都用这个视图；（注意，InnoDB利用MVCC已经在可重复读隔离级别下避免了幻读问题！！注意和上边的表格内容区分清楚！！！）</li>
+<li><strong>串行化</strong>：隔离级别下直接用加锁的方式来避免并行访问。</li>
+<li><blockquote>
+<p>这个所谓的视图其实是通过多版本并发控制（MVCC）来实现。（详情见《高性能MySQL》第三版 1.4 多版本并发控制）</p>
 </blockquote>
-<h2 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h2><ul>
-<li><a href="https://time.geekbang.org/column/intro/100020801" target="_blank" rel="noopener">MySQL实战45讲</a>: 非常适合入门的MySQL学习资料；</li>
-<li>《高性能MySQL》</li>
-<li>《MySQL技术内幕（InnoDB存储引擎）》</li>
-<li><a href="https://blog.51cto.com/gfsunny/1566683" target="_blank" rel="noopener">浅谈参数innodb_undo_tablespaces</a></li>
-<li><a href="https://www.cnblogs.com/andy6/p/9734885.html" target="_blank" rel="noopener">MySQL 5.7新特性之在线收缩undo表空间</a></li>
-<li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
-<li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
+</li>
 </ul>
+<h3 id="事务的启动"><a href="#事务的启动" class="headerlink" title="事务的启动"></a>事务的启动</h3><p>事务启动方式：</p>
+<ul>
+<li>1.显式启动事务语句， begin 或 start transaction。配套的提交语句是 commit，回滚语句是 rollback。</li>
+<li>2.set autocommit=0，这个命令会将这个线程的自动提交关掉（注意，仅影响当前线程。）。这意味着如果你只执行一个 select 语句，这个事务就启动了，而且并不会自动提交。这个事务持续存在直到你主动执行 commit 或 rollback 语句，或者断开连接。一般建议总是使用 set autocommit=1, 然后通过显式语句的方式来启动事务。</li>
+</ul>
+<p>长事务会导致数据库空间，并且占用所资源，生产中应该尽量避免长事务。查询长事务方法：</p>
+<pre><code class="sql">// 查询超过60秒的事务
+select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx_started))&gt;60</code></pre>
+<h3 id="查看修改事务隔离级别"><a href="#查看修改事务隔离级别" class="headerlink" title="查看修改事务隔离级别"></a>查看修改事务隔离级别</h3><p>MySQL默认的事务隔离级别是可重复读（REPEATABLE READ）。</p>
+<p>可以通过sql查看MySQL事务隔离级别：</p>
+<pre><code class="sql">show variables like &quot;%isolation%&quot;;</code></pre>
+<p>MySQL提供了SET TRANSACTION语句，该语句可以改变单个会话或全局的事务隔离级别。语法格式如下：</p>
+<pre><code class="sql">SET [SESSION | GLOBAL] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE}</code></pre>
+<p>其中，SESSION 和 GLOBAL 关键字用来指定修改的事务隔离级别的范围：</p>
+<ul>
+<li>SESSION：表示修改的事务隔离级别将应用于当前 session（当前 cmd 窗口）内的所有事务；</li>
+<li>GLOBAL：表示修改的事务隔离级别将应用于所有 session（全局）中的所有事务，且当前已经存在的 session (包括当前session）不受影响；</li>
+<li>如果省略 SESSION 和 GLOBAL，表示修改的事务隔离级别将应用于当前 session 内的下一个还未开始的事务。</li>
+</ul>
+<p>任何用户都能改变会话的事务隔离级别，但是只有拥有 SUPER 权限的用户才能改变全局的事务隔离级别。</p>
+<h3 id="其他注意"><a href="#其他注意" class="headerlink" title="其他注意"></a>其他注意</h3><ul>
+<li>更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”（current read）。具体见：<a href="https://time.geekbang.org/column/article/70562" target="_blank" rel="noopener">08 | 事务到底是隔离的还是不隔离的？
+</a></li>
+</ul>
+<h1 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h1><p>-<a href="https://juejin.im/post/6874330052461330446" target="_blank" rel="noopener">理解MySQL的锁机制和事务原理</a></p>
 
     </div>
 
@@ -390,7 +408,13 @@
       <div class="popular-posts-title"><a href="/2020/10/07/MySQL底层原理笔记/" rel="bookmark">MySQL底层原理笔记</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/29/深入-MySQL-一-MySQL-体系结构/" rel="bookmark">深入 MySQL (一) MySQL 体系结构</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/29/深入-MySQL-1-体系结构/" rel="bookmark">深入 MySQL (一) 体系结构</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/06/深入-MySQL-5-锁/" rel="bookmark">深入 MySQL (五) 锁</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/05/深入-MySQL-4-索引/" rel="bookmark">深入 MySQL (四) 索引</a></div>
     </li>
   </ul>
 
@@ -428,7 +452,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-%E4%BA%8C-MySQL-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" title="深入 MySQL (二) MySQL 文件系统">https://duval1024.gitee.io/2021/01/30/深入-MySQL-二-MySQL-文件系统/</a>
+    <a href="https://blog.duval.top/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/" title="深入 MySQL (三) 事务">https://blog.duval.top/2021/02/04/深入-MySQL-3-事务/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -450,10 +474,13 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-%E4%B8%80-MySQL-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="prev" title="深入 MySQL (一) MySQL 体系结构">
-      <i class="fa fa-chevron-left"></i> 深入 MySQL (一) MySQL 体系结构
+    <a href="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" rel="prev" title="深入 MySQL (二) 文件系统">
+      <i class="fa fa-chevron-left"></i> 深入 MySQL (二) 文件系统
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2021/02/05/%E6%B7%B1%E5%85%A5-MySQL-4-%E7%B4%A2%E5%BC%95/" rel="next" title="深入 MySQL (四) 索引">
+      深入 MySQL (四) 索引 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -516,7 +543,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#binlog（二进制日志）"><span class="nav-number">1.</span> <span class="nav-text">binlog（二进制日志）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#redo-log（重做日志）"><span class="nav-number">2.</span> <span class="nav-text">redo log（重做日志）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#undo-log-回滚日志"><span class="nav-number">3.</span> <span class="nav-text">undo log (回滚日志)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#两阶段提交"><span class="nav-number">4.</span> <span class="nav-text">两阶段提交</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#延伸阅读"><span class="nav-number">5.</span> <span class="nav-text">延伸阅读</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#事务"><span class="nav-number">1.</span> <span class="nav-text">事务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ACID概念"><span class="nav-number">1.1.</span> <span class="nav-text">ACID概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#隔离性和隔离级别"><span class="nav-number">1.2.</span> <span class="nav-text">隔离性和隔离级别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL中的事务"><span class="nav-number">1.3.</span> <span class="nav-text">MySQL中的事务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MVCC与事务隔离实现"><span class="nav-number">1.3.1.</span> <span class="nav-text">MVCC与事务隔离实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#事务的启动"><span class="nav-number">1.3.2.</span> <span class="nav-text">事务的启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看修改事务隔离级别"><span class="nav-number">1.3.3.</span> <span class="nav-text">查看修改事务隔离级别</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其他注意"><span class="nav-number">1.3.4.</span> <span class="nav-text">其他注意</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#延伸阅读"><span class="nav-number">2.</span> <span class="nav-text">延伸阅读</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -532,7 +559,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">44</span>
+          <span class="site-state-item-count">48</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -610,12 +637,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">438k</span>
+    <span title="站点总字数">445k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:38</span>
+    <span title="站点阅读时长">6:44</span>
 
 </div>
 

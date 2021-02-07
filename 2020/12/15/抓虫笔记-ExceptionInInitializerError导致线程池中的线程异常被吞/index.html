@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞">
-<meta property="og:url" content="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/index.html">
+<meta property="og:url" content="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。">
 <meta property="og:locale" content="zh_CN">
@@ -75,7 +75,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
+<link rel="canonical" href="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
 
 
 <script id="page-configurations">
@@ -222,7 +222,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -602,7 +602,7 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" title="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞">https://duval1024.gitee.io/2020/12/15/抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞/</a>
+    <a href="https://blog.duval.top/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" title="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞">https://blog.duval.top/2020/12/15/抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -708,7 +708,7 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">44</span>
+          <span class="site-state-item-count">48</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -786,12 +786,12 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">438k</span>
+    <span title="站点总字数">445k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:38</span>
+    <span title="站点阅读时长">6:44</span>
 
 </div>
 

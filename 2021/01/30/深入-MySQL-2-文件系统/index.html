@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本文介绍 MySQL 的几个重要的日志文件以及两阶段提交的原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入 MySQL (二) 文件系统">
+<meta property="og:url" content="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="杜瓦尔">
+<meta property="og:description" content="本文介绍 MySQL 的几个重要的日志文件以及两阶段提交的原理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%BA%8C%29%20MySQL%20%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png">
+<meta property="article:published_time" content="2021-01-30T04:00:39.000Z">
+<meta property="article:modified_time" content="2021-02-07T05:56:59.973Z">
+<meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png">
+
+<link rel="canonical" href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>深入 MySQL (二) 文件系统 | 杜瓦尔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">杜瓦尔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入 MySQL (二) 文件系统
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-30 12:00:39" itemprop="dateCreated datePublished" datetime="2021-01-30T12:00:39+08:00">2021-01-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index">
+                    <span itemprop="name">数据库</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="post-meta-item leancloud_visitors" data-flag-title="深入 MySQL (二) 文件系统" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文介绍 MySQL 的几个重要的日志文件以及两阶段提交的原理。</p>
+<a id="more"></a>
+
+<h1 id="binlog（二进制日志）"><a href="#binlog（二进制日志）" class="headerlink" title="binlog（二进制日志）"></a>binlog（二进制日志）</h1><ul>
+<li>binlog 是MySQL Server 层的逻辑日志，可以被所有存储引擎使用；</li>
+<li>binlog 日志常用于数据恢复、复制以及审计；</li>
+<li>binlog 可以是 ROW、 STATEMENT、MIXED 三种格式：<ul>
+<li>ROW 格式下 binlog 日志记录的是每个数据行变化前和变化后的内容，因此占用空间相对较大；</li>
+<li>STATEMENT格式 下，binlog 日志记录的是执行的 SQL 语句；</li>
+<li>MIXED 格式下，默认采用 STATEMENT 格式，某些情况下会选择性地采用 ROW 格式；</li>
+</ul>
+</li>
+<li>仅凭 binlog 日志是不能确保MySQL crash-safe的；</li>
+<li>binlog日志是顺序追加写到磁盘文件，文件达到一定大小后会切换到下一个，因此不会发生数据覆盖；</li>
+<li>重要主库推荐配置 <em>sync_binlog=1</em> ，可以使得MySQL每次提交事务都会将binlog日志同步到磁盘上，保证服务器崩溃的时候不会丢失数据；此外，如果是 Innodb 引擎，还需要配置 innodb_support_xa 为 1，才能确保二进制日志与 InnoDB 存储数据文件的同步（也就是下文的两阶段提交确保不丢失数据）。</li>
+</ul>
+<h1 id="redo-log（重做日志）"><a href="#redo-log（重做日志）" class="headerlink" title="redo log（重做日志）"></a>redo log（重做日志）</h1><ul>
+<li><p>redo log是InnoDB引擎特有的物理日志；</p>
+</li>
+<li><p>WAL 技术，WAL 的全称是 Write-Ahead Logging，它的关键点就是先写日志，再写磁盘数据；</p>
+</li>
+<li><p>redo log记录的是某个数据页做了什么修改；</p>
+</li>
+<li><p>凭借redo log可以确保InnoDB的crash-safe；凭借redo log和binlog实现的两阶段提交可以保障MySQL的crash-safe；</p>
+</li>
+<li><p>redo log日志是固定大小的循环写，超过文件大小会擦除老日志；</p>
+<p>  <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2Fmysql%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%B9%8B%E4%B8%80%20%E5%9F%BA%E7%A1%80%E7%AF%87%2Fredo%20log%E5%BE%AA%E7%8E%AF%E5%86%99.png" alt="redo log循环写.png"></p>
+</li>
+<li><p>重做日志并不是直接写日志文件，而是先写一个重做日志缓冲（redo log buffer），然后再按照一定条件顺序写入日志文件。常见条件包括：</p>
+<ul>
+<li>主库配置 <em>innodb_flush_log_at_trx_commit=1</em> ，可以使得每次提交事务都会将 buffer 刷到日志文件，保证服务器崩溃的时候不会丢失数据；</li>
+<li>主线程每秒会将重做日志缓冲写入日志文件，不论事务是否已经提交。</li>
+</ul>
+</li>
+</ul>
+<h1 id="undo-log-回滚日志"><a href="#undo-log-回滚日志" class="headerlink" title="undo log (回滚日志)"></a>undo log (回滚日志)</h1><ul>
+<li>回滚日志记录的是事务的行为，当事务由于某种原因执行失败或者用户手动回滚的时候，便可以通过回滚日志来恢复缓冲池数据至历史版本；</li>
+<li>回滚日志默认保存在共享表空间中（也就是 ibdata 文件中）；如果配置了 innodb_undo_tablespaces=N，则会保存到单独的undo001~undoN 文件中；</li>
+</ul>
+<h1 id="两阶段提交"><a href="#两阶段提交" class="headerlink" title="两阶段提交"></a>两阶段提交</h1><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%BA%8C%29%20MySQL%20%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%2F%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4.png" alt="两阶段提交.png"></p>
+<p>两阶段提交过程：</p>
+<ul>
+<li>1.新数据更新到内存；</li>
+<li>2.新数据写入redo log，并处于prepare状态；</li>
+<li>3.写入binlog；</li>
+<li>4.提交事务，使redo log 更新为commit状态。</li>
+</ul>
+<p>crash-safe保障原理：</p>
+<ul>
+<li>如果在步骤2之前数据库宕机，因为redo log 和binlog都没写入，内存数据丢失，所以不影响一致性；</li>
+<li>如果在步骤3之前数据库宕机，因为redo log存在且处于prepare状态，但检查binlog发现不存在，则回滚事务。所以不影响数据一致性；</li>
+<li>如果在步骤4之前数据库宕机，因为redo log存在且处于prepare状态，而检查binlog发现存在，则执行步骤4。所以事务成功，也不影响数据一致性；</li>
+<li>如果在步骤4之后数据库宕机，因为redo log存在且处于commit状态。所以不影响数据一致性。</li>
+</ul>
+<p>binlog和redo log的联系：</p>
+<blockquote>
+<p>它们有一个共同的数据字段，叫XID。崩溃恢复的时候，会按顺序扫描redo log：如果碰到commit状态的redo log，就直接提交；如果碰到只有 parepare状态的redo log，就拿着XID去binlog找对应的事务。</p>
+</blockquote>
+<h1 id="延伸阅读"><a href="#延伸阅读" class="headerlink" title="延伸阅读"></a>延伸阅读</h1><ul>
+<li><a href="https://time.geekbang.org/column/intro/100020801" target="_blank" rel="noopener">MySQL实战45讲</a>: 非常适合入门的MySQL学习资料；</li>
+<li>《高性能MySQL》</li>
+<li>《MySQL技术内幕（InnoDB存储引擎）》</li>
+<li><a href="https://blog.51cto.com/gfsunny/1566683" target="_blank" rel="noopener">浅谈参数innodb_undo_tablespaces</a></li>
+<li><a href="https://www.cnblogs.com/andy6/p/9734885.html" target="_blank" rel="noopener">MySQL 5.7新特性之在线收缩undo表空间</a></li>
+<li><a href="https://juejin.im/post/6844903621495095309" target="_blank" rel="noopener">分布式理论(三) - 2PC协议</a></li>
+<li><a href="https://time.geekbang.org/column/article/207508" target="_blank" rel="noopener">05 | 分布式事务：如何保证多个系统间的数据是一致的？</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/03/30/MySQL的limit优化和流式查询/" rel="bookmark">MySQL的Limit优化和流式查询</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2020/10/07/MySQL底层原理笔记/" rel="bookmark">MySQL底层原理笔记</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/29/深入-MySQL-1-体系结构/" rel="bookmark">深入 MySQL (一) 体系结构</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/04/深入-MySQL-3-事务/" rel="bookmark">深入 MySQL (三) 事务</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/06/深入-MySQL-5-锁/" rel="bookmark">深入 MySQL (五) 锁</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杜瓦尔
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2021/01/30/%E6%B7%B1%E5%85%A5-MySQL-2-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" title="深入 MySQL (二) 文件系统">https://blog.duval.top/2021/01/30/深入-MySQL-2-文件系统/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+              <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" rel="prev" title="深入 MySQL (一) 体系结构">
+      <i class="fa fa-chevron-left"></i> 深入 MySQL (一) 体系结构
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/02/04/%E6%B7%B1%E5%85%A5-MySQL-3-%E4%BA%8B%E5%8A%A1/" rel="next" title="深入 MySQL (三) 事务">
+      深入 MySQL (三) 事务 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#binlog（二进制日志）"><span class="nav-number">1.</span> <span class="nav-text">binlog（二进制日志）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#redo-log（重做日志）"><span class="nav-number">2.</span> <span class="nav-text">redo log（重做日志）</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#undo-log-回滚日志"><span class="nav-number">3.</span> <span class="nav-text">undo log (回滚日志)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#两阶段提交"><span class="nav-number">4.</span> <span class="nav-text">两阶段提交</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#延伸阅读"><span class="nav-number">5.</span> <span class="nav-text">延伸阅读</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">445k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">6:44</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
