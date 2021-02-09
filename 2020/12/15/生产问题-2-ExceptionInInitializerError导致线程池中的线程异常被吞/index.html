@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -62,20 +62,20 @@
 
   <meta name="description" content="最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞">
-<meta property="og:url" content="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/index.html">
+<meta property="og:title" content="生产问题(1) ExceptionInInitializerError导致线程池中的线程异常被吞">
+<meta property="og:url" content="https://blog.duval.top/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="最近在生产环境遇到一个比较极端的线程池吞异常问题，研究了下背后的原理，发现是静态块初始化异常抛出 ExceptionInInitializerError 导致的。这情景平时少见，在这里记录下已备忘。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png">
 <meta property="article:published_time" content="2020-12-15T09:26:29.000Z">
-<meta property="article:modified_time" content="2020-12-16T03:39:52.181Z">
+<meta property="article:modified_time" content="2021-02-09T03:14:19.675Z">
 <meta property="article:author" content="杜瓦尔">
-<meta property="article:tag" content="bugfix">
+<meta property="article:tag" content="生产问题">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0%3AExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E%2Fthrowable-exception-error.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
+<link rel="canonical" href="https://blog.duval.top/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
 
 
 <script id="page-configurations">
@@ -87,7 +87,7 @@
   };
 </script>
 
-  <title>抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞 | 杜瓦尔</title>
+  <title>生产问题(1) ExceptionInInitializerError导致线程池中的线程异常被吞 | 杜瓦尔</title>
   
 
 
@@ -222,7 +222,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -235,7 +235,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞
+          生产问题(1) ExceptionInInitializerError导致线程池中的线程异常被吞
         </h1>
 
         <div class="post-meta">
@@ -253,14 +253,14 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index">
-                    <span itemprop="name">抓虫笔记</span>
+                  <a href="/categories/%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
+                    <span itemprop="name">总结</span>
                   </a>
                 </span>
             </span>
 
           
-            <span id="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" class="post-meta-item leancloud_visitors" data-flag-title="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞" title="阅读次数">
+            <span id="/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" class="post-meta-item leancloud_visitors" data-flag-title="生产问题(1) ExceptionInInitializerError导致线程池中的线程异常被吞" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -275,8 +275,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" itemprop="commentCount"></span>
+    <a title="valine" href="/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -564,7 +564,10 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/02/11/抓虫笔记-Java进程CPU占用过高/" rel="bookmark">抓虫笔记-Java进程CPU占用过高</a></div>
+      <div class="popular-posts-title"><a href="/2020/02/11/生产问题-1-Java进程CPU占用过高/" rel="bookmark">生产问题(1) Java进程CPU占用过高</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/02/09/生产问题-3-应用开发过程中的海恩法则/" rel="bookmark">生产问题(3) 应用开发过程中的海恩法则</a></div>
     </li>
   </ul>
 
@@ -602,7 +605,7 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2020/12/15/%E6%8A%93%E8%99%AB%E7%AC%94%E8%AE%B0-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" title="抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞">https://duval1024.gitee.io/2020/12/15/抓虫笔记-ExceptionInInitializerError导致线程池中的线程异常被吞/</a>
+    <a href="https://blog.duval.top/2020/12/15/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-2-ExceptionInInitializerError%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%BC%82%E5%B8%B8%E8%A2%AB%E5%90%9E/" title="生产问题(1) ExceptionInInitializerError导致线程池中的线程异常被吞">https://blog.duval.top/2020/12/15/生产问题-2-ExceptionInInitializerError导致线程池中的线程异常被吞/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -615,7 +618,7 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/bugfix/" rel="tag"><i class="fa fa-tag"></i> bugfix</a>
+              <a href="/tags/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98/" rel="tag"><i class="fa fa-tag"></i> 生产问题</a>
           </div>
 
         
@@ -708,7 +711,7 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">47</span>
+          <span class="site-state-item-count">48</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -786,7 +789,7 @@ Caused by: java.lang.RuntimeException: ExceptionSingleton constructor exception.
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">435k</span>
+    <span title="站点总字数">436k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
