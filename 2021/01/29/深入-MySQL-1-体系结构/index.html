@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="深入 MySQL (一) 体系结构">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:url" content="https://blog.duval.top/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="工作中常常用到 MySQL，但对 MySQL 底层原理不够熟悉。知其然，知其所以然。所以我决定深入学习 MySQL 底层知识，并产出一些备忘笔记。本文主要介绍 MySQL 的体系结构。">
 <meta property="og:locale" content="zh_CN">
@@ -73,12 +73,12 @@
 <meta property="article:published_time" content="2021-01-29T14:50:38.000Z">
 <meta property="article:modified_time" content="2021-02-07T06:29:04.621Z">
 <meta property="article:author" content="杜瓦尔">
-<meta property="article:tag" content="数据库">
 <meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="数据库">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E6%B7%B1%E5%85%A5%20MySQL%20%28%E4%B8%80%29%20MySQL%20%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%2FMySQL%E4%BD%93%E7%B3%BB%E6%9E%B6%E6%9E%84.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+<link rel="canonical" href="https://blog.duval.top/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
 
 
 <script id="page-configurations">
@@ -225,7 +225,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -413,19 +413,19 @@
   <div class="popular-posts-header">相关文章推荐</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2017/03/30/MySQL的limit优化和流式查询/" rel="bookmark">MySQL的Limit优化和流式查询</a></div>
+      <div class="popular-posts-title"><a href="/2021/02/04/深入-MySQL-3-事务/" rel="bookmark">深入 MySQL (三) 事务</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/01/30/深入-MySQL-2-文件系统/" rel="bookmark">深入 MySQL (二) 文件系统</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/02/04/深入-MySQL-3-事务/" rel="bookmark">深入 MySQL (三) 事务</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/02/05/深入-MySQL-4-索引/" rel="bookmark">深入 MySQL (四) 索引</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/02/06/深入-MySQL-5-锁/" rel="bookmark">深入 MySQL (五) 锁</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/03/30/MySQL的limit优化和流式查询/" rel="bookmark">MySQL的Limit优化和流式查询</a></div>
     </li>
   </ul>
 
@@ -463,7 +463,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" title="深入 MySQL (一) 体系结构">https://duval1024.gitee.io/2021/01/29/深入-MySQL-1-体系结构/</a>
+    <a href="https://blog.duval.top/2021/01/29/%E6%B7%B1%E5%85%A5-MySQL-1-%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84/" title="深入 MySQL (一) 体系结构">https://blog.duval.top/2021/01/29/深入-MySQL-1-体系结构/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -476,8 +476,8 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
               <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
           </div>
 
         
