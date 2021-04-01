@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,21 +63,21 @@
   <meta name="description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java 虚拟机原理 (五) G1垃圾收集器深入">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/index.html">
+<meta property="og:url" content="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="深入了解G1垃圾收集器背后的核心原理。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2FRemembered%20Sets.jpg">
 <meta property="article:published_time" content="2021-01-10T17:00:07.000Z">
-<meta property="article:modified_time" content="2021-02-07T07:11:02.263Z">
+<meta property="article:modified_time" content="2021-04-01T09:16:20.004Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="垃圾回收器">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5%2Fg1gc-tams.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
+<link rel="canonical" href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
 
 <script id="page-configurations">
@@ -224,7 +224,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -288,7 +288,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>3.4k</span>
+              <span>3.5k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -317,15 +317,20 @@
 <li>白色(white):尚未标记对象。</li>
 </ul>
 <p><strong>注意：</strong> 标记结束后，被标记的对象是存活对象，没有被标记的对象会被回收。</p>
-<p>在并行GC阶段，应用线程和GC形成并行，所以有可能同时发生以下两种情况：</p>
+<p>在并行GC阶段，应用线程和GC形成并行。如果一个白对象被灰对象引用着，那么这个白对象被漏标的充分必要条件是：</p>
 <ul>
-<li>1.mutator把一个白对象的引用存到黑对象的字段里；</li>
-<li>2.某个白对象失去所有能从灰对象到达它的引用路径（直接或间接）。</li>
+<li>1.mutator 新增了一个黑对象到该白对象的引用；</li>
+<li>2.mutator 删除了所有灰对象到该白对象的引用。</li>
 </ul>
-<p>黑对象持有了指向白对象的引用。根据定义，collector已经不会再去遍历黑对象的字段，所以发现不了这里还有一个活引用指向这个白对象。如果还有某个灰对象持有直接或间接引用能到达这个白对象，那就没关系；如果从灰对象出发的所有引用到这个白对象的路径都不幸被切断了，那这个白对象就要被漏扫描了。</p>
-<p>所以如果同时发生以上两种情况，会导致对象漏标而被回收掉。</p>
-<p>Incremental Update是CMS收集器针对上述问题而采用的算法。该算法的做法是：只要在write barrier里发现要有一个白对象的引用被赋值到一个黑对象的字段里，那就把这个白对象变成灰色的（例如说标记并压到marking stack上，或者是记录在类似mod-union table里）。这样就强力杜绝了上述第一种情况的发生。</p>
-<p>而SATB的做法是把标记开始时的逻辑快照里所有的活对象都看作时活的。具体做法是在write barrier里把所有旧的引用所指向的对象都变成非白的（已经黑灰就不用管，还是白的就变成灰的）。</p>
+<blockquote>
+<p>解释：<br>黑对象持有了指向白对象的引用。根据定义，collector已经不会再去遍历黑对象的字段，所以发现不了这里还有一个活引用指向这个白对象。如果还有某个灰对象持有直接或间接引用能到达这个白对象，那就没关系；如果从灰对象出发的所有引用到这个白对象的路径都不幸被切断了，那这个白对象就要被漏扫描了。<br>所以如果同时发生以上两种情况，会导致对象漏标而被回收掉。</p>
+</blockquote>
+<p>为了解决漏标问题。</p>
+<ul>
+<li>CMS 采用写屏障和 Incremental Update 算法，致力于打破第一个条件。做法是只要在写屏障里发现要有一个白对象的引用被赋值到一个黑对象的字段里，那就把这个白对象变成灰色的（就是标记为存活对象，常见做法是标记并压到marking stack上，或者是记录在类似mod-union table里）。这样就强力杜绝了上述第一种情况的发生。</li>
+<li>G1 则采用写屏障和 SATB 算法，致力于打破第二个条件。SATB 的原理是是把标记开始时的逻辑快照里所有的活对象都看作时活的，而 NextTAMS 指针之后的的对象也在这一个周期里隐式存活，并且在写屏障中把变更前的对象引用都记录下来，都作为存活对象保留到下一个周期。（已经黑灰就不用管，还是白的就变成灰的）。</li>
+</ul>
+<p>无论 CMS 抑或是 G1 都会产生浮动垃圾。</p>
 <h2 id="SATB"><a href="#SATB" class="headerlink" title="SATB"></a>SATB</h2><p>SATB（snapshot at the beginning)是G1并发理论的基础，用于维护确保回收过程的正确性。从名字上理解，就是GC在开始的时候先对活着的对象保存一个快照；</p>
 <p>接下来，在GC过程中新分配的对象都是活的。</p>
 <p>很容易知道哪些对象是一次GC开始之后新分配的：每个region记录着两个top-at-mark-start（TAMS）指针，分别为prevTAMS和nextTAMS。并发标记开始时候Top指针和NextTAMS指针是重合的（如下图所示），并发阶段分配的对象对位于[Next TAMS，Top]区间。这个区间内的对象默认都是存活的，这也叫做隐式标记。</p>
@@ -388,10 +393,10 @@
       <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
     </li>
   </ul>
 
@@ -429,7 +434,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" title="Java 虚拟机原理 (五) G1垃圾收集器深入">https://duval1024.gitee.io/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/</a>
+    <a href="https://blog.duval.top/2021/01/11/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-5-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E6%B7%B1%E5%85%A5/" title="Java 虚拟机原理 (五) G1垃圾收集器深入">https://blog.duval.top/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -614,12 +619,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">436k</span>
+    <span title="站点总字数">437k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:36</span>
+    <span title="站点阅读时长">6:37</span>
 
 </div>
 
