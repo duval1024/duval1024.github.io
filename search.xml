@@ -1,6 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Java 虚拟机原理 (六) ZGC 垃圾收集器</title>
+    <url>/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/</url>
+    <content><![CDATA[<p>ZGC 是 JVM 生态最新最先进的一款垃圾收集器，具有可扩展低延迟高吞吐量等特性，其设计目标包括：</p>
+<ul>
+<li>亚毫秒级停顿时间（ &lt;= 10ms)；</li>
+<li>停顿时间长短与堆大小、存活对象数量、根节点数量无关；</li>
+<li>支持堆大小从8MB到16TB不等；</li>
+</ul>
+<a id="more"></a>
+<h2 id="总览"><a href="#总览" class="headerlink" title="总览"></a>总览</h2><p>ZGC 主要特点包括：</p>
+<ul>
+<li>尽可能的并发；</li>
+<li>基于 Region 的堆空间划分；</li>
+<li>空间整理；</li>
+<li>支持 NUMA-aware；</li>
+<li>使用染色指针（colored pointers）</li>
+<li>使用读屏障；</li>
+</ul>
+<h2 id="并发"><a href="#并发" class="headerlink" title="并发"></a>并发</h2><p>ZGC 之所以能实现10ms以内的低延迟，最核心原因是实现了并发的对象转移。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="ZGC垃圾收集阶段图.png"></p>
+<p>ZGC 只有三个停顿阶段：开始标记（Mark Start）、结束标记（Mark End）、开始转移（Relocate Start）。这仨阶段的最大停顿时间不超过10ms，而开始标记和开始转移两个节点只是扫描 GC Root，与堆内活跃对象数量多少没有关系。而结束标记阶段（也称重新标记阶段）的停顿时间一般小于1ms，如果超过1ms会重新进入并发标记阶段。</p>
+<p>此外，在每一个 GC 周期的并发标记阶段都会顺便进行上一个阶段的并发对象重定位。</p>
+<h2 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fzgc%20region%20%E5%88%92%E5%88%86.png" alt="zgc region 划分.png"></p>
+<p>ZGC 也是采用 Region 来划分堆空间，这点与 G1 类似，但有略有不同：</p>
+<ul>
+<li>ZGC 不采用分代划分；</li>
+<li>ZGC 包含三种大小类型的 Region：Small（2MB)、Medium（32MB)、Large（N * 2MB）；</li>
+<li>ZGC 中的 Region 也称为 ZPage，空闲的 ZPage 会被记录在 ZPageCache；而空闲的 ZPage 有可能会被归还给操作系统；</li>
+</ul>
+<h2 id="染色指针"><a href="#染色指针" class="headerlink" title="染色指针"></a>染色指针</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2F%E6%9F%93%E8%89%B2%E6%8C%87%E9%92%88%E5%AF%BB%E5%9D%80%E7%A9%BA%E9%97%B4.png" alt="染色指针寻址空间.png"></p>
+<p>ZGC 只支持64位地址系统，其中，[0~4TB) 对应Java堆，[4TB ~ 8TB) 称为M0地址空间，[8TB ~ 12TB) 称为M1地址空间，[12TB ~ 16TB) 预留未使用，[16TB ~ 20TB) 称为 Remapped 空间。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FHeap%20Multi-Mapping%20on%20Linux%3Ax86_64.png" alt="Heap Multi-Mapping on Linux:x86_64.png"></p>
+<p>因此，同一个时间点下，堆空间的某一个位置会同时有三个虚拟地址与之对应。ZGC 用这三个地址来标识该对象所处的状态，在对象转移和重定位过程中会用到这三个虚拟地址。</p>
+<h2 id="读屏障"><a href="#读屏障" class="headerlink" title="读屏障"></a>读屏障</h2><p>ZGC 在并发转移的时候会转移对象，并变更对象指针为 Remapped 空间指针。但此时应用程序中的指针还是 M0 或者 M1 空间指针，该指针也称为坏指针（bad pointer）。</p>
+<p>如果应用线程或者GC线程访问到该坏指针并尝试从堆中读取指针背后的对象，则会尝试在读取之后通过读屏障进行指针修复，类似伪代码如下：</p>
+<pre><code class="c++">Object o = obj.fieldA; // Loading an object reference from heap
+&lt;load barrier needed here&gt;
+Object p = o; // No barrier, not a load from heap
+o.doSomething(); // No barrier, not a load from heap
+int i = obj.fieldB; // No barrier, not an object reference</code></pre>
+<p>如上，假定 fieldA 对象已经被转移，需要被重定向。那么，第一行代码其后会被插入一段读屏障代码，代码里所做的事情就是修正当前指针为 M0 或者 M1 指针：</p>
+<pre><code class="c++">Object o = obj.fieldA; // Loading an object reference from heap
+if (!(o &amp; good_bit_mask)) {
+    if (o != null) {
+        slow_path(register_for(o), address_of(obj.fieldA));
+    }
+}</code></pre>
+<p>这个修改过程大概有4%的执行开销。</p>
+<h2 id="ZGC-回收过程详解"><a href="#ZGC-回收过程详解" class="headerlink" title="ZGC 回收过程详解"></a>ZGC 回收过程详解</h2><h3 id="初始标记-Pause-Mark-Start"><a href="#初始标记-Pause-Mark-Start" class="headerlink" title="初始标记/Pause Mark Start"></a>初始标记/Pause Mark Start</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20Start.png" alt="Pause Mark Start.png"></p>
+<p>从 GC Roots 出发快速标记并其引用的对象。由于根节点集合很小，这个阶段时间会很短。</p>
+<p>假如当前 GC 周期使用 M0 地址空间，那么被标记存活的对象1、2、4会被更新为 M0 指针。</p>
+<h3 id="并发标记以及并发重定位-Concurrent-Mark-amp-amp-Remapped"><a href="#并发标记以及并发重定位-Concurrent-Mark-amp-amp-Remapped" class="headerlink" title="并发标记以及并发重定位/ Concurrent Mark &amp;&amp; Remapped"></a>并发标记以及并发重定位/ Concurrent Mark &amp;&amp; Remapped</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20mark.png" alt="concurrent mark.png"></p>
+<p>并发阶段会遍历整个堆，所有活跃对象都将得到标记。</p>
+<p>假如当前 GC 周期使用 M0 地址空间，则对象1、2、4、5、8会被更新为 M0 地址空间。而3、6、7可能还处于上一个阶段，也就是 M1 指针。另外，坏指针也会被修复为 M0 指针。</p>
+<h3 id="重新标记-Pause-Mark-End"><a href="#重新标记-Pause-Mark-End" class="headerlink" title="重新标记/Pause Mark End"></a>重新标记/Pause Mark End</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20End.png" alt="Pause Mark End.png"></p>
+<p>重新阶段会 STW，并做一些收尾工作。这个阶段会控制在1ms以内，超过1ms会重新回到并发标记阶段。</p>
+<h3 id="并发迁移准备-Concurrent-Prepare-for-Reloc"><a href="#并发迁移准备-Concurrent-Prepare-for-Reloc" class="headerlink" title="并发迁移准备/Concurrent Prepare for Reloc"></a>并发迁移准备/Concurrent Prepare for Reloc</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate.png" alt="Concurrent Prepare for Relocate.png"></p>
+<p>经过之前的标记工作，已经掌握了整个堆中的存活对象。那么在并发迁移准备过程中，会计算迁移集合。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate%202.png" alt="Concurrent Prepare for Relocate 2.png"></p>
+<p>同时会初始化一个空的 forwarding tables，用于保存迁移前后的映射关系。</p>
+<h3 id="初始迁移-Pause-Relacate-Start"><a href="#初始迁移-Pause-Relacate-Start" class="headerlink" title="初始迁移/Pause Relacate Start"></a>初始迁移/Pause Relacate Start</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Relocate%20Start.png" alt="Pause Relocate Start.png"></p>
+<p>初始迁移阶段只是扫描与根节点直接关联的对象，并进行迁移，被迁移对象会被变更为 Remapped 指针，并把映射映射关系保存到  forwarding tables。该阶段只扫描少量对象，速度非常快。</p>
+<h3 id="并发迁移-Concurrent-Relocate"><a href="#并发迁移-Concurrent-Relocate" class="headerlink" title="并发迁移/Concurrent Relocate"></a>并发迁移/Concurrent Relocate</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%201.png" alt="concurrent reloacate 1.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%202.png" alt="concurrent reloacate 2.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%203.png" alt="concurrent reloacate 3.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%204.png" alt="concurrent reloacate 4.png"></p>
+<p>并发转移阶段会遍历所有的迁移集合，进行存活对象迁移，并回收空区块。被迁移的对象指针都会被变更为 Remapped 指针，并把映射映射关系保存到  forwarding tables。</p>
+<p>假如当前 GC 周期使用 M0 地址空间，那么对象4、5、6都发生了迁移，此时其指针处于 Remapped 地址空间。而对象2、4、5所引用的指针都是处于 M2 指针。这些指针都已经失效，也就是坏指针，后续对象重定向阶段会修复它们。</p>
+<h3 id="对象重定位"><a href="#对象重定位" class="headerlink" title="对象重定位"></a>对象重定位</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FGC%20Cycle%20Completed.png" alt="GC Cycle Completed.png"></p>
+<p>上一个 GC 周期结束后，JVM 内部还有很多坏指针，如果应用线程线程加载了这些指针，则会在读屏障阶段修复这些指针。剩下的未修复指针将延迟到第二个 GC 周期来进行修复。</p>
+<p>假如上一个 GC 周期使用的是 M0 地址空间，那么新的 GC 周期就会使用 M1 地址空间进行活跃对象标记。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20Start%28Second%20Cycle%29.png" alt="Pause Mark Start(Second Cycle).png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Mark%28Second%20Cycle%29.png" alt="Concurrent Mark(Second Cycle).png"></p>
+<p>下一个周期的初始标记和并发标记会顺带把上一个周期的坏指针修复。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate%28Second%20Cycle%29.png" alt="Concurrent Prepare for Relocate(Second Cycle).png"></p>
+<p>然后清空上一个阶段的 forwarding table。</p>
+<h2 id="ZGC-触发条件"><a href="#ZGC-触发条件" class="headerlink" title="ZGC 触发条件"></a>ZGC 触发条件</h2><p>CMS 调优中一般会调整 CMSInitiatingOccupancyFraction 参数，然后在老年代占用达到一定比例的时候，触发一次 GC；</p>
+<p>G1 中也有类似的参数 InitiatingHeapOccupancyPercent，在老年代占用达到堆空间的一定比例的时候，触发一次混合 GC；此外，G1 还会评估当前收集时间是否超过阈值 MaxGCPauseMillis ，如果超过阈值也会触发一次 GC；</p>
+<p>无论是 CMS 或者是 G1 的触发方式都存在一些不足。因此，ZGC 使用了更复杂的一套机制：</p>
+<ul>
+<li><p><strong>元空间分配触发</strong>：元空间分配不足的时候触发。使用 G1 的时候一般建议配置，因为默认会占满所有剩余内存。但在 ZGC 中不存在这个问题，所以一般不用关心元空间分配。</p>
+<pre><code class="text">  [2021-04-07T03:17:58.763-0400][14855][gc          ] GC(0) Garbage Collection (Metadata GC Threshold) 196M(0%)-&gt;196M(0%)
+  [2021-04-07T03:18:00.052-0400][14855][gc          ] GC(1) Garbage Collection (Metadata GC Threshold) 444M(0%)-&gt;202M(0%)
+  [2021-04-07T03:18:04.429-0400][14855][gc          ] GC(2) Garbage Collection (Metadata GC Threshold) 1038M(1%)-&gt;206M(0%)</code></pre>
+</li>
+<li><p><strong>固定时间间隔触发</strong>：通过 <em>-XX:ZCollectionInterval=&lt;seconds&gt;</em> 来控制。如果服务压力不大的话，这是最主要的 GC 方式。这种方式是为了在流量平稳的情况下定时触发 GC，避免流量突增的时候才触发 GC，从而导致线程阻塞。如果 G1 用得比较多话，就会发现 G1 就存在这个比较严重的问题。</p>
+<pre><code class="text">  [2021-04-07T10:00:24.610-0400][14855][gc          ] GC(203) Garbage Collection (Timer) 48674M(32%)-&gt;336M(0%)
+  [2021-04-07T10:02:24.709-0400][14855][gc          ] GC(204) Garbage Collection (Timer) 54888M(36%)-&gt;360M(0%)
+  [2021-04-07T10:04:24.804-0400][14855][gc          ] GC(205) Garbage Collection (Timer) 50482M(33%)-&gt;362M(0%)
+  [2021-04-07T10:06:24.904-0400][14855][gc          ] GC(206) Garbage Collection (Timer) 46962M(31%)-&gt;370M(0%)
+  [2021-04-07T10:08:25.006-0400][14855][gc          ] GC(207) Garbage Collection (Timer) 49444M(32%)-&gt;340M(0%)</code></pre>
+</li>
+<li><p><strong>基于分配速率的自适应算法触发</strong>：ZGC 根据对象分配速率和 GC 时间来计算内存占用达到什么阈值的时候才触发 GC。通过ZAllocationSpikeTolerance参数控制阈值大小，该参数默认2，数值越大，越早的触发GC。</p>
+<pre><code class="text">  [2021-04-07T09:30:41.600-0400][22575][gc          ] GC(166) Garbage Collection (Allocation Rate) 7854M(96%)-&gt;340M(4%)
+  [2021-04-07T09:31:16.474-0400][22575][gc          ] GC(167) Garbage Collection (Allocation Rate) 7798M(95%)-&gt;330M(4%)
+  [2021-04-07T09:31:54.769-0400][22575][gc          ] GC(168) Garbage Collection (Allocation Rate) 7812M(95%)-&gt;312M(4%)
+  [2021-04-07T09:32:34.672-0400][22575][gc          ] GC(169) Garbage Collection (Allocation Rate) 7894M(96%)-&gt;330M(4%)
+  [2021-04-07T09:33:09.872-0400][22575][gc          ] GC(170) Garbage Collection (Allocation Rate) 7886M(96%)-&gt;314M(4%)</code></pre>
+</li>
+<li><p><strong>阻塞内存触发分配</strong>：当垃圾来不及回收并堆满整个堆的情况下，会触发这种 GC。调优良好情况下，应该尽量避免这种 GC：</p>
+<pre><code class="text">  [2021-04-07T10:08:14.458-0400][23755][gc          ] Allocation Stall (nioEventLoopGroup-12-1) 0.749ms
+  [2021-04-07T10:08:14.458-0400][23783][gc          ] Allocation Stall (nioEventLoopGroup-16-1) 1.019ms
+  [2021-04-07T11:13:08.556-0400][23764][gc          ] Allocation Stall (nioEventLoopGroup-13-1) 0.115ms</code></pre>
+</li>
+<li><p>主动触发规则：类似于固定间隔规则，但时间间隔不固定，是ZGC自行算出来的时机，我们的服务因为已经加了基于固定时间间隔的触发机制，所以通过-ZProactive参数将该功能关闭，以免GC频繁，影响服务可用性。 日志中关键字是”Proactive”</p>
+</li>
+<li><p>预热规则：服务刚启动时出现，一般不需要关注。日志中关键字是”Warmup”</p>
+</li>
+<li><p>外部触发：代码中显式调用System.gc()触发。 日志中关键字是”System.gc()”</p>
+</li>
+</ul>
+<blockquote>
+<p>后边三种较少见，没在生产服务里找到案例，所以直接复制了<a href="https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html" target="_blank" rel="noopener">美团的技术文章</a>里的片段。</p>
+</blockquote>
+<h2 id="ZGC-与-G1-案例对比"><a href="#ZGC-与-G1-案例对比" class="headerlink" title="ZGC 与 G1 案例对比"></a>ZGC 与 G1 案例对比</h2><p>简单做了下测试对比下 ZGC 和 G1，无论是大堆或者小堆，ZGC 在收集停顿上都控制得非常好，基本不会超过10ms，这点远胜于 G1；但是可能 ZGC 的触发策略保守了，总的停顿时间要比 G1 多。</p>
+<p>但总体来说，ZGC 是一款低延迟高吞吐量的收集器，是 G1 的良好替代！</p>
+<h3 id="大堆（150G）"><a href="#大堆（150G）" class="headerlink" title="大堆（150G）"></a>大堆（150G）</h3><h4 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h4><pre><code class="bash">-Xmx150g -Xms150g -XX:ReservedCodeCacheSize=256m -XX:InitialCodeCacheSize=256m 
+-XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:ConcGCThreads=80 -XX:ParallelGCThreads=80 
+-XX:ZCollectionInterval=120 -XX:ZAllocationSpikeTolerance=5 -XX:+UnlockDiagnosticVMOptions 
+-XX:-ZProactive -Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=gc.log:time,tid,tags:filecount=5,filesize=500m</code></pre>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%A4%A7%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4%E5%9B%BE.png" alt="ZGC大堆停顿时间图.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=0232678d-bae8-4b29-8347-a4630972754e" target="_blank" rel="noopener">GC分析报告</a></p>
+<h4 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h4><pre><code class="bash">-Xmx150g -Xms150g -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=150m -XX:MaxMetaspaceSize=150M -XX:+UnlockExperimentalVMOptions -Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=gc.log:time,tid,tags:filecount=5,filesize=500m</code></pre>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FG1%E5%A4%A7%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4%E5%9B%BE.png" alt="G1大堆停顿时间图.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=93be8dc7-a1bc-47bf-8a41-576354036acd" target="_blank" rel="noopener">GC分析报告</a></p>
+<h3 id="小堆（8G）"><a href="#小堆（8G）" class="headerlink" title="小堆（8G）"></a>小堆（8G）</h3><h4 id="ZGC-1"><a href="#ZGC-1" class="headerlink" title="ZGC"></a>ZGC</h4><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%B0%8F%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4.png" alt="ZGC小堆停顿时间.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=83a0415a-5a27-457b-b807-ec1d91a14ef5" target="_blank" rel="noopener">GC分析报告</a></p>
+<h4 id="G1-1"><a href="#G1-1" class="headerlink" title="G1"></a>G1</h4><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FG1%E5%B0%8F%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4.png" alt="G1小堆停顿时间.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=bcd74765-2660-473a-a0d9-27ff6c4076cb" target="_blank" rel="noopener">GC分析报告</a></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://cr.openjdk.java.net/~pliden/slides/ZGC-Jfokus-2018.pdf" target="_blank" rel="noopener">ZGC-Jfokus-2018</a>：本文大部分内容参考这个PPT。PPT 对应的视频在这 <a href="https://www.youtube.com/watch?v=tShc0dyFtgw" target="_blank" rel="noopener">https://www.youtube.com/watch?v=tShc0dyFtgw</a></li>
+<li><a href="https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html" target="_blank" rel="noopener">新一代垃圾回收器ZGC的探索与实践</a>：美团出品，真是精品</li>
+<li><a href="http://cr.openjdk.java.net/~pliden/slides/ZGC-OracleDevLive-2020.pdf" target="_blank" rel="noopener">ZGC-OracleDevLive-2020</a>：ZGC最新的一些展望以及性能分析</li>
+<li><a href="https://wiki.openjdk.java.net/display/zgc/Main" target="_blank" rel="noopener">ZGC</a>:官方文档右侧有很多PPT和油管视频</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>JVM</tag>
+        <tag>垃圾回收器</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>生产问题(3) 应用开发过程中的海恩法则</title>
     <url>/2021/02/09/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-3-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E6%B5%B7%E6%81%A9%E6%B3%95%E5%88%99/</url>
     <content><![CDATA[<p>海恩法则，是航空界关于飞行安全的法则。海恩法则指出: 每一起严重事故的背后，必然有29次轻微事故和300起未遂先兆以及1000起事故隐患。</p>
@@ -1188,7 +1332,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 <li>重新标记阶段默认就是多线程（Rescan (parallel)），也就是说 CMSParallelRemarkEnabled 默认开启；</li>
 </ul>
 <h4 id="常见调优思路"><a href="#常见调优思路" class="headerlink" title="常见调优思路"></a>常见调优思路</h4><p><a href="https://tech.meituan.com/2020/11/12/java-9-cms-gc.html" target="_blank" rel="noopener">Java中9种常见的CMS GC问题分析与解决</a></p>
-<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" target="_blank" rel="noopener">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
+<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
 <p>下边直接来看 G1 的垃圾回收阶段图：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="G1垃圾收集阶段图.png"></p>
 <p>具体各个阶段总结如下：</p>
@@ -1551,7 +1695,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2F%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%9B%9E%E6%94%B6%E4%BB%A5%E5%8F%8A%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" alt="对象创建与回收思维导图"></p>
 <h2 id="对象创建"><a href="#对象创建" class="headerlink" title="对象创建"></a>对象创建</h2><p>对象在 JVM 的创建过程可见下图：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2FJVM%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B.png" alt="JVM对象创建过程.png"></p>
 <h3 id="类加载检查"><a href="#类加载检查" class="headerlink" title="类加载检查"></a>类加载检查</h3><p>虚拟机遇到一条new指令时，首先将去检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并且检查这个<br>符号引用代表的类是否已被加载、解析和初始化过。如果没有，那必须先执行相应的类加载过程。</p>
-<h3 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h3><p>这部分之前已经探讨过，参见<a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">《一文彻底掌握 Java 类加载机制》</a>。</p>
+<h3 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h3><p>这部分之前已经探讨过，参见<a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">《一文彻底掌握 Java 类加载机制》</a>。</p>
 <p>简单来说，就是类对象的加载、连接（验证-&gt;准备-&gt;解析）和初始化（&lt;clinit&gt;方法)等过程。</p>
 <h3 id="分配内存"><a href="#分配内存" class="headerlink" title="分配内存"></a>分配内存</h3><h4 id="分配方法"><a href="#分配方法" class="headerlink" title="分配方法"></a>分配方法</h4><p>类加载完毕后，类的新对象所需要的内存大小已经确定。这时候可以为新对象在堆中分配空间。分配空间的算法在不同的垃圾收集器中实现不一样。常见有以下两种解决方案：</p>
 <ul>
@@ -1771,7 +1915,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://juejin.cn/post/6844903957836333063" target="_blank" rel="noopener">《Java 对象创建过程。init 方法和 clinit方法》</a></li>
 <li><a href="http://youngforzy.top/2017/10/26/JVM%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">《JVM之对象创建过程》</a></li>
-<li><a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">《一文彻底掌握 Java 类加载机制》</a></li>
+<li><a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">《一文彻底掌握 Java 类加载机制》</a></li>
 <li><a href="https://ifeve.com/jvm%E4%BC%98%E5%8C%96%E4%B9%8B%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90%E5%8F%8A%E9%94%81%E6%B6%88%E9%99%A4/" target="_blank" rel="noopener">《JVM优化之逃逸分析及锁消除》</a></li>
 </ul>
 ]]></content>
@@ -1882,7 +2026,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
     public synchronized void reset() throws IOException {/***/}
     public boolean markSupported() {/***/}</code></pre>
 <p>InputStream 实现了 Closeable 接口，并且内部只有一个抽象方法 read， 所有实现类都强制要求实现该方法。其他方法提供了非常扼要的默认实现，实现类可以酌情覆盖实现。</p>
-<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" target="_blank" rel="noopener">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
+<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
 <p>简单来说，FileInputStream 内部通过文件描述符 FileDescriptor 和系统文件关联起来，并通过 native 方法调用系统 API 读写文件。</p>
 <h4 id="FilterInputStream"><a href="#FilterInputStream" class="headerlink" title="FilterInputStream"></a>FilterInputStream</h4><p>FilterInputStream 采用装饰器模式，内部包装了一个 InputStream 对象，并且继承了 InputStream 并覆写全部方法，但方法内容都是单纯地调用内部包装的 InputStream 对象。如下：</p>
 <pre><code class="java">public
@@ -3661,7 +3805,7 @@ public class SecurityLdapConfiguration extends GeneralSecurityConfiguration {
 <p>通过深入学习原理，我们可以大大提高对Spring Security的掌握程度，真正做到融会贯通、得心应手。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#servlet-architecture" target="_blank" rel="noopener">官方文档9-11章节</a>：非常清晰的文档</li>
-<li><a href="https://blog.duval.top/" target="_blank" rel="noopener">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
+<li><a href="https://blog.duval.top/">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
 </ul>
 ]]></content>
       <categories>
@@ -4400,8 +4544,8 @@ public class PermissionValidator {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Apollo</tag>
         <tag>源码分析</tag>
+        <tag>Apollo</tag>
       </tags>
   </entry>
   <entry>
@@ -5204,7 +5348,7 @@ protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBea
     }
 }
 </code></pre>
-<h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/" target="_blank" rel="noopener">《再读Spring源码之二 FactoryBean》</a></p>
+<h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">《再读Spring源码之二 FactoryBean》</a></p>
 ]]></content>
       <categories>
         <category>Spring</category>
@@ -5444,7 +5588,7 @@ public Student getStudent() throws Exception {
   <entry>
     <title>再读Spring源码之一 Spring如何对付循环引用</title>
     <url>/2020/08/21/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80-Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8/</url>
-    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" target="_blank" rel="noopener">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
+    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
 <a id="more"></a>
 
 <h2 id="Bean循环依赖"><a href="#Bean循环依赖" class="headerlink" title="Bean循环依赖"></a>Bean循环依赖</h2><p>spring框架的bean可以互相依赖，因此，可能存在循环依赖的情况，例如：</p>
@@ -5838,9 +5982,9 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
 <h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h3 id="链式结构"><a href="#链式结构" class="headerlink" title="链式结构"></a>链式结构</h3><p>我们先来回忆下在<a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">《Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)》</a>提到过来的handler链式结构：</p>
@@ -6197,12 +6341,12 @@ protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List&lt;Object&gt;
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
-<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/" target="_blank" rel="noopener">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
+<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
 <ul>
 <li>ByteBuffer底层实现包含四个关键字段，并满足大小关系：mark &lt;= position &lt;= limit &lt;= capacity；</li>
 <li>ByteBuffer存在写模式和读模式两种状态，内部方法可以触发状态切换，比如flip方法从写状态切换为读状态；</li>
@@ -6988,9 +7132,9 @@ c.t.n.u.UnsafeBenchmark.unsafeMethod    thrpt        4  3141320463.164 ± 120448
 </ul>
 <p>续写章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33</em></p>
 <h2 id="Future和Promise的关系"><a href="#Future和Promise的关系" class="headerlink" title="Future和Promise的关系"></a>Future<V>和Promise<V>的关系</h2><p>Netty内部的io.netty.util.concurrent.Future<V> 继承自java.util.concurrent.Future<V>，而Promise<V>是前者的一个特殊实现。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%9B%9B%20Promise%20%E4%B8%8E%20Future%3A%20%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86%2FFuture%E5%92%8CPromise%E7%B1%BB%E5%9B%BE.png" alt="Future和Promise类图.png"></p>
@@ -8307,7 +8451,7 @@ public class NioEchoServer {
 ......</code></pre>
 <p>上边的列表打印出来了这个JAVA进程的线程号(PID)、CPU占用（%CPU)等信息。呵！可以看到PID为2971和2972的线程排在前边，两个都几乎占了一个CPU核心！想必就是死循环了吧!</p>
 <h2 id="问题诊断"><a href="#问题诊断" class="headerlink" title="问题诊断"></a>问题诊断</h2><p>既然明确了是这两个线程的问题，那就把这两个线程找出来，看看代码逻辑便知。</p>
-<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/" target="_blank" rel="noopener">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
+<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
 <p>这两个线程的PID从<a href="https://tool.oschina.net/hexconvert" target="_blank" rel="noopener">十进制转化为十六进制</a>，分别是b9b和b9c，然后用这两个值去jstack结果里边查找一下，便有如下结果：</p>
 <pre><code class="bash">[prod@xxxxxxxxxxxx xxxx-xxxxxxxxx-service]$ jstack 2652 |egrep -A 8 &quot;b9b|b9c&quot;
 &quot;Pool-Default-schedule-0&quot; #26 prio=5 os_prio=0 tid=0x00007f9eb243e000 nid=0xb9c runnable [0x00007f9e1dff6000]
@@ -8485,7 +8629,7 @@ inline jint     Atomic::cmpxchg    (jint     exchange_value, volatile jint*     
 
 <p>正式开始前先废话一下：</p>
 <div style="margin-top: -20px;"><div class="fold_hider"><div class="close hider_title"><span style="color:gray;font-size:12px">点击显/隐</span></div></div><div class="fold">
-<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
+<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
 <p>我明白直接研究Spring的核心机制，不应该从RestfultWeb入手，因为那样子其实是从Spring boot层面开始阅读源码了。</p>
 <p>可以阅读这篇文章<a href="https://www.jianshu.com/p/42620a0a2c33" target="_blank" rel="noopener">《Spring,Spring MVC及Spring Boot区别》</a>大致了解。</p>
 <p>所以直接按照书上介绍的内容去啃源码就对了。另外提一下就是书上的Spring版本要比现在的版本老了，但是核心思想一样的，底层的源码改动不大，可以正常阅读。</p>
@@ -12700,8 +12844,8 @@ hiveStatement.execute(sql);    </code></pre>
         <category>Azkaban</category>
       </categories>
       <tags>
-        <tag>源码分析</tag>
         <tag>Azkaban</tag>
+        <tag>源码分析</tag>
       </tags>
   </entry>
   <entry>

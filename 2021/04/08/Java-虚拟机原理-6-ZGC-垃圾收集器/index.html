@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="ZGC 是 JVM 生态最新最先进的一款垃圾收集器，具有可扩展低延迟高吞吐量等特性，其设计目标包括：  亚毫秒级停顿时间（ &lt;&#x3D; 10ms)； 停顿时间长短与堆大小、存活对象数量、根节点数量无关； 支持堆大小从8MB到16TB不等；">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java 虚拟机原理 (六) ZGC 垃圾收集器">
+<meta property="og:url" content="https://blog.duval.top/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/index.html">
+<meta property="og:site_name" content="杜瓦尔">
+<meta property="og:description" content="ZGC 是 JVM 生态最新最先进的一款垃圾收集器，具有可扩展低延迟高吞吐量等特性，其设计目标包括：  亚毫秒级停顿时间（ &lt;&#x3D; 10ms)； 停顿时间长短与堆大小、存活对象数量、根节点数量无关； 支持堆大小从8MB到16TB不等；">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fzgc%20region%20%E5%88%92%E5%88%86.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2F%E6%9F%93%E8%89%B2%E6%8C%87%E9%92%88%E5%AF%BB%E5%9D%80%E7%A9%BA%E9%97%B4.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FHeap%20Multi-Mapping%20on%20Linux%3Ax86_64.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20Start.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20mark.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20End.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate%202.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Relocate%20Start.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%201.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%202.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%203.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%204.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FGC%20Cycle%20Completed.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20Start%28Second%20Cycle%29.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Mark%28Second%20Cycle%29.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate%28Second%20Cycle%29.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%A4%A7%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FG1%E5%A4%A7%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4%E5%9B%BE.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%B0%8F%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4.png">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FG1%E5%B0%8F%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4.png">
+<meta property="article:published_time" content="2021-04-08T06:39:45.000Z">
+<meta property="article:modified_time" content="2021-04-09T11:05:46.120Z">
+<meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="JVM">
+<meta property="article:tag" content="垃圾回收器">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png">
+
+<link rel="canonical" href="https://blog.duval.top/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Java 虚拟机原理 (六) ZGC 垃圾收集器 | 杜瓦尔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">杜瓦尔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Java 虚拟机原理 (六) ZGC 垃圾收集器
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-08 14:39:45" itemprop="dateCreated datePublished" datetime="2021-04-08T14:39:45+08:00">2021-04-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/" class="post-meta-item leancloud_visitors" data-flag-title="Java 虚拟机原理 (六) ZGC 垃圾收集器" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>ZGC 是 JVM 生态最新最先进的一款垃圾收集器，具有可扩展低延迟高吞吐量等特性，其设计目标包括：</p>
+<ul>
+<li>亚毫秒级停顿时间（ &lt;= 10ms)；</li>
+<li>停顿时间长短与堆大小、存活对象数量、根节点数量无关；</li>
+<li>支持堆大小从8MB到16TB不等；</li>
+</ul>
+<a id="more"></a>
+<h2 id="总览"><a href="#总览" class="headerlink" title="总览"></a>总览</h2><p>ZGC 主要特点包括：</p>
+<ul>
+<li>尽可能的并发；</li>
+<li>基于 Region 的堆空间划分；</li>
+<li>空间整理；</li>
+<li>支持 NUMA-aware；</li>
+<li>使用染色指针（colored pointers）</li>
+<li>使用读屏障；</li>
+</ul>
+<h2 id="并发"><a href="#并发" class="headerlink" title="并发"></a>并发</h2><p>ZGC 之所以能实现10ms以内的低延迟，最核心原因是实现了并发的对象转移。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="ZGC垃圾收集阶段图.png"></p>
+<p>ZGC 只有三个停顿阶段：开始标记（Mark Start）、结束标记（Mark End）、开始转移（Relocate Start）。这仨阶段的最大停顿时间不超过10ms，而开始标记和开始转移两个节点只是扫描 GC Root，与堆内活跃对象数量多少没有关系。而结束标记阶段（也称重新标记阶段）的停顿时间一般小于1ms，如果超过1ms会重新进入并发标记阶段。</p>
+<p>此外，在每一个 GC 周期的并发标记阶段都会顺便进行上一个阶段的并发对象重定位。</p>
+<h2 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fzgc%20region%20%E5%88%92%E5%88%86.png" alt="zgc region 划分.png"></p>
+<p>ZGC 也是采用 Region 来划分堆空间，这点与 G1 类似，但有略有不同：</p>
+<ul>
+<li>ZGC 不采用分代划分；</li>
+<li>ZGC 包含三种大小类型的 Region：Small（2MB)、Medium（32MB)、Large（N * 2MB）；</li>
+<li>ZGC 中的 Region 也称为 ZPage，空闲的 ZPage 会被记录在 ZPageCache；而空闲的 ZPage 有可能会被归还给操作系统；</li>
+</ul>
+<h2 id="染色指针"><a href="#染色指针" class="headerlink" title="染色指针"></a>染色指针</h2><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2F%E6%9F%93%E8%89%B2%E6%8C%87%E9%92%88%E5%AF%BB%E5%9D%80%E7%A9%BA%E9%97%B4.png" alt="染色指针寻址空间.png"></p>
+<p>ZGC 只支持64位地址系统，其中，[0~4TB) 对应Java堆，[4TB ~ 8TB) 称为M0地址空间，[8TB ~ 12TB) 称为M1地址空间，[12TB ~ 16TB) 预留未使用，[16TB ~ 20TB) 称为 Remapped 空间。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FHeap%20Multi-Mapping%20on%20Linux%3Ax86_64.png" alt="Heap Multi-Mapping on Linux:x86_64.png"></p>
+<p>因此，同一个时间点下，堆空间的某一个位置会同时有三个虚拟地址与之对应。ZGC 用这三个地址来标识该对象所处的状态，在对象转移和重定位过程中会用到这三个虚拟地址。</p>
+<h2 id="读屏障"><a href="#读屏障" class="headerlink" title="读屏障"></a>读屏障</h2><p>ZGC 在并发转移的时候会转移对象，并变更对象指针为 Remapped 空间指针。但此时应用程序中的指针还是 M0 或者 M1 空间指针，该指针也称为坏指针（bad pointer）。</p>
+<p>如果应用线程或者GC线程访问到该坏指针并尝试从堆中读取指针背后的对象，则会尝试在读取之后通过读屏障进行指针修复，类似伪代码如下：</p>
+<pre><code class="c++">Object o = obj.fieldA; // Loading an object reference from heap
+&lt;load barrier needed here&gt;
+Object p = o; // No barrier, not a load from heap
+o.doSomething(); // No barrier, not a load from heap
+int i = obj.fieldB; // No barrier, not an object reference</code></pre>
+<p>如上，假定 fieldA 对象已经被转移，需要被重定向。那么，第一行代码其后会被插入一段读屏障代码，代码里所做的事情就是修正当前指针为 M0 或者 M1 指针：</p>
+<pre><code class="c++">Object o = obj.fieldA; // Loading an object reference from heap
+if (!(o &amp; good_bit_mask)) {
+    if (o != null) {
+        slow_path(register_for(o), address_of(obj.fieldA));
+    }
+}</code></pre>
+<p>这个修改过程大概有4%的执行开销。</p>
+<h2 id="ZGC-回收过程详解"><a href="#ZGC-回收过程详解" class="headerlink" title="ZGC 回收过程详解"></a>ZGC 回收过程详解</h2><h3 id="初始标记-Pause-Mark-Start"><a href="#初始标记-Pause-Mark-Start" class="headerlink" title="初始标记/Pause Mark Start"></a>初始标记/Pause Mark Start</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20Start.png" alt="Pause Mark Start.png"></p>
+<p>从 GC Roots 出发快速标记并其引用的对象。由于根节点集合很小，这个阶段时间会很短。</p>
+<p>假如当前 GC 周期使用 M0 地址空间，那么被标记存活的对象1、2、4会被更新为 M0 指针。</p>
+<h3 id="并发标记以及并发重定位-Concurrent-Mark-amp-amp-Remapped"><a href="#并发标记以及并发重定位-Concurrent-Mark-amp-amp-Remapped" class="headerlink" title="并发标记以及并发重定位/ Concurrent Mark &amp;&amp; Remapped"></a>并发标记以及并发重定位/ Concurrent Mark &amp;&amp; Remapped</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20mark.png" alt="concurrent mark.png"></p>
+<p>并发阶段会遍历整个堆，所有活跃对象都将得到标记。</p>
+<p>假如当前 GC 周期使用 M0 地址空间，则对象1、2、4、5、8会被更新为 M0 地址空间。而3、6、7可能还处于上一个阶段，也就是 M1 指针。另外，坏指针也会被修复为 M0 指针。</p>
+<h3 id="重新标记-Pause-Mark-End"><a href="#重新标记-Pause-Mark-End" class="headerlink" title="重新标记/Pause Mark End"></a>重新标记/Pause Mark End</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20End.png" alt="Pause Mark End.png"></p>
+<p>重新阶段会 STW，并做一些收尾工作。这个阶段会控制在1ms以内，超过1ms会重新回到并发标记阶段。</p>
+<h3 id="并发迁移准备-Concurrent-Prepare-for-Reloc"><a href="#并发迁移准备-Concurrent-Prepare-for-Reloc" class="headerlink" title="并发迁移准备/Concurrent Prepare for Reloc"></a>并发迁移准备/Concurrent Prepare for Reloc</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate.png" alt="Concurrent Prepare for Relocate.png"></p>
+<p>经过之前的标记工作，已经掌握了整个堆中的存活对象。那么在并发迁移准备过程中，会计算迁移集合。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate%202.png" alt="Concurrent Prepare for Relocate 2.png"></p>
+<p>同时会初始化一个空的 forwarding tables，用于保存迁移前后的映射关系。</p>
+<h3 id="初始迁移-Pause-Relacate-Start"><a href="#初始迁移-Pause-Relacate-Start" class="headerlink" title="初始迁移/Pause Relacate Start"></a>初始迁移/Pause Relacate Start</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Relocate%20Start.png" alt="Pause Relocate Start.png"></p>
+<p>初始迁移阶段只是扫描与根节点直接关联的对象，并进行迁移，被迁移对象会被变更为 Remapped 指针，并把映射映射关系保存到  forwarding tables。该阶段只扫描少量对象，速度非常快。</p>
+<h3 id="并发迁移-Concurrent-Relocate"><a href="#并发迁移-Concurrent-Relocate" class="headerlink" title="并发迁移/Concurrent Relocate"></a>并发迁移/Concurrent Relocate</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%201.png" alt="concurrent reloacate 1.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%202.png" alt="concurrent reloacate 2.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%203.png" alt="concurrent reloacate 3.png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2Fconcurrent%20reloacate%204.png" alt="concurrent reloacate 4.png"></p>
+<p>并发转移阶段会遍历所有的迁移集合，进行存活对象迁移，并回收空区块。被迁移的对象指针都会被变更为 Remapped 指针，并把映射映射关系保存到  forwarding tables。</p>
+<p>假如当前 GC 周期使用 M0 地址空间，那么对象4、5、6都发生了迁移，此时其指针处于 Remapped 地址空间。而对象2、4、5所引用的指针都是处于 M2 指针。这些指针都已经失效，也就是坏指针，后续对象重定向阶段会修复它们。</p>
+<h3 id="对象重定位"><a href="#对象重定位" class="headerlink" title="对象重定位"></a>对象重定位</h3><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FGC%20Cycle%20Completed.png" alt="GC Cycle Completed.png"></p>
+<p>上一个 GC 周期结束后，JVM 内部还有很多坏指针，如果应用线程线程加载了这些指针，则会在读屏障阶段修复这些指针。剩下的未修复指针将延迟到第二个 GC 周期来进行修复。</p>
+<p>假如上一个 GC 周期使用的是 M0 地址空间，那么新的 GC 周期就会使用 M1 地址空间进行活跃对象标记。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FPause%20Mark%20Start%28Second%20Cycle%29.png" alt="Pause Mark Start(Second Cycle).png"></p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Mark%28Second%20Cycle%29.png" alt="Concurrent Mark(Second Cycle).png"></p>
+<p>下一个周期的初始标记和并发标记会顺带把上一个周期的坏指针修复。</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FConcurrent%20Prepare%20for%20Relocate%28Second%20Cycle%29.png" alt="Concurrent Prepare for Relocate(Second Cycle).png"></p>
+<p>然后清空上一个阶段的 forwarding table。</p>
+<h2 id="ZGC-触发条件"><a href="#ZGC-触发条件" class="headerlink" title="ZGC 触发条件"></a>ZGC 触发条件</h2><p>CMS 调优中一般会调整 CMSInitiatingOccupancyFraction 参数，然后在老年代占用达到一定比例的时候，触发一次 GC；</p>
+<p>G1 中也有类似的参数 InitiatingHeapOccupancyPercent，在老年代占用达到堆空间的一定比例的时候，触发一次混合 GC；此外，G1 还会评估当前收集时间是否超过阈值 MaxGCPauseMillis ，如果超过阈值也会触发一次 GC；</p>
+<p>无论是 CMS 或者是 G1 的触发方式都存在一些不足。因此，ZGC 使用了更复杂的一套机制：</p>
+<ul>
+<li><p><strong>元空间分配触发</strong>：元空间分配不足的时候触发。使用 G1 的时候一般建议配置，因为默认会占满所有剩余内存。但在 ZGC 中不存在这个问题，所以一般不用关心元空间分配。</p>
+<pre><code class="text">  [2021-04-07T03:17:58.763-0400][14855][gc          ] GC(0) Garbage Collection (Metadata GC Threshold) 196M(0%)-&gt;196M(0%)
+  [2021-04-07T03:18:00.052-0400][14855][gc          ] GC(1) Garbage Collection (Metadata GC Threshold) 444M(0%)-&gt;202M(0%)
+  [2021-04-07T03:18:04.429-0400][14855][gc          ] GC(2) Garbage Collection (Metadata GC Threshold) 1038M(1%)-&gt;206M(0%)</code></pre>
+</li>
+<li><p><strong>固定时间间隔触发</strong>：通过 <em>-XX:ZCollectionInterval=&lt;seconds&gt;</em> 来控制。如果服务压力不大的话，这是最主要的 GC 方式。这种方式是为了在流量平稳的情况下定时触发 GC，避免流量突增的时候才触发 GC，从而导致线程阻塞。如果 G1 用得比较多话，就会发现 G1 就存在这个比较严重的问题。</p>
+<pre><code class="text">  [2021-04-07T10:00:24.610-0400][14855][gc          ] GC(203) Garbage Collection (Timer) 48674M(32%)-&gt;336M(0%)
+  [2021-04-07T10:02:24.709-0400][14855][gc          ] GC(204) Garbage Collection (Timer) 54888M(36%)-&gt;360M(0%)
+  [2021-04-07T10:04:24.804-0400][14855][gc          ] GC(205) Garbage Collection (Timer) 50482M(33%)-&gt;362M(0%)
+  [2021-04-07T10:06:24.904-0400][14855][gc          ] GC(206) Garbage Collection (Timer) 46962M(31%)-&gt;370M(0%)
+  [2021-04-07T10:08:25.006-0400][14855][gc          ] GC(207) Garbage Collection (Timer) 49444M(32%)-&gt;340M(0%)</code></pre>
+</li>
+<li><p><strong>基于分配速率的自适应算法触发</strong>：ZGC 根据对象分配速率和 GC 时间来计算内存占用达到什么阈值的时候才触发 GC。通过ZAllocationSpikeTolerance参数控制阈值大小，该参数默认2，数值越大，越早的触发GC。</p>
+<pre><code class="text">  [2021-04-07T09:30:41.600-0400][22575][gc          ] GC(166) Garbage Collection (Allocation Rate) 7854M(96%)-&gt;340M(4%)
+  [2021-04-07T09:31:16.474-0400][22575][gc          ] GC(167) Garbage Collection (Allocation Rate) 7798M(95%)-&gt;330M(4%)
+  [2021-04-07T09:31:54.769-0400][22575][gc          ] GC(168) Garbage Collection (Allocation Rate) 7812M(95%)-&gt;312M(4%)
+  [2021-04-07T09:32:34.672-0400][22575][gc          ] GC(169) Garbage Collection (Allocation Rate) 7894M(96%)-&gt;330M(4%)
+  [2021-04-07T09:33:09.872-0400][22575][gc          ] GC(170) Garbage Collection (Allocation Rate) 7886M(96%)-&gt;314M(4%)</code></pre>
+</li>
+<li><p><strong>阻塞内存触发分配</strong>：当垃圾来不及回收并堆满整个堆的情况下，会触发这种 GC。调优良好情况下，应该尽量避免这种 GC：</p>
+<pre><code class="text">  [2021-04-07T10:08:14.458-0400][23755][gc          ] Allocation Stall (nioEventLoopGroup-12-1) 0.749ms
+  [2021-04-07T10:08:14.458-0400][23783][gc          ] Allocation Stall (nioEventLoopGroup-16-1) 1.019ms
+  [2021-04-07T11:13:08.556-0400][23764][gc          ] Allocation Stall (nioEventLoopGroup-13-1) 0.115ms</code></pre>
+</li>
+<li><p>主动触发规则：类似于固定间隔规则，但时间间隔不固定，是ZGC自行算出来的时机，我们的服务因为已经加了基于固定时间间隔的触发机制，所以通过-ZProactive参数将该功能关闭，以免GC频繁，影响服务可用性。 日志中关键字是”Proactive”</p>
+</li>
+<li><p>预热规则：服务刚启动时出现，一般不需要关注。日志中关键字是”Warmup”</p>
+</li>
+<li><p>外部触发：代码中显式调用System.gc()触发。 日志中关键字是”System.gc()”</p>
+</li>
+</ul>
+<blockquote>
+<p>后边三种较少见，没在生产服务里找到案例，所以直接复制了<a href="https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html" target="_blank" rel="noopener">美团的技术文章</a>里的片段。</p>
+</blockquote>
+<h2 id="ZGC-与-G1-案例对比"><a href="#ZGC-与-G1-案例对比" class="headerlink" title="ZGC 与 G1 案例对比"></a>ZGC 与 G1 案例对比</h2><p>简单做了下测试对比下 ZGC 和 G1，无论是大堆或者小堆，ZGC 在收集停顿上都控制得非常好，基本不会超过10ms，这点远胜于 G1；但是可能 ZGC 的触发策略保守了，总的停顿时间要比 G1 多。</p>
+<p>但总体来说，ZGC 是一款低延迟高吞吐量的收集器，是 G1 的良好替代！</p>
+<h3 id="大堆（150G）"><a href="#大堆（150G）" class="headerlink" title="大堆（150G）"></a>大堆（150G）</h3><h4 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h4><pre><code class="bash">-Xmx150g -Xms150g -XX:ReservedCodeCacheSize=256m -XX:InitialCodeCacheSize=256m 
+-XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:ConcGCThreads=80 -XX:ParallelGCThreads=80 
+-XX:ZCollectionInterval=120 -XX:ZAllocationSpikeTolerance=5 -XX:+UnlockDiagnosticVMOptions 
+-XX:-ZProactive -Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=gc.log:time,tid,tags:filecount=5,filesize=500m</code></pre>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%A4%A7%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4%E5%9B%BE.png" alt="ZGC大堆停顿时间图.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=0232678d-bae8-4b29-8347-a4630972754e" target="_blank" rel="noopener">GC分析报告</a></p>
+<h4 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h4><pre><code class="bash">-Xmx150g -Xms150g -XX:+UseG1GC -XX:MaxGCPauseMillis=500 -XX:MetaspaceSize=150m -XX:MaxMetaspaceSize=150M -XX:+UnlockExperimentalVMOptions -Xlog:safepoint,classhisto*=trace,age*,gc*=info:file=gc.log:time,tid,tags:filecount=5,filesize=500m</code></pre>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FG1%E5%A4%A7%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4%E5%9B%BE.png" alt="G1大堆停顿时间图.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=93be8dc7-a1bc-47bf-8a41-576354036acd" target="_blank" rel="noopener">GC分析报告</a></p>
+<h3 id="小堆（8G）"><a href="#小堆（8G）" class="headerlink" title="小堆（8G）"></a>小堆（8G）</h3><h4 id="ZGC-1"><a href="#ZGC-1" class="headerlink" title="ZGC"></a>ZGC</h4><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FZGC%E5%B0%8F%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4.png" alt="ZGC小堆停顿时间.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=83a0415a-5a27-457b-b807-ec1d91a14ef5" target="_blank" rel="noopener">GC分析报告</a></p>
+<h4 id="G1-1"><a href="#G1-1" class="headerlink" title="G1"></a>G1</h4><p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%20%28%E5%85%AD%29%20ZGC%20%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%2FG1%E5%B0%8F%E5%A0%86%E5%81%9C%E9%A1%BF%E6%97%B6%E9%97%B4.png" alt="G1小堆停顿时间.png"></p>
+<p><a href="https://gceasy.io/diamondgc-report.jsp?oTxnId_value=bcd74765-2660-473a-a0d9-27ff6c4076cb" target="_blank" rel="noopener">GC分析报告</a></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="http://cr.openjdk.java.net/~pliden/slides/ZGC-Jfokus-2018.pdf" target="_blank" rel="noopener">ZGC-Jfokus-2018</a>：本文大部分内容参考这个PPT。PPT 对应的视频在这 <a href="https://www.youtube.com/watch?v=tShc0dyFtgw" target="_blank" rel="noopener">https://www.youtube.com/watch?v=tShc0dyFtgw</a></li>
+<li><a href="https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html" target="_blank" rel="noopener">新一代垃圾回收器ZGC的探索与实践</a>：美团出品，真是精品</li>
+<li><a href="http://cr.openjdk.java.net/~pliden/slides/ZGC-OracleDevLive-2020.pdf" target="_blank" rel="noopener">ZGC-OracleDevLive-2020</a>：ZGC最新的一些展望以及性能分析</li>
+<li><a href="https://wiki.openjdk.java.net/display/zgc/Main" target="_blank" rel="noopener">ZGC</a>:官方文档右侧有很多PPT和油管视频</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/10/Java-虚拟机原理-4-G1垃圾收集器入门/" rel="bookmark">Java 虚拟机原理 (四) G1垃圾收集器入门</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理 (五) G1垃圾收集器深入</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杜瓦尔
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2021/04/08/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-6-ZGC-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8/" title="Java 虚拟机原理 (六) ZGC 垃圾收集器">https://blog.duval.top/2021/04/08/Java-虚拟机原理-6-ZGC-垃圾收集器/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/JVM/" rel="tag"><i class="fa fa-tag"></i> JVM</a>
+              <a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 垃圾回收器</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/02/09/%E7%94%9F%E4%BA%A7%E9%97%AE%E9%A2%98-3-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E6%B5%B7%E6%81%A9%E6%B3%95%E5%88%99/" rel="prev" title="生产问题(3) 应用开发过程中的海恩法则">
+      <i class="fa fa-chevron-left"></i> 生产问题(3) 应用开发过程中的海恩法则
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#总览"><span class="nav-number">1.</span> <span class="nav-text">总览</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#并发"><span class="nav-number">2.</span> <span class="nav-text">并发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Region"><span class="nav-number">3.</span> <span class="nav-text">Region</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#染色指针"><span class="nav-number">4.</span> <span class="nav-text">染色指针</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#读屏障"><span class="nav-number">5.</span> <span class="nav-text">读屏障</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZGC-回收过程详解"><span class="nav-number">6.</span> <span class="nav-text">ZGC 回收过程详解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#初始标记-Pause-Mark-Start"><span class="nav-number">6.1.</span> <span class="nav-text">初始标记&#x2F;Pause Mark Start</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#并发标记以及并发重定位-Concurrent-Mark-amp-amp-Remapped"><span class="nav-number">6.2.</span> <span class="nav-text">并发标记以及并发重定位&#x2F; Concurrent Mark &amp;&amp; Remapped</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重新标记-Pause-Mark-End"><span class="nav-number">6.3.</span> <span class="nav-text">重新标记&#x2F;Pause Mark End</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#并发迁移准备-Concurrent-Prepare-for-Reloc"><span class="nav-number">6.4.</span> <span class="nav-text">并发迁移准备&#x2F;Concurrent Prepare for Reloc</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初始迁移-Pause-Relacate-Start"><span class="nav-number">6.5.</span> <span class="nav-text">初始迁移&#x2F;Pause Relacate Start</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#并发迁移-Concurrent-Relocate"><span class="nav-number">6.6.</span> <span class="nav-text">并发迁移&#x2F;Concurrent Relocate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#对象重定位"><span class="nav-number">6.7.</span> <span class="nav-text">对象重定位</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZGC-触发条件"><span class="nav-number">7.</span> <span class="nav-text">ZGC 触发条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ZGC-与-G1-案例对比"><span class="nav-number">8.</span> <span class="nav-text">ZGC 与 G1 案例对比</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#大堆（150G）"><span class="nav-number">8.1.</span> <span class="nav-text">大堆（150G）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ZGC"><span class="nav-number">8.1.1.</span> <span class="nav-text">ZGC</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#G1"><span class="nav-number">8.1.2.</span> <span class="nav-text">G1</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#小堆（8G）"><span class="nav-number">8.2.</span> <span class="nav-text">小堆（8G）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ZGC-1"><span class="nav-number">8.2.1.</span> <span class="nav-text">ZGC</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#G1-1"><span class="nav-number">8.2.2.</span> <span class="nav-text">G1</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">9.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">443k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">6:42</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
