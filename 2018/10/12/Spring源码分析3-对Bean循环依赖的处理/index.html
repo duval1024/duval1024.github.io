@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://blog.duval.top').hostname,
+    hostname: new URL('https://duval1024.gitee.io').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="本文主要是分析Spring如何处理循环依赖，分别从构造器注入循环依赖、setter注入循环依赖、prototype范围的循环依赖三个方面进行详细分析。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring源码分析3-对Bean循环依赖的处理">
-<meta property="og:url" content="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/index.html">
+<meta property="og:url" content="https://duval1024.gitee.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="本文主要是分析Spring如何处理循环依赖，分别从构造器注入循环依赖、setter注入循环依赖、prototype范围的循环依赖三个方面进行详细分析。">
 <meta property="og:locale" content="zh_CN">
@@ -74,7 +74,7 @@
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">
+<link rel="canonical" href="https://duval1024.gitee.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">
 
 
 <script id="page-configurations">
@@ -221,7 +221,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">
+    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -309,7 +309,7 @@
 
 <p>正式开始前先废话一下：</p>
 <div style="margin-top: -20px;"><div class="fold_hider"><div class="close hider_title"><span style="color:gray;font-size:12px">点击显/隐</span></div></div><div class="fold">
-<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
+<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
 <p>我明白直接研究Spring的核心机制，不应该从RestfultWeb入手，因为那样子其实是从Spring boot层面开始阅读源码了。</p>
 <p>可以阅读这篇文章<a href="https://www.jianshu.com/p/42620a0a2c33" target="_blank" rel="noopener">《Spring,Spring MVC及Spring Boot区别》</a>大致了解。</p>
 <p>所以直接按照书上介绍的内容去啃源码就对了。另外提一下就是书上的Spring版本要比现在的版本老了，但是核心思想一样的，底层的源码改动不大，可以正常阅读。</p>
@@ -675,16 +675,16 @@ if (isPrototypeCurrentlyInCreation(beanName)) {
       <div class="popular-posts-title"><a href="/2020/11/26/Spring-Security-学习之使用篇/" rel="bookmark">Spring Security 学习之使用篇</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/01/Spring-Security-学习之原理篇/" rel="bookmark">Spring Security 学习之原理篇</a></div>
+      <div class="popular-posts-title"><a href="/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2018/07/12/Spring源码分析1-RESTful Web启动过程/" rel="bookmark">Spring源码分析1-RESTfulWeb启动过程</a></div>
+      <div class="popular-posts-title"><a href="/2020/12/01/Spring-Security-学习之原理篇/" rel="bookmark">Spring Security 学习之原理篇</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/08/21/再读Spring源码之一-Spring如何对付循环引用/" rel="bookmark">再读Spring源码之一 Spring如何对付循环引用</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/10/26/再读Spring源码之三-常用扩展点/" rel="bookmark">再读Spring源码之三 常用扩展点</a></div>
+      <div class="popular-posts-title"><a href="/2020/10/07/再读Spring源码之二-FactoryBean/" rel="bookmark">再读Spring源码之二 FactoryBean</a></div>
     </li>
   </ul>
 
@@ -722,7 +722,7 @@ if (isPrototypeCurrentlyInCreation(beanName)) {
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" title="Spring源码分析3-对Bean循环依赖的处理">https://blog.duval.top/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/</a>
+    <a href="https://duval1024.gitee.io/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" title="Spring源码分析3-对Bean循环依赖的处理">https://duval1024.gitee.io/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
