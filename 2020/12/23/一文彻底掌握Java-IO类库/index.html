@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="Java开发过程中经常会用到 Java IO 类库，本文将深入源码，带你彻底掌握 Java IO 类库。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="一文彻底掌握Java IO类库">
-<meta property="og:url" content="https://duval1024.gitee.io/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/index.html">
+<meta property="og:url" content="https://blog.duval.top/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="Java开发过程中经常会用到 Java IO 类库，本文将深入源码，带你彻底掌握 Java IO 类库。">
 <meta property="og:locale" content="zh_CN">
@@ -76,7 +76,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java%20IO%E7%B1%BB%E5%BA%93%2FJava%20IO%20%E7%B1%BB%E5%9B%BE.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/">
+<link rel="canonical" href="https://blog.duval.top/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/">
 
 
 <script id="page-configurations">
@@ -223,7 +223,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -325,7 +325,7 @@
     public synchronized void reset() throws IOException {/***/}
     public boolean markSupported() {/***/}</code></pre>
 <p>InputStream 实现了 Closeable 接口，并且内部只有一个抽象方法 read， 所有实现类都强制要求实现该方法。其他方法提供了非常扼要的默认实现，实现类可以酌情覆盖实现。</p>
-<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" target="_blank" rel="noopener">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
+<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
 <p>简单来说，FileInputStream 内部通过文件描述符 FileDescriptor 和系统文件关联起来，并通过 native 方法调用系统 API 读写文件。</p>
 <h4 id="FilterInputStream"><a href="#FilterInputStream" class="headerlink" title="FilterInputStream"></a>FilterInputStream</h4><p>FilterInputStream 采用装饰器模式，内部包装了一个 InputStream 对象，并且继承了 InputStream 并覆写全部方法，但方法内容都是单纯地调用内部包装的 InputStream 对象。如下：</p>
 <pre><code class="java">public
@@ -642,10 +642,10 @@ public void writeTo(Writer out) throws IOException {
       <div class="popular-posts-title"><a href="/2021/01/07/Java-虚拟机原理-1-内存划分/" rel="bookmark">Java 虚拟机原理 (一) 内存划分</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/08/Java-虚拟机原理-2-对象创建和回收/" rel="bookmark">Java 虚拟机原理 (二) 对象创建与回收</a></div>
+      <div class="popular-posts-title"><a href="/2021/01/09/Java-虚拟机原理-3-垃圾收集/" rel="bookmark">Java 虚拟机原理 (三) 垃圾收集</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/12/28/一文彻底掌握-Java-类加载机制/" rel="bookmark">一文彻底掌握 Java 类加载机制</a></div>
@@ -689,7 +689,7 @@ public void writeTo(Writer out) throws IOException {
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/" title="一文彻底掌握Java IO类库">https://duval1024.gitee.io/2020/12/23/一文彻底掌握Java-IO类库/</a>
+    <a href="https://blog.duval.top/2020/12/23/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1Java-IO%E7%B1%BB%E5%BA%93/" title="一文彻底掌握Java IO类库">https://blog.duval.top/2020/12/23/一文彻底掌握Java-IO类库/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
