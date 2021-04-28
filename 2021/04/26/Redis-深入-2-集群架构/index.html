@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="总结在生产中常见的几种 Redis 集群部署架构。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Redis 深入 (2) 集群架构">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/index.html">
+<meta property="og:url" content="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="总结在生产中常见的几种 Redis 集群部署架构。">
 <meta property="og:locale" content="zh_CN">
@@ -72,13 +72,13 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2Fsentinel%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.jpg">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2FCluster%E6%9E%B6%E6%9E%84.jpg">
 <meta property="article:published_time" content="2021-04-26T14:16:01.000Z">
-<meta property="article:modified_time" content="2021-04-28T09:45:16.781Z">
+<meta property="article:modified_time" content="2021-04-28T10:17:55.506Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="Redis">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">
+<link rel="canonical" href="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">
 
 
 <script id="page-configurations">
@@ -225,7 +225,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -539,79 +539,77 @@ OK
   &gt;&gt;&gt; Check for open slots...
   &gt;&gt;&gt; Check slots coverage...
   [OK] All 16384 slots covered.</code></pre>
-<ul>
+</li>
 <li><p>Redis 6800 宕机，6805 被选为主   </p>
-<pre><code class="bash">127.0.0.1:6804&gt; cluster nodes
-ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 master - 0 1619599971259 3 connected 10923-16383
-f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619599972264 2 connected
-2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 master,fail - 1619599400385 1619599396000 1 disconnected
-838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619599970000 2 connected 5461-10922
-80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619599973268 7 connected 0-5460
-6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 myself,slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619599972000 3 connected</code></pre>
-<p>6805 选主日志：</p>
-<pre><code class="bash">62735:S 28 Apr 2021 16:43:17.110 # Connection with master lost.
-62735:S 28 Apr 2021 16:43:17.111 * Caching the disconnected master state.
-62735:S 28 Apr 2021 16:43:17.111 * Reconnecting to MASTER 127.0.0.1:6800
-62735:S 28 Apr 2021 16:43:17.113 * MASTER &lt;-&gt; REPLICA sync started
-62735:S 28 Apr 2021 16:43:17.114 # Error condition on socket for SYNC: Connection refused
-62735:S 28 Apr 2021 16:43:17.317 * Connecting to MASTER 127.0.0.1:6800
-62735:S 28 Apr 2021 16:43:17.321 * MASTER &lt;-&gt; REPLICA sync started
-62735:S 28 Apr 2021 16:43:17.322 # Error condition on socket for SYNC: Connection refused
-### 省略部分...
-62735:S 28 Apr 2021 16:43:36.483 * Connecting to MASTER 127.0.0.1:6800
-62735:S 28 Apr 2021 16:43:36.501 * MASTER &lt;-&gt; REPLICA sync started
-62735:S 28 Apr 2021 16:43:36.508 # Error condition on socket for SYNC: Connection refused
-62735:S 28 Apr 2021 16:43:36.625 * FAIL message received from 838e70efaa99a1e5be69e984548f546f684f3bb4 about 2130527167330eee433e4a85e23667e1f3e7f18c
-62735:S 28 Apr 2021 16:43:36.625 # Cluster state changed: fail
-62735:S 28 Apr 2021 16:43:36.709 # Start of election delayed for 544 milliseconds (rank #0, offset 23072).
-62735:S 28 Apr 2021 16:43:37.314 # Starting a failover election for epoch 7.
-62735:S 28 Apr 2021 16:43:37.325 # Failover election won: I&#39;m the new master.
-62735:S 28 Apr 2021 16:43:37.326 # configEpoch set to 7 after successful failover
-62735:M 28 Apr 2021 16:43:37.326 * Discarding previously cached master state.
-62735:M 28 Apr 2021 16:43:37.327 # Setting secondary replication ID to 044c1d04537e505407a6f80634583698e24e0b94, valid up to offset: 23073. New replication ID is fa8198769c1b1214d9b16ee07deccde429e98c3a
-62735:M 28 Apr 2021 16:43:37.331 # Cluster state changed: ok</code></pre>
+<pre><code class="bash">  127.0.0.1:6804&gt; cluster nodes
+  ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 master - 0 1619599971259 3 connected 10923-16383
+  f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619599972264 2 connected
+  2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 master,fail - 1619599400385 1619599396000 1 disconnected
+  838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619599970000 2 connected 5461-10922
+  80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619599973268 7 connected 0-5460
+  6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 myself,slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619599972000 3 connected</code></pre>
+<p>  6805 选主日志：</p>
+<pre><code class="bash">  62735:S 28 Apr 2021 16:43:17.110 # Connection with master lost.
+  62735:S 28 Apr 2021 16:43:17.111 * Caching the disconnected master state.
+  62735:S 28 Apr 2021 16:43:17.111 * Reconnecting to MASTER 127.0.0.1:6800
+  62735:S 28 Apr 2021 16:43:17.113 * MASTER &lt;-&gt; REPLICA sync started
+  62735:S 28 Apr 2021 16:43:17.114 # Error condition on socket for SYNC: Connection refused
+  62735:S 28 Apr 2021 16:43:17.317 * Connecting to MASTER 127.0.0.1:6800
+  62735:S 28 Apr 2021 16:43:17.321 * MASTER &lt;-&gt; REPLICA sync started
+  62735:S 28 Apr 2021 16:43:17.322 # Error condition on socket for SYNC: Connection refused
+  ### 省略部分...
+  62735:S 28 Apr 2021 16:43:36.483 * Connecting to MASTER 127.0.0.1:6800
+  62735:S 28 Apr 2021 16:43:36.501 * MASTER &lt;-&gt; REPLICA sync started
+  62735:S 28 Apr 2021 16:43:36.508 # Error condition on socket for SYNC: Connection refused
+  62735:S 28 Apr 2021 16:43:36.625 * FAIL message received from 838e70efaa99a1e5be69e984548f546f684f3bb4 about 2130527167330eee433e4a85e23667e1f3e7f18c
+  62735:S 28 Apr 2021 16:43:36.625 # Cluster state changed: fail
+  62735:S 28 Apr 2021 16:43:36.709 # Start of election delayed for 544 milliseconds (rank #0, offset 23072).
+  62735:S 28 Apr 2021 16:43:37.314 # Starting a failover election for epoch 7.
+  62735:S 28 Apr 2021 16:43:37.325 # Failover election won: I&#39;m the new master.
+  62735:S 28 Apr 2021 16:43:37.326 # configEpoch set to 7 after successful failover
+  62735:M 28 Apr 2021 16:43:37.326 * Discarding previously cached master state.
+  62735:M 28 Apr 2021 16:43:37.327 # Setting secondary replication ID to 044c1d04537e505407a6f80634583698e24e0b94, valid up to offset: 23073. New replication ID is fa8198769c1b1214d9b16ee07deccde429e98c3a
+  62735:M 28 Apr 2021 16:43:37.331 # Cluster state changed: ok</code></pre>
 </li>
 <li><p>增加 Redis 节点   </p>
-<p>比如新增一个端口为 6806 的节点：</p>
-<pre><code class="bash">~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster add-node 127.0.0.1:6806 127.0.0.1:6800
-Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
-&gt;&gt;&gt; Adding node 127.0.0.1:6806 to cluster 127.0.0.1:6800
-&gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
-S: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
-slots: (0 slots) slave
-replicates 80a4eeac5a4f45656af66f77c37fed724ff186e9
-M: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
-slots:[0-5460] (5461 slots) master
-1 additional replica(s)
-S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
-slots: (0 slots) slave
-replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
-M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
-slots:[5461-10922] (5462 slots) master
-1 additional replica(s)
-M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
-slots:[10923-16383] (5461 slots) master
-1 additional replica(s)
-S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
-slots: (0 slots) slave
-replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
-[OK] All nodes agree about slots configuration.
-&gt;&gt;&gt; Check for open slots...
-&gt;&gt;&gt; Check slots coverage...
-[OK] All 16384 slots covered.
-&gt;&gt;&gt; Send CLUSTER MEET to node 127.0.0.1:6806 to make it join the cluster.
-[OK] New node added correctly.</code></pre>
-<p>新增的节点自动为master节点，并且没有槽位分配给它：</p>
-<pre><code class="bash">127.0.0.1:6802&gt; cluster nodes
-6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619600907256 3 connected
-80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619600904000 7 connected 0-5460
-6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806@16806 master - 0 1619600906000 0 connected
-2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 slave 80a4eeac5a4f45656af66f77c37fed724ff186e9 0 1619600906000 7 connected
-ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 myself,master - 0 1619600904000 3 connected 10923-16383
-838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619600906248 2 connected 5461-10922
-f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619600908264 2 connected</code></pre>
-</li>
-</ul>
+<p>  比如新增一个端口为 6806 的节点：</p>
+<pre><code class="bash">  ~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster add-node 127.0.0.1:6806 127.0.0.1:6800
+  Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+  &gt;&gt;&gt; Adding node 127.0.0.1:6806 to cluster 127.0.0.1:6800
+  &gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+  S: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots: (0 slots) slave
+  replicates 80a4eeac5a4f45656af66f77c37fed724ff186e9
+  M: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  slots:[0-5460] (5461 slots) master
+  1 additional replica(s)
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  slots: (0 slots) slave
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  1 additional replica(s)
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  1 additional replica(s)
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  slots: (0 slots) slave
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  [OK] All nodes agree about slots configuration.
+  &gt;&gt;&gt; Check for open slots...
+  &gt;&gt;&gt; Check slots coverage...
+  [OK] All 16384 slots covered.
+  &gt;&gt;&gt; Send CLUSTER MEET to node 127.0.0.1:6806 to make it join the cluster.
+  [OK] New node added correctly.</code></pre>
+<p>  新增的节点自动为master节点，并且没有槽位分配给它：</p>
+<pre><code class="bash">  127.0.0.1:6802&gt; cluster nodes
+  6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619600907256 3 connected
+  80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619600904000 7 connected 0-5460
+  6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806@16806 master - 0 1619600906000 0 connected
+  2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 slave 80a4eeac5a4f45656af66f77c37fed724ff186e9 0 1619600906000 7 connected
+  ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 myself,master - 0 1619600904000 3 connected 10923-16383
+  838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619600906248 2 connected 5461-10922
+  f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619600908264 2 connected</code></pre>
 </li>
 <li><p>resharding</p>
 <pre><code class="bash">    ~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster reshard  127.0.0.1:6800
@@ -727,7 +725,7 @@ f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/" title="Redis 深入 (2) 集群架构">https://duval1024.gitee.io/2021/04/26/Redis-深入-2-集群架构/</a>
+    <a href="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/" title="Redis 深入 (2) 集群架构">https://blog.duval.top/2021/04/26/Redis-深入-2-集群架构/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
