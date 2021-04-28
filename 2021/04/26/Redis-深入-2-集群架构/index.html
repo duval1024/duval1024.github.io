@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+<meta name="google-site-verification" content="hM_URmzOtlq76PYeUBKvxCxaFVdHJA81pDjq316-jno" />
+<meta name="baidu-site-verification" content="code-tTdEF7bYON" />
+<!--代码高亮配置，使用highlight.js -->
+<script src="/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime-copy.css">
+
+<!-- 
+<link rel="stylesheet" href="/css/highlight/styles/gradient-light.css">
+<link rel="stylesheet" href="/css/highlight/styles/monokai-sublime.css">
+-->
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Roboto Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://blog.duval.top').hostname,
+    root: '/',
+    scheme: 'Muse',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="总结在生产中常见的几种 Redis 集群部署架构。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis 深入 (2) 集群架构">
+<meta property="og:url" content="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/index.html">
+<meta property="og:site_name" content="杜瓦尔">
+<meta property="og:description" content="总结在生产中常见的几种 Redis 集群部署架构。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E5%A4%9A%E7%BA%A7%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2Fsentinel%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.jpg">
+<meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2FCluster%E6%9E%B6%E6%9E%84.jpg">
+<meta property="article:published_time" content="2021-04-26T14:16:01.000Z">
+<meta property="article:modified_time" content="2021-04-28T09:34:07.258Z">
+<meta property="article:author" content="杜瓦尔">
+<meta property="article:tag" content="Redis">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg">
+
+<link rel="canonical" href="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Redis 深入 (2) 集群架构 | 杜瓦尔</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">杜瓦尔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-top">
+
+    <a href="/top/" rel="section"><i class="fa fa-fw fa-signal"></i>热门</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+      <meta itemprop="name" content="杜瓦尔">
+      <meta itemprop="description" content="热爱技术，认真生活，专心养猪">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="杜瓦尔">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis 深入 (2) 集群架构
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-04-26 22:16:01" itemprop="dateCreated datePublished" datetime="2021-04-26T22:16:01+08:00">2021-04-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/" class="post-meta-item leancloud_visitors" data-flag-title="Redis 深入 (2) 集群架构" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>14k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>13 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>总结在生产中常见的几种 Redis 集群部署架构。</p>
+<a id="more"></a>
+
+<h2 id="主从集群架构"><a href="#主从集群架构" class="headerlink" title="主从集群架构"></a>主从集群架构</h2><p>最简单的 Redis 集群架构就是主从架构。服务通过主节点写数据，通过从节点读数据，实现读写分离。如下图所示：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg" alt="主从架构.jpg"></p>
+<p>存在问题：</p>
+<ul>
+<li>主机节点宕机后无法对外提供写服务；</li>
+<li>集群扩容存在瓶颈，从节点数量不能无限拓展，否则数据同步会拖垮主节点。</li>
+</ul>
+<h3 id="配置方式"><a href="#配置方式" class="headerlink" title="配置方式"></a>配置方式</h3><ul>
+<li>主节点 6379：<pre><code class="bash">  ## 配置Redis后台运行
+  daemonize yes
+  ## 配置数据目录，用于存放日志、PID文件、RDB文件、AOF文件等
+  dir &quot;./data/6379&quot;
+  ## 配置redis日志文件名
+  logfile &quot;6379.log&quot;
+  ## 配置pid文件
+  pidfile &quot;redis_6379.pid&quot;
+  ## 密码
+  requirepass mypassword</code></pre>
+</li>
+<li>从节点 6380：<pre><code class="bash">  ## 配置Redis后台运行
+  daemonize yes
+  ## 配置数据目录，用于存放日志、PID文件、RDB文件、AOF文件等
+  dir &quot;./data/6380&quot;
+  ## 配置redis日志文件名
+  logfile &quot;6380.log&quot;
+  ## 配置pid文件
+  pidfile &quot;redis_6380.pid&quot;
+  ## 配置同步复制
+  replicaof 127.0.0.1 6379
+  ## 密码
+  requirepass mypassword</code></pre>
+</li>
+<li>丛节点 6381：<pre><code class="bash">  ## 配置Redis后台运行
+  daemonize yes
+  ## 配置数据目录，用于存放日志、PID文件、RDB文件、AOF文件等
+  dir &quot;./data/6381&quot;
+  ## 配置redis日志文件名
+  logfile &quot;6381.log&quot;
+  ## 配置pid文件
+  pidfile &quot;redis_6381.pid&quot;
+  ## 配置同步复制
+  replicaof 127.0.0.1 6379
+  ## 密码
+  requirepass mypassword</code></pre>
+<h2 id="多级主从架构"><a href="#多级主从架构" class="headerlink" title="多级主从架构"></a>多级主从架构</h2></li>
+</ul>
+<p>在主从架构上做的优化就是采用多级主从架构，避免主节点同步复制出现瓶颈：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E5%A4%9A%E7%BA%A7%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg" alt="多级主从架构.jpg"></p>
+<p>存在问题：</p>
+<ul>
+<li>主机节点宕机后无法对外提供写服务；</li>
+<li>多级结构，同步复制延迟增大；</li>
+</ul>
+<h3 id="配置方式-1"><a href="#配置方式-1" class="headerlink" title="配置方式"></a>配置方式</h3><p>参考主从架构</p>
+<h2 id="Sentinel-集群架构"><a href="#Sentinel-集群架构" class="headerlink" title="Sentinel 集群架构"></a>Sentinel 集群架构</h2><p>前两种架构都没有解决主节点的高可用问题，主节点挂掉之后，集群不能写数据，所以上述两种架构都不能用在对可靠性要求较高的服务上。</p>
+<p>为了实现集群的高可用，于是有了 Sentinel 集群架构。Sentinel 是一个单独的进程，用来监控 Redis Server 进程的状态；当 Redis 主节点挂掉之后，Sentinel 集群会选举出新的 主节点，并更新在配置文件中；而客户端服务可以通过 Sentinel 集群 获取到当前的 Redis 主节点进行数据读写。</p>
+<p>架构图如下：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2Fsentinel%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.jpg" alt="sentinel集群架构.jpg"></p>
+<p>存在问题：</p>
+<ul>
+<li>Redis 从节点仅有备份作用，不对外提供服务；</li>
+<li>Redis 主节点单点，同时对外提供读写功能，存在性能瓶颈；</li>
+</ul>
+<p>可见 Sentinel 集群架构只适用于对可靠性有要求，但压力较小的服务场景。</p>
+<h3 id="配置方式-2"><a href="#配置方式-2" class="headerlink" title="配置方式"></a>配置方式</h3><p>Redis 的主从配置同上。此外还需要配置 Sentinel 集群，可以参考：</p>
+<ul>
+<li>sentinel-26379.conf<pre><code class="bash">  ## 配置后台运行
+  daemonize yes
+  ## 数据目录，保存 pid 文件、日志等数据
+  dir &quot;./data/26379&quot;
+  ## pid 文件名
+  pidfile &quot;sentinel-26379.pid&quot;
+  ## 日志文件名
+  logfile &quot;26379.log&quot;
+  ## sentinel-master为集群主节点名；
+  ## 127.0.0.1:6379 为主节点IP端口；
+  ## 2 表示当有两个以上的Sentinel认为 Master 挂掉的时候，便重新选主。一般设置为Sentinel节点总数一半以上的值
+  sentinel monitor sentinel-master 127.0.0.1 6379 2</code></pre>
+</li>
+<li>sentinel-26380.conf<pre><code class="bash">  ## 配置后台运行
+  daemonize yes
+  ## 数据目录，保存 pid 文件、日志等数据
+  dir &quot;./data/26380&quot;
+  ## pid 文件名
+  pidfile &quot;sentinel-26380.pid&quot;
+  ## 日志文件名
+  logfile &quot;26380.log&quot;
+  ## sentinel-master为集群主节点名；
+  ## 127.0.0.1:6379 为主节点IP端口；
+  ## 2 表示当有两个以上的Sentinel认为 Master 挂掉的时候，便重新选主。一般设置为Sentinel节点总数一半以上的值
+  sentinel monitor sentinel-master 127.0.0.1 6379 2</code></pre>
+</li>
+<li>sentinel-26381.conf<pre><code class="bash">  ## 配置后台运行
+  daemonize yes
+  ## 数据目录，保存 pid 文件、日志等数据
+  dir &quot;./data/26381&quot;
+  ## pid 文件名
+  pidfile &quot;sentinel-26381.pid&quot;
+  ## 日志文件名
+  logfile &quot;26381.log&quot;
+  ## sentinel-master为集群主节点名；
+  ## 127.0.0.1:6379 为主节点IP端口；
+  ## 2 表示当有两个以上的Sentinel认为 Master 挂掉的时候，便重新选主。一般设置为Sentinel节点总数一半以上的值
+  sentinel monitor sentinel-master 127.0.0.1 6379 2</code></pre>
+</li>
+</ul>
+<p>如果发生主从切换，哨兵会自动修改 redis-xxx.conf 以及 sentinel-xxx.conf 的主从信息。此外，哨兵还会在 sentinel-xxx.conf 最后追加一些集群信息，例如当 Redis 6380成为主后，sentinel-26379.conf 末尾追加信息为：</p>
+<pre><code class="bash">user default on nopass ~* &amp;* +@all
+sentinel myid bf4850100209679d8287350390e79ee0556df18d
+sentinel config-epoch sentinel-master 1
+sentinel leader-epoch sentinel-master 1
+sentinel current-epoch 1
+sentinel known-replica sentinel-master 127.0.0.1 6381
+sentinel known-replica sentinel-master 127.0.0.1 6379
+sentinel known-sentinel sentinel-master 127.0.0.1 26381 a827326703986e36617dfe5f16ef601cb8e983cd
+sentinel known-sentinel sentinel-master 127.0.0.1 26380 95e1de44a18a86774f922ff96cf364b03d1f835e</code></pre>
+<h2 id="Cluster-架构"><a href="#Cluster-架构" class="headerlink" title="Cluster 架构"></a>Cluster 架构</h2><p>Redis Cluster 架构将整个数据库划分为多个槽位，并将所有槽位均匀分布到多个小型 Redis 主从集群上。每个 Redis 小集群内部维护一个主从集群，各个小集群之间通过 gossip 协议通讯。架构图如下：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2FCluster%E6%9E%B6%E6%9E%84.jpg" alt="Cluster架构.jpg"></p>
+<h3 id="槽划分与重定向"><a href="#槽划分与重定向" class="headerlink" title="槽划分与重定向"></a>槽划分与重定向</h3><p>整个集群会被划分为16384个槽位，并均匀分布到集群中。每个小集群只负责维护一部分槽位。</p>
+<p>Redis Cluster 客户端连接集群后会在本地保存一份槽位分配信息。如果集群发生变更而导致槽位信息与本地缓存内容不一致，则客户端请求会被重定向到新的节点上。例如：</p>
+<pre><code class="bash">## 注意要使用 -c 参数连接才会重定向
+redis-cli -c -a mypassword -p 6804
+Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+127.0.0.1:6804&gt; get name1
+-&gt; Redirected to slot [12933] located at 127.0.0.1:6802
+&quot;\&quot;ddddd334333\&quot;&quot;</code></pre>
+<h3 id="Gossip-协议"><a href="#Gossip-协议" class="headerlink" title="Gossip 协议"></a>Gossip 协议</h3><p>集群中的所有 Redis 节点都使用 gossip 协议进行通讯，默认端口是 Redis 访问端口加上 10000。gossip 协议包括ping、pong、fail、meet等消息类型。</p>
+<p>详见：<a href="https://segmentfault.com/a/1190000038373546" target="_blank" rel="noopener">《一万字详解 Redis Cluster Gossip 协议》</a></p>
+<h3 id="固定槽位"><a href="#固定槽位" class="headerlink" title="固定槽位"></a>固定槽位</h3><p>通过大括号前缀可以指定槽位，常用于批量操作语句：</p>
+<pre><code class="bash">127.0.0.1:6802&gt; mset {d1}:name name1 {d1}:name2 name2
+-&gt; Redirected to slot [8604] located at 127.0.0.1:6801
+OK
+127.0.0.1:6801&gt; keys *
+1) &quot;{d1}:name2&quot;
+2) &quot;name&quot;
+3) &quot;{d1}:name&quot;
+127.0.0.1:6801&gt; get {d1}:name2
+&quot;name2&quot;</code></pre>
+<h3 id="集群选主"><a href="#集群选主" class="headerlink" title="集群选主"></a>集群选主</h3><ul>
+<li>slave 节点探测到 master 节点挂掉之后，会自行延迟一段时间，然后将自己所在集群的currentEpoch递增，并广播 FAILOVER_AUTH_REQUEST 信息；</li>
+<li>其他 master 节点收到信息后，会应答 FAILOVER_AUTH_ACK 信息，而且每个 Epoch 只会应答一次；</li>
+<li>slave 节点收集记录收到的 FAILOVER_AUTH_ACK 信息；如果收到超过半数 master 的 ACK（所以 master 节点数量一般为奇数），则自己变为 master 节点，并广播 Pong 消息通知所有节点；</li>
+</ul>
+<h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><ul>
+<li><p>节点配置</p>
+<p>  如果 Redis 端口为 6800，则配置如下：</p>
+<pre><code>  ```bash
+  ## 配置redis后台运行
+  daemonize yes
+  ## 配置端口
+  port 6800
+  ## 配置pid文件
+  pidfile /var/run/redis_6800.pid
+  ## 日志文件
+  logfile &quot;cluster-6800.log&quot;
+  ## 配置数据目录
+  dir &quot;./data/cluster-6800/&quot;
+  ## 开启集群模式
+  cluster-enabled yes
+  ## 集群节点信息文件（该文件由Redis节点生成和维护，每个节点需要有单独的节点信息文件）
+  cluster-config-file nodes-6800.conf
+  ## 超时时间。当节点失联超时，该节点会被认为失效。
+  cluster-node-timeout 15000
+  ## 绑定端口
+  bind 127.0.0.1 -::1
+  ## 保护模式
+  protected-mode yes
+  ## 使用AOF
+  appendonly yes
+  appendfilename &quot;appendonly.aof&quot;
+  ```</code></pre><p>  其他节点配置只需要根据端口号相应改下即可。</p>
+</li>
+<li><p>启动全部 Redis 节点</p>
+</li>
+<li><p>创建集群</p>
+<pre><code class="bash">
+  redis-cli -a mypassword --cluster create --cluster-replicas 1 127.0.0.1:6800 127.0.0.1:6801 127.0.0.1:6802 127.0.0.1:6803 127.0.0.1:6804 127.0.0.1:6805</code></pre>
+<p>  这里以6个节点（3主3从）为例，创建结果如下：</p>
+<pre><code class="bash">  &gt;&gt;&gt; Performing hash slots allocation on 6 nodes...
+  Master[0] -&gt; Slots 0 - 5460
+  Master[1] -&gt; Slots 5461 - 10922
+  Master[2] -&gt; Slots 10923 - 16383
+  Adding replica 127.0.0.1:6804 to 127.0.0.1:6800
+  Adding replica 127.0.0.1:6805 to 127.0.0.1:6801
+  Adding replica 127.0.0.1:6803 to 127.0.0.1:6802
+  &gt;&gt;&gt; Trying to optimize slaves allocation for anti-affinity
+  [WARNING] Some slaves are in the same host as their master
+  M: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots:[0-5460] (5461 slots) master
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  S: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  replicates 2130527167330eee433e4a85e23667e1f3e7f18c
+  Can I set the above configuration? (type &#39;yes&#39; to accept): yes
+  &gt;&gt;&gt; Nodes configuration updated
+  &gt;&gt;&gt; Assign a different config epoch to each node
+  &gt;&gt;&gt; Sending CLUSTER MEET messages to join the cluster
+  Waiting for the cluster to join
+
+  &gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+  M: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots:[0-5460] (5461 slots) master
+  1 additional replica(s)
+  S: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  slots: (0 slots) slave
+  replicates 2130527167330eee433e4a85e23667e1f3e7f18c
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  1 additional replica(s)
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  1 additional replica(s)
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  slots: (0 slots) slave
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  slots: (0 slots) slave
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  [OK] All nodes agree about slots configuration.
+  &gt;&gt;&gt; Check for open slots...
+  &gt;&gt;&gt; Check slots coverage...
+  [OK] All 16384 slots covered.</code></pre>
+<ul>
+<li><p>Redis 6800 宕机，6805 被选为主   </p>
+<pre><code class="bash">127.0.0.1:6804&gt; cluster nodes
+ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 master - 0 1619599971259 3 connected 10923-16383
+f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619599972264 2 connected
+2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 master,fail - 1619599400385 1619599396000 1 disconnected
+838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619599970000 2 connected 5461-10922
+80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619599973268 7 connected 0-5460
+6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 myself,slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619599972000 3 connected</code></pre>
+<p>6805 选主日志：</p>
+<pre><code class="bash">62735:S 28 Apr 2021 16:43:17.110 # Connection with master lost.
+62735:S 28 Apr 2021 16:43:17.111 * Caching the disconnected master state.
+62735:S 28 Apr 2021 16:43:17.111 * Reconnecting to MASTER 127.0.0.1:6800
+62735:S 28 Apr 2021 16:43:17.113 * MASTER &lt;-&gt; REPLICA sync started
+62735:S 28 Apr 2021 16:43:17.114 # Error condition on socket for SYNC: Connection refused
+62735:S 28 Apr 2021 16:43:17.317 * Connecting to MASTER 127.0.0.1:6800
+62735:S 28 Apr 2021 16:43:17.321 * MASTER &lt;-&gt; REPLICA sync started
+62735:S 28 Apr 2021 16:43:17.322 # Error condition on socket for SYNC: Connection refused
+### 省略部分...
+62735:S 28 Apr 2021 16:43:36.483 * Connecting to MASTER 127.0.0.1:6800
+62735:S 28 Apr 2021 16:43:36.501 * MASTER &lt;-&gt; REPLICA sync started
+62735:S 28 Apr 2021 16:43:36.508 # Error condition on socket for SYNC: Connection refused
+62735:S 28 Apr 2021 16:43:36.625 * FAIL message received from 838e70efaa99a1e5be69e984548f546f684f3bb4 about 2130527167330eee433e4a85e23667e1f3e7f18c
+62735:S 28 Apr 2021 16:43:36.625 # Cluster state changed: fail
+62735:S 28 Apr 2021 16:43:36.709 # Start of election delayed for 544 milliseconds (rank #0, offset 23072).
+62735:S 28 Apr 2021 16:43:37.314 # Starting a failover election for epoch 7.
+62735:S 28 Apr 2021 16:43:37.325 # Failover election won: I&#39;m the new master.
+62735:S 28 Apr 2021 16:43:37.326 # configEpoch set to 7 after successful failover
+62735:M 28 Apr 2021 16:43:37.326 * Discarding previously cached master state.
+62735:M 28 Apr 2021 16:43:37.327 # Setting secondary replication ID to 044c1d04537e505407a6f80634583698e24e0b94, valid up to offset: 23073. New replication ID is fa8198769c1b1214d9b16ee07deccde429e98c3a
+62735:M 28 Apr 2021 16:43:37.331 # Cluster state changed: ok</code></pre>
+</li>
+<li><p>增加 Redis 节点<br>比如新增一个端口为 6806 的节点：</p>
+<pre><code class="bash">~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster add-node 127.0.0.1:6806 127.0.0.1:6800
+Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+&gt;&gt;&gt; Adding node 127.0.0.1:6806 to cluster 127.0.0.1:6800
+&gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+S: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+slots: (0 slots) slave
+replicates 80a4eeac5a4f45656af66f77c37fed724ff186e9
+M: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+slots:[0-5460] (5461 slots) master
+1 additional replica(s)
+S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+slots: (0 slots) slave
+replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+slots:[5461-10922] (5462 slots) master
+1 additional replica(s)
+M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+slots:[10923-16383] (5461 slots) master
+1 additional replica(s)
+S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+slots: (0 slots) slave
+replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+[OK] All nodes agree about slots configuration.
+&gt;&gt;&gt; Check for open slots...
+&gt;&gt;&gt; Check slots coverage...
+[OK] All 16384 slots covered.
+&gt;&gt;&gt; Send CLUSTER MEET to node 127.0.0.1:6806 to make it join the cluster.
+[OK] New node added correctly.</code></pre>
+<p>新增的节点自动为master节点，并且没有槽位分配给它：</p>
+<pre><code class="bash">127.0.0.1:6802&gt; cluster nodes
+6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619600907256 3 connected
+80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619600904000 7 connected 0-5460
+6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806@16806 master - 0 1619600906000 0 connected
+2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 slave 80a4eeac5a4f45656af66f77c37fed724ff186e9 0 1619600906000 7 connected
+ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 myself,master - 0 1619600904000 3 connected 10923-16383
+838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619600906248 2 connected 5461-10922
+f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619600908264 2 connected</code></pre>
+</li>
+</ul>
+</li>
+<li><p>resharding</p>
+<pre><code class="bash">    ~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster reshard  127.0.0.1:6800
+  Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+  &gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+  S: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots: (0 slots) slave
+  replicates 80a4eeac5a4f45656af66f77c37fed724ff186e9
+  M: 6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806
+  slots: (0 slots) master
+  M: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  slots:[0-5460] (5461 slots) master
+  1 additional replica(s)
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  slots: (0 slots) slave
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  1 additional replica(s)
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  1 additional replica(s)
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  slots: (0 slots) slave
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  [OK] All nodes agree about slots configuration.
+  &gt;&gt;&gt; Check for open slots...
+  &gt;&gt;&gt; Check slots coverage...
+  [OK] All 16384 slots covered.
+  How many slots do you want to move (from 1 to 16384)? 3000
+  What is the receiving node ID? 6d52725b2d1f4bb561dacabe285091c11d17cbc5
+  Please enter all the source node IDs.
+  Type &#39;all&#39; to use all the nodes as source nodes for the hash slots.
+  Type &#39;done&#39; once you entered all the source nodes IDs.
+  Source node #1: all
+  # 省略部分
+  Moving slot 11917 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11918 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11919 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11920 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11921 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Do you want to proceed with the proposed reshard plan (yes/no)? yes
+  Moving slot 11918 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  Moving slot 11919 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  Moving slot 11920 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  Moving slot 11921 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  # 省略部分</code></pre>
+<p>resharding 后的结果：</p>
+<pre><code class="bash">  127.0.0.1:6802&gt; cluster nodes
+  6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619602397000 3 connected
+  80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619602397000 7 connected 999-5460
+  6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806@16806 master - 0 1619602398000 8 connected 0-998 5461-6461 10923-11921
+  2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 slave 80a4eeac5a4f45656af66f77c37fed724ff186e9 0 1619602398274 7 connected
+  ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 myself,master - 0 1619602396000 3 connected 11922-16383
+  838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619602399281 2 connected 6462-10922
+  f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619602397000 2 connected
+</code></pre>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章推荐</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2021/04/12/Redis-深入-1-持久化/" rel="bookmark">Redis 深入 (1) 持久化</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="/2018/06/01/Redis入门/" rel="bookmark">Redis入门</a></div>
+    </li>
+  </ul>
+
+<div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------　　　　全文终　<i class="fa fa-heart"></i>　谢谢阅读　　　　-------------</div>
+    
+</div>
+        <div class="reward-container">
+  <div></div>
+  <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/wetchat.png" alt="杜瓦尔 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/alipay.png" alt="杜瓦尔 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>杜瓦尔
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://blog.duval.top/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/" title="Redis 深入 (2) 集群架构">https://blog.duval.top/2021/04/26/Redis-深入-2-集群架构/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+  <footer class="post-footer">
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"><i class="fa fa-tag"></i> Redis</a>
+          </div>
+
+        
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/04/12/Redis-%E6%B7%B1%E5%85%A5-1-%E6%8C%81%E4%B9%85%E5%8C%96/" rel="prev" title="Redis 深入 (1) 持久化">
+      <i class="fa fa-chevron-left"></i> Redis 深入 (1) 持久化
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+
+
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#主从集群架构"><span class="nav-number">1.</span> <span class="nav-text">主从集群架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置方式"><span class="nav-number">1.1.</span> <span class="nav-text">配置方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多级主从架构"><span class="nav-number">2.</span> <span class="nav-text">多级主从架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置方式-1"><span class="nav-number">2.1.</span> <span class="nav-text">配置方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sentinel-集群架构"><span class="nav-number">3.</span> <span class="nav-text">Sentinel 集群架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置方式-2"><span class="nav-number">3.1.</span> <span class="nav-text">配置方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cluster-架构"><span class="nav-number">4.</span> <span class="nav-text">Cluster 架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#槽划分与重定向"><span class="nav-number">4.1.</span> <span class="nav-text">槽划分与重定向</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Gossip-协议"><span class="nav-number">4.2.</span> <span class="nav-text">Gossip 协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#固定槽位"><span class="nav-number">4.3.</span> <span class="nav-text">固定槽位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群选主"><span class="nav-number">4.4.</span> <span class="nav-text">集群选主</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置"><span class="nav-number">4.5.</span> <span class="nav-text">配置</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杜瓦尔"
+      src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
+  <p class="site-author-name" itemprop="name">杜瓦尔</p>
+  <div class="site-description" itemprop="description">热爱技术，认真生活，专心养猪</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">51</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/duval1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;duval1024" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+
+         
+        <div id="days"></div>
+<script>
+    function show_date_time(){
+        window.setTimeout("show_date_time()", 1000);
+        BirthDay=new Date("01/01/2020 00:00:00");
+        today=new Date();
+        timeold=(today.getTime()-BirthDay.getTime());
+        sectimeold=timeold/1000
+        secondsold=Math.floor(sectimeold);
+        msPerDay=24*60*60*1000
+        e_daysold=timeold/msPerDay
+        daysold=Math.floor(e_daysold);
+        e_hrsold=(e_daysold-daysold)*24;
+        hrsold=setzero(Math.floor(e_hrsold));
+        e_minsold=(e_hrsold-hrsold)*60;
+        minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+        seconds=setzero(Math.floor((e_minsold-minsold)*60));
+        document.getElementById('days').innerHTML="本站已运行 "+daysold+" 天 "+hrsold+" 小时 "+minsold+" 分 "+seconds+" 秒";
+    }
+    function setzero(i) {
+        if (i<10) {
+            i="0" + i
+        };
+        return i;
+    }
+    show_date_time();
+</script>
+      </div>
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杜瓦尔</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">458k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">6:57</span>
+
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('/js/valine1.3.10.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el: '#valine-comments',
+      verify: true,
+      notify: true,
+      appId: 'AGjUUsxHQbjMeHtweLLsjje6-gzGzoHsz',
+      appKey: 'z0ImSoMply63p9hIgj2AIDG0',
+      placeholder: "多多指教，请留言。",
+      avatar: 'identicon',
+      meta: guest,
+      pageSize: '10' || 10,
+      visitor: true,
+      lang: 'zh-cn' || 'zh-cn',
+      path: location.pathname,
+      recordIP: false,
+      serverURLs: ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

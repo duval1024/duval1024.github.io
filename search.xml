@@ -1,6 +1,379 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Redis 深入 (2) 集群架构</title>
+    <url>/2021/04/26/Redis-%E6%B7%B1%E5%85%A5-2-%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84/</url>
+    <content><![CDATA[<p>总结在生产中常见的几种 Redis 集群部署架构。</p>
+<a id="more"></a>
+
+<h2 id="主从集群架构"><a href="#主从集群架构" class="headerlink" title="主从集群架构"></a>主从集群架构</h2><p>最简单的 Redis 集群架构就是主从架构。服务通过主节点写数据，通过从节点读数据，实现读写分离。如下图所示：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg" alt="主从架构.jpg"></p>
+<p>存在问题：</p>
+<ul>
+<li>主机节点宕机后无法对外提供写服务；</li>
+<li>集群扩容存在瓶颈，从节点数量不能无限拓展，否则数据同步会拖垮主节点。</li>
+</ul>
+<h3 id="配置方式"><a href="#配置方式" class="headerlink" title="配置方式"></a>配置方式</h3><ul>
+<li>主节点 6379：<pre><code class="bash">  ## 配置Redis后台运行
+  daemonize yes
+  ## 配置数据目录，用于存放日志、PID文件、RDB文件、AOF文件等
+  dir &quot;./data/6379&quot;
+  ## 配置redis日志文件名
+  logfile &quot;6379.log&quot;
+  ## 配置pid文件
+  pidfile &quot;redis_6379.pid&quot;
+  ## 密码
+  requirepass mypassword</code></pre>
+</li>
+<li>从节点 6380：<pre><code class="bash">  ## 配置Redis后台运行
+  daemonize yes
+  ## 配置数据目录，用于存放日志、PID文件、RDB文件、AOF文件等
+  dir &quot;./data/6380&quot;
+  ## 配置redis日志文件名
+  logfile &quot;6380.log&quot;
+  ## 配置pid文件
+  pidfile &quot;redis_6380.pid&quot;
+  ## 配置同步复制
+  replicaof 127.0.0.1 6379
+  ## 密码
+  requirepass mypassword</code></pre>
+</li>
+<li>丛节点 6381：<pre><code class="bash">  ## 配置Redis后台运行
+  daemonize yes
+  ## 配置数据目录，用于存放日志、PID文件、RDB文件、AOF文件等
+  dir &quot;./data/6381&quot;
+  ## 配置redis日志文件名
+  logfile &quot;6381.log&quot;
+  ## 配置pid文件
+  pidfile &quot;redis_6381.pid&quot;
+  ## 配置同步复制
+  replicaof 127.0.0.1 6379
+  ## 密码
+  requirepass mypassword</code></pre>
+<h2 id="多级主从架构"><a href="#多级主从架构" class="headerlink" title="多级主从架构"></a>多级主从架构</h2></li>
+</ul>
+<p>在主从架构上做的优化就是采用多级主从架构，避免主节点同步复制出现瓶颈：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2F%E5%A4%9A%E7%BA%A7%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84.jpg" alt="多级主从架构.jpg"></p>
+<p>存在问题：</p>
+<ul>
+<li>主机节点宕机后无法对外提供写服务；</li>
+<li>多级结构，同步复制延迟增大；</li>
+</ul>
+<h3 id="配置方式-1"><a href="#配置方式-1" class="headerlink" title="配置方式"></a>配置方式</h3><p>参考主从架构</p>
+<h2 id="Sentinel-集群架构"><a href="#Sentinel-集群架构" class="headerlink" title="Sentinel 集群架构"></a>Sentinel 集群架构</h2><p>前两种架构都没有解决主节点的高可用问题，主节点挂掉之后，集群不能写数据，所以上述两种架构都不能用在对可靠性要求较高的服务上。</p>
+<p>为了实现集群的高可用，于是有了 Sentinel 集群架构。Sentinel 是一个单独的进程，用来监控 Redis Server 进程的状态；当 Redis 主节点挂掉之后，Sentinel 集群会选举出新的 主节点，并更新在配置文件中；而客户端服务可以通过 Sentinel 集群 获取到当前的 Redis 主节点进行数据读写。</p>
+<p>架构图如下：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2Fsentinel%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84.jpg" alt="sentinel集群架构.jpg"></p>
+<p>存在问题：</p>
+<ul>
+<li>Redis 从节点仅有备份作用，不对外提供服务；</li>
+<li>Redis 主节点单点，同时对外提供读写功能，存在性能瓶颈；</li>
+</ul>
+<p>可见 Sentinel 集群架构只适用于对可靠性有要求，但压力较小的服务场景。</p>
+<h3 id="配置方式-2"><a href="#配置方式-2" class="headerlink" title="配置方式"></a>配置方式</h3><p>Redis 的主从配置同上。此外还需要配置 Sentinel 集群，可以参考：</p>
+<ul>
+<li>sentinel-26379.conf<pre><code class="bash">  ## 配置后台运行
+  daemonize yes
+  ## 数据目录，保存 pid 文件、日志等数据
+  dir &quot;./data/26379&quot;
+  ## pid 文件名
+  pidfile &quot;sentinel-26379.pid&quot;
+  ## 日志文件名
+  logfile &quot;26379.log&quot;
+  ## sentinel-master为集群主节点名；
+  ## 127.0.0.1:6379 为主节点IP端口；
+  ## 2 表示当有两个以上的Sentinel认为 Master 挂掉的时候，便重新选主。一般设置为Sentinel节点总数一半以上的值
+  sentinel monitor sentinel-master 127.0.0.1 6379 2</code></pre>
+</li>
+<li>sentinel-26380.conf<pre><code class="bash">  ## 配置后台运行
+  daemonize yes
+  ## 数据目录，保存 pid 文件、日志等数据
+  dir &quot;./data/26380&quot;
+  ## pid 文件名
+  pidfile &quot;sentinel-26380.pid&quot;
+  ## 日志文件名
+  logfile &quot;26380.log&quot;
+  ## sentinel-master为集群主节点名；
+  ## 127.0.0.1:6379 为主节点IP端口；
+  ## 2 表示当有两个以上的Sentinel认为 Master 挂掉的时候，便重新选主。一般设置为Sentinel节点总数一半以上的值
+  sentinel monitor sentinel-master 127.0.0.1 6379 2</code></pre>
+</li>
+<li>sentinel-26381.conf<pre><code class="bash">  ## 配置后台运行
+  daemonize yes
+  ## 数据目录，保存 pid 文件、日志等数据
+  dir &quot;./data/26381&quot;
+  ## pid 文件名
+  pidfile &quot;sentinel-26381.pid&quot;
+  ## 日志文件名
+  logfile &quot;26381.log&quot;
+  ## sentinel-master为集群主节点名；
+  ## 127.0.0.1:6379 为主节点IP端口；
+  ## 2 表示当有两个以上的Sentinel认为 Master 挂掉的时候，便重新选主。一般设置为Sentinel节点总数一半以上的值
+  sentinel monitor sentinel-master 127.0.0.1 6379 2</code></pre>
+</li>
+</ul>
+<p>如果发生主从切换，哨兵会自动修改 redis-xxx.conf 以及 sentinel-xxx.conf 的主从信息。此外，哨兵还会在 sentinel-xxx.conf 最后追加一些集群信息，例如当 Redis 6380成为主后，sentinel-26379.conf 末尾追加信息为：</p>
+<pre><code class="bash">user default on nopass ~* &amp;* +@all
+sentinel myid bf4850100209679d8287350390e79ee0556df18d
+sentinel config-epoch sentinel-master 1
+sentinel leader-epoch sentinel-master 1
+sentinel current-epoch 1
+sentinel known-replica sentinel-master 127.0.0.1 6381
+sentinel known-replica sentinel-master 127.0.0.1 6379
+sentinel known-sentinel sentinel-master 127.0.0.1 26381 a827326703986e36617dfe5f16ef601cb8e983cd
+sentinel known-sentinel sentinel-master 127.0.0.1 26380 95e1de44a18a86774f922ff96cf364b03d1f835e</code></pre>
+<h2 id="Cluster-架构"><a href="#Cluster-架构" class="headerlink" title="Cluster 架构"></a>Cluster 架构</h2><p>Redis Cluster 架构将整个数据库划分为多个槽位，并将所有槽位均匀分布到多个小型 Redis 主从集群上。每个 Redis 小集群内部维护一个主从集群，各个小集群之间通过 gossip 协议通讯。架构图如下：</p>
+<p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FRedis%20%E6%B7%B1%E5%85%A5%20%282%29%20%E9%9B%86%E7%BE%A4%E6%9E%B6%E6%9E%84%2FCluster%E6%9E%B6%E6%9E%84.jpg" alt="Cluster架构.jpg"></p>
+<h3 id="槽划分与重定向"><a href="#槽划分与重定向" class="headerlink" title="槽划分与重定向"></a>槽划分与重定向</h3><p>整个集群会被划分为16384个槽位，并均匀分布到集群中。每个小集群只负责维护一部分槽位。</p>
+<p>Redis Cluster 客户端连接集群后会在本地保存一份槽位分配信息。如果集群发生变更而导致槽位信息与本地缓存内容不一致，则客户端请求会被重定向到新的节点上。例如：</p>
+<pre><code class="bash">## 注意要使用 -c 参数连接才会重定向
+redis-cli -c -a mypassword -p 6804
+Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+127.0.0.1:6804&gt; get name1
+-&gt; Redirected to slot [12933] located at 127.0.0.1:6802
+&quot;\&quot;ddddd334333\&quot;&quot;</code></pre>
+<h3 id="Gossip-协议"><a href="#Gossip-协议" class="headerlink" title="Gossip 协议"></a>Gossip 协议</h3><p>集群中的所有 Redis 节点都使用 gossip 协议进行通讯，默认端口是 Redis 访问端口加上 10000。gossip 协议包括ping、pong、fail、meet等消息类型。</p>
+<p>详见：<a href="https://segmentfault.com/a/1190000038373546" target="_blank" rel="noopener">《一万字详解 Redis Cluster Gossip 协议》</a></p>
+<h3 id="固定槽位"><a href="#固定槽位" class="headerlink" title="固定槽位"></a>固定槽位</h3><p>通过大括号前缀可以指定槽位，常用于批量操作语句：</p>
+<pre><code class="bash">127.0.0.1:6802&gt; mset {d1}:name name1 {d1}:name2 name2
+-&gt; Redirected to slot [8604] located at 127.0.0.1:6801
+OK
+127.0.0.1:6801&gt; keys *
+1) &quot;{d1}:name2&quot;
+2) &quot;name&quot;
+3) &quot;{d1}:name&quot;
+127.0.0.1:6801&gt; get {d1}:name2
+&quot;name2&quot;</code></pre>
+<h3 id="集群选主"><a href="#集群选主" class="headerlink" title="集群选主"></a>集群选主</h3><ul>
+<li>slave 节点探测到 master 节点挂掉之后，会自行延迟一段时间，然后将自己所在集群的currentEpoch递增，并广播 FAILOVER_AUTH_REQUEST 信息；</li>
+<li>其他 master 节点收到信息后，会应答 FAILOVER_AUTH_ACK 信息，而且每个 Epoch 只会应答一次；</li>
+<li>slave 节点收集记录收到的 FAILOVER_AUTH_ACK 信息；如果收到超过半数 master 的 ACK（所以 master 节点数量一般为奇数），则自己变为 master 节点，并广播 Pong 消息通知所有节点；</li>
+</ul>
+<h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><ul>
+<li><p>节点配置</p>
+<p>  如果 Redis 端口为 6800，则配置如下：</p>
+<pre><code>  ```bash
+  ## 配置redis后台运行
+  daemonize yes
+  ## 配置端口
+  port 6800
+  ## 配置pid文件
+  pidfile /var/run/redis_6800.pid
+  ## 日志文件
+  logfile &quot;cluster-6800.log&quot;
+  ## 配置数据目录
+  dir &quot;./data/cluster-6800/&quot;
+  ## 开启集群模式
+  cluster-enabled yes
+  ## 集群节点信息文件（该文件由Redis节点生成和维护，每个节点需要有单独的节点信息文件）
+  cluster-config-file nodes-6800.conf
+  ## 超时时间。当节点失联超时，该节点会被认为失效。
+  cluster-node-timeout 15000
+  ## 绑定端口
+  bind 127.0.0.1 -::1
+  ## 保护模式
+  protected-mode yes
+  ## 使用AOF
+  appendonly yes
+  appendfilename &quot;appendonly.aof&quot;
+  ```</code></pre><p>  其他节点配置只需要根据端口号相应改下即可。</p>
+</li>
+<li><p>启动全部 Redis 节点</p>
+</li>
+<li><p>创建集群</p>
+<pre><code class="bash">
+  redis-cli -a mypassword --cluster create --cluster-replicas 1 127.0.0.1:6800 127.0.0.1:6801 127.0.0.1:6802 127.0.0.1:6803 127.0.0.1:6804 127.0.0.1:6805</code></pre>
+<p>  这里以6个节点（3主3从）为例，创建结果如下：</p>
+<pre><code class="bash">  &gt;&gt;&gt; Performing hash slots allocation on 6 nodes...
+  Master[0] -&gt; Slots 0 - 5460
+  Master[1] -&gt; Slots 5461 - 10922
+  Master[2] -&gt; Slots 10923 - 16383
+  Adding replica 127.0.0.1:6804 to 127.0.0.1:6800
+  Adding replica 127.0.0.1:6805 to 127.0.0.1:6801
+  Adding replica 127.0.0.1:6803 to 127.0.0.1:6802
+  &gt;&gt;&gt; Trying to optimize slaves allocation for anti-affinity
+  [WARNING] Some slaves are in the same host as their master
+  M: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots:[0-5460] (5461 slots) master
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  S: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  replicates 2130527167330eee433e4a85e23667e1f3e7f18c
+  Can I set the above configuration? (type &#39;yes&#39; to accept): yes
+  &gt;&gt;&gt; Nodes configuration updated
+  &gt;&gt;&gt; Assign a different config epoch to each node
+  &gt;&gt;&gt; Sending CLUSTER MEET messages to join the cluster
+  Waiting for the cluster to join
+
+  &gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+  M: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots:[0-5460] (5461 slots) master
+  1 additional replica(s)
+  S: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  slots: (0 slots) slave
+  replicates 2130527167330eee433e4a85e23667e1f3e7f18c
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  1 additional replica(s)
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  1 additional replica(s)
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  slots: (0 slots) slave
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  slots: (0 slots) slave
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  [OK] All nodes agree about slots configuration.
+  &gt;&gt;&gt; Check for open slots...
+  &gt;&gt;&gt; Check slots coverage...
+  [OK] All 16384 slots covered.</code></pre>
+<ul>
+<li><p>Redis 6800 宕机，6805 被选为主   </p>
+<pre><code class="bash">127.0.0.1:6804&gt; cluster nodes
+ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 master - 0 1619599971259 3 connected 10923-16383
+f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619599972264 2 connected
+2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 master,fail - 1619599400385 1619599396000 1 disconnected
+838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619599970000 2 connected 5461-10922
+80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619599973268 7 connected 0-5460
+6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 myself,slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619599972000 3 connected</code></pre>
+<p>6805 选主日志：</p>
+<pre><code class="bash">62735:S 28 Apr 2021 16:43:17.110 # Connection with master lost.
+62735:S 28 Apr 2021 16:43:17.111 * Caching the disconnected master state.
+62735:S 28 Apr 2021 16:43:17.111 * Reconnecting to MASTER 127.0.0.1:6800
+62735:S 28 Apr 2021 16:43:17.113 * MASTER &lt;-&gt; REPLICA sync started
+62735:S 28 Apr 2021 16:43:17.114 # Error condition on socket for SYNC: Connection refused
+62735:S 28 Apr 2021 16:43:17.317 * Connecting to MASTER 127.0.0.1:6800
+62735:S 28 Apr 2021 16:43:17.321 * MASTER &lt;-&gt; REPLICA sync started
+62735:S 28 Apr 2021 16:43:17.322 # Error condition on socket for SYNC: Connection refused
+### 省略部分...
+62735:S 28 Apr 2021 16:43:36.483 * Connecting to MASTER 127.0.0.1:6800
+62735:S 28 Apr 2021 16:43:36.501 * MASTER &lt;-&gt; REPLICA sync started
+62735:S 28 Apr 2021 16:43:36.508 # Error condition on socket for SYNC: Connection refused
+62735:S 28 Apr 2021 16:43:36.625 * FAIL message received from 838e70efaa99a1e5be69e984548f546f684f3bb4 about 2130527167330eee433e4a85e23667e1f3e7f18c
+62735:S 28 Apr 2021 16:43:36.625 # Cluster state changed: fail
+62735:S 28 Apr 2021 16:43:36.709 # Start of election delayed for 544 milliseconds (rank #0, offset 23072).
+62735:S 28 Apr 2021 16:43:37.314 # Starting a failover election for epoch 7.
+62735:S 28 Apr 2021 16:43:37.325 # Failover election won: I&#39;m the new master.
+62735:S 28 Apr 2021 16:43:37.326 # configEpoch set to 7 after successful failover
+62735:M 28 Apr 2021 16:43:37.326 * Discarding previously cached master state.
+62735:M 28 Apr 2021 16:43:37.327 # Setting secondary replication ID to 044c1d04537e505407a6f80634583698e24e0b94, valid up to offset: 23073. New replication ID is fa8198769c1b1214d9b16ee07deccde429e98c3a
+62735:M 28 Apr 2021 16:43:37.331 # Cluster state changed: ok</code></pre>
+</li>
+<li><p>增加 Redis 节点<br>比如新增一个端口为 6806 的节点：</p>
+<pre><code class="bash">~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster add-node 127.0.0.1:6806 127.0.0.1:6800
+Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+&gt;&gt;&gt; Adding node 127.0.0.1:6806 to cluster 127.0.0.1:6800
+&gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+S: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+slots: (0 slots) slave
+replicates 80a4eeac5a4f45656af66f77c37fed724ff186e9
+M: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+slots:[0-5460] (5461 slots) master
+1 additional replica(s)
+S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+slots: (0 slots) slave
+replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+slots:[5461-10922] (5462 slots) master
+1 additional replica(s)
+M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+slots:[10923-16383] (5461 slots) master
+1 additional replica(s)
+S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+slots: (0 slots) slave
+replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+[OK] All nodes agree about slots configuration.
+&gt;&gt;&gt; Check for open slots...
+&gt;&gt;&gt; Check slots coverage...
+[OK] All 16384 slots covered.
+&gt;&gt;&gt; Send CLUSTER MEET to node 127.0.0.1:6806 to make it join the cluster.
+[OK] New node added correctly.</code></pre>
+<p>新增的节点自动为master节点，并且没有槽位分配给它：</p>
+<pre><code class="bash">127.0.0.1:6802&gt; cluster nodes
+6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619600907256 3 connected
+80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619600904000 7 connected 0-5460
+6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806@16806 master - 0 1619600906000 0 connected
+2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 slave 80a4eeac5a4f45656af66f77c37fed724ff186e9 0 1619600906000 7 connected
+ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 myself,master - 0 1619600904000 3 connected 10923-16383
+838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619600906248 2 connected 5461-10922
+f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619600908264 2 connected</code></pre>
+</li>
+</ul>
+</li>
+<li><p>resharding</p>
+<pre><code class="bash">    ~/Applications/redis-6.2.1  redis-cli -a mypassword --cluster reshard  127.0.0.1:6800
+  Warning: Using a password with &#39;-a&#39; or &#39;-u&#39; option on the command line interface may not be safe.
+  &gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6800)
+  S: 2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800
+  slots: (0 slots) slave
+  replicates 80a4eeac5a4f45656af66f77c37fed724ff186e9
+  M: 6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806
+  slots: (0 slots) master
+  M: 80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805
+  slots:[0-5460] (5461 slots) master
+  1 additional replica(s)
+  S: f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803
+  slots: (0 slots) slave
+  replicates 838e70efaa99a1e5be69e984548f546f684f3bb4
+  M: 838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801
+  slots:[5461-10922] (5462 slots) master
+  1 additional replica(s)
+  M: ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802
+  slots:[10923-16383] (5461 slots) master
+  1 additional replica(s)
+  S: 6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804
+  slots: (0 slots) slave
+  replicates ef87bb7b2838bcd02a7debd206136817c9e02a97
+  [OK] All nodes agree about slots configuration.
+  &gt;&gt;&gt; Check for open slots...
+  &gt;&gt;&gt; Check slots coverage...
+  [OK] All 16384 slots covered.
+  How many slots do you want to move (from 1 to 16384)? 3000
+  What is the receiving node ID? 6d52725b2d1f4bb561dacabe285091c11d17cbc5
+  Please enter all the source node IDs.
+  Type &#39;all&#39; to use all the nodes as source nodes for the hash slots.
+  Type &#39;done&#39; once you entered all the source nodes IDs.
+  Source node #1: all
+  # 省略部分
+  Moving slot 11917 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11918 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11919 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11920 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Moving slot 11921 from ef87bb7b2838bcd02a7debd206136817c9e02a97
+  Do you want to proceed with the proposed reshard plan (yes/no)? yes
+  Moving slot 11918 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  Moving slot 11919 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  Moving slot 11920 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  Moving slot 11921 from 127.0.0.1:6802 to 127.0.0.1:6806:
+  # 省略部分</code></pre>
+<p>resharding 后的结果：</p>
+<pre><code class="bash">  127.0.0.1:6802&gt; cluster nodes
+  6d7bd796300a8b977df1691d4be8927b6c7da20a 127.0.0.1:6804@16804 slave ef87bb7b2838bcd02a7debd206136817c9e02a97 0 1619602397000 3 connected
+  80a4eeac5a4f45656af66f77c37fed724ff186e9 127.0.0.1:6805@16805 master - 0 1619602397000 7 connected 999-5460
+  6d52725b2d1f4bb561dacabe285091c11d17cbc5 127.0.0.1:6806@16806 master - 0 1619602398000 8 connected 0-998 5461-6461 10923-11921
+  2130527167330eee433e4a85e23667e1f3e7f18c 127.0.0.1:6800@16800 slave 80a4eeac5a4f45656af66f77c37fed724ff186e9 0 1619602398274 7 connected
+  ef87bb7b2838bcd02a7debd206136817c9e02a97 127.0.0.1:6802@16802 myself,master - 0 1619602396000 3 connected 11922-16383
+  838e70efaa99a1e5be69e984548f546f684f3bb4 127.0.0.1:6801@16801 master - 0 1619602399281 2 connected 6462-10922
+  f6b807ce2328586c86e8ce3190750a9519d99850 127.0.0.1:6803@16803 slave 838e70efaa99a1e5be69e984548f546f684f3bb4 0 1619602397000 2 connected
+</code></pre>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Redis</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Redis 深入 (1) 持久化</title>
     <url>/2021/04/12/Redis-%E6%B7%B1%E5%85%A5-1-%E6%8C%81%E4%B9%85%E5%8C%96/</url>
     <content><![CDATA[<p>Redis 常用的持久方式主要有三种：RDB 方式、AOF 方式以及混合持久化方式。</p>
@@ -1421,7 +1794,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 <li>重新标记阶段默认就是多线程（Rescan (parallel)），也就是说 CMSParallelRemarkEnabled 默认开启；</li>
 </ul>
 <h4 id="常见调优思路"><a href="#常见调优思路" class="headerlink" title="常见调优思路"></a>常见调优思路</h4><p><a href="https://tech.meituan.com/2020/11/12/java-9-cms-gc.html" target="_blank" rel="noopener">Java中9种常见的CMS GC问题分析与解决</a></p>
-<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" target="_blank" rel="noopener">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
+<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
 <p>下边直接来看 G1 的垃圾回收阶段图：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="G1垃圾收集阶段图.png"></p>
 <p>具体各个阶段总结如下：</p>
@@ -1784,7 +2157,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2F%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%9B%9E%E6%94%B6%E4%BB%A5%E5%8F%8A%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png" alt="对象创建与回收思维导图"></p>
 <h2 id="对象创建"><a href="#对象创建" class="headerlink" title="对象创建"></a>对象创建</h2><p>对象在 JVM 的创建过程可见下图：<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E4%B8%8E%E5%9B%9E%E6%94%B6%2FJVM%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B.png" alt="JVM对象创建过程.png"></p>
 <h3 id="类加载检查"><a href="#类加载检查" class="headerlink" title="类加载检查"></a>类加载检查</h3><p>虚拟机遇到一条new指令时，首先将去检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并且检查这个<br>符号引用代表的类是否已被加载、解析和初始化过。如果没有，那必须先执行相应的类加载过程。</p>
-<h3 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h3><p>这部分之前已经探讨过，参见<a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">《一文彻底掌握 Java 类加载机制》</a>。</p>
+<h3 id="类加载"><a href="#类加载" class="headerlink" title="类加载"></a>类加载</h3><p>这部分之前已经探讨过，参见<a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">《一文彻底掌握 Java 类加载机制》</a>。</p>
 <p>简单来说，就是类对象的加载、连接（验证-&gt;准备-&gt;解析）和初始化（&lt;clinit&gt;方法)等过程。</p>
 <h3 id="分配内存"><a href="#分配内存" class="headerlink" title="分配内存"></a>分配内存</h3><h4 id="分配方法"><a href="#分配方法" class="headerlink" title="分配方法"></a>分配方法</h4><p>类加载完毕后，类的新对象所需要的内存大小已经确定。这时候可以为新对象在堆中分配空间。分配空间的算法在不同的垃圾收集器中实现不一样。常见有以下两种解决方案：</p>
 <ul>
@@ -2004,7 +2377,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://juejin.cn/post/6844903957836333063" target="_blank" rel="noopener">《Java 对象创建过程。init 方法和 clinit方法》</a></li>
 <li><a href="http://youngforzy.top/2017/10/26/JVM%E4%B9%8B%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">《JVM之对象创建过程》</a></li>
-<li><a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" target="_blank" rel="noopener">《一文彻底掌握 Java 类加载机制》</a></li>
+<li><a href="https://blog.duval.top/2020/12/28/%E4%B8%80%E6%96%87%E5%BD%BB%E5%BA%95%E6%8E%8C%E6%8F%A1-Java-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">《一文彻底掌握 Java 类加载机制》</a></li>
 <li><a href="https://ifeve.com/jvm%E4%BC%98%E5%8C%96%E4%B9%8B%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90%E5%8F%8A%E9%94%81%E6%B6%88%E9%99%A4/" target="_blank" rel="noopener">《JVM优化之逃逸分析及锁消除》</a></li>
 </ul>
 ]]></content>
@@ -2115,7 +2488,7 @@ Space losses: 3 bytes internal + 0 bytes external = 3 bytes total</code></pre>
     public synchronized void reset() throws IOException {/***/}
     public boolean markSupported() {/***/}</code></pre>
 <p>InputStream 实现了 Closeable 接口，并且内部只有一个抽象方法 read， 所有实现类都强制要求实现该方法。其他方法提供了非常扼要的默认实现，实现类可以酌情覆盖实现。</p>
-<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/" target="_blank" rel="noopener">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
+<h4 id="FileInputStream"><a href="#FileInputStream" class="headerlink" title="FileInputStream"></a>FileInputStream</h4><p>在<a href="https://blog.duval.top/2020/12/16/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E6%96%87%E4%BB%B6%E8%BE%93%E5%85%A5%E8%BE%93%E5%87%BA%E6%B5%81%E5%92%8C%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">《深入理解Java文件输入输出流和文件描述符》</a>我们已经深入探讨过该类。</p>
 <p>简单来说，FileInputStream 内部通过文件描述符 FileDescriptor 和系统文件关联起来，并通过 native 方法调用系统 API 读写文件。</p>
 <h4 id="FilterInputStream"><a href="#FilterInputStream" class="headerlink" title="FilterInputStream"></a>FilterInputStream</h4><p>FilterInputStream 采用装饰器模式，内部包装了一个 InputStream 对象，并且继承了 InputStream 并覆写全部方法，但方法内容都是单纯地调用内部包装的 InputStream 对象。如下：</p>
 <pre><code class="java">public
@@ -3894,7 +4267,7 @@ public class SecurityLdapConfiguration extends GeneralSecurityConfiguration {
 <p>通过深入学习原理，我们可以大大提高对Spring Security的掌握程度，真正做到融会贯通、得心应手。</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://docs.spring.io/spring-security/site/docs/5.3.5.RELEASE/reference/html5/#servlet-architecture" target="_blank" rel="noopener">官方文档9-11章节</a>：非常清晰的文档</li>
-<li><a href="https://blog.duval.top/" target="_blank" rel="noopener">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
+<li><a href="https://blog.duval.top/">杜瓦尔的博客</a>：我的个人博客地址，可以去看看更多内容；</li>
 </ul>
 ]]></content>
       <categories>
@@ -4633,8 +5006,8 @@ public class PermissionValidator {
         <category>Java</category>
       </categories>
       <tags>
-        <tag>Apollo</tag>
         <tag>源码分析</tag>
+        <tag>Apollo</tag>
       </tags>
   </entry>
   <entry>
@@ -5437,7 +5810,7 @@ protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBea
     }
 }
 </code></pre>
-<h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/" target="_blank" rel="noopener">《再读Spring源码之二 FactoryBean》</a></p>
+<h2 id="FactoryBean"><a href="#FactoryBean" class="headerlink" title="FactoryBean"></a>FactoryBean</h2><p>之前单独写过一篇，请见<a href="https://blog.duval.top/2020/10/07/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%BA%8C-FactoryBean/">《再读Spring源码之二 FactoryBean》</a></p>
 ]]></content>
       <categories>
         <category>Spring</category>
@@ -5677,7 +6050,7 @@ public Student getStudent() throws Exception {
   <entry>
     <title>再读Spring源码之一 Spring如何对付循环引用</title>
     <url>/2020/08/21/%E5%86%8D%E8%AF%BBSpring%E6%BA%90%E7%A0%81%E4%B9%8B%E4%B8%80-Spring%E5%A6%82%E4%BD%95%E5%AF%B9%E4%BB%98%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8/</url>
-    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/" target="_blank" rel="noopener">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
+    <content><![CDATA[<p>关于Spring如何解决循环依赖这个问题，以前写过一篇文章<a href="https://blog.duval.top/2018/10/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%903-%E5%AF%B9Bean%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E7%9A%84%E5%A4%84%E7%90%86/">Spring源码分析3-对Bean循环依赖的处理</a>。但是如今回头看，写得还是略粗糙，而且细节也忘得差不多了。所以决定再写一写，重新理一遍思路。</p>
 <a id="more"></a>
 
 <h2 id="Bean循环依赖"><a href="#Bean循环依赖" class="headerlink" title="Bean循环依赖"></a>Bean循环依赖</h2><p>spring框架的bean可以互相依赖，因此，可能存在循环依赖的情况，例如：</p>
@@ -6071,9 +6444,9 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
 <h2 id="回忆handler"><a href="#回忆handler" class="headerlink" title="回忆handler"></a>回忆handler</h2><h3 id="链式结构"><a href="#链式结构" class="headerlink" title="链式结构"></a>链式结构</h3><p>我们先来回忆下在<a href="https://segmentfault.com/a/1190000007308934" target="_blank" rel="noopener">《Netty 源码分析之 二 贯穿 Netty 的大动脉 ── ChannelPipeline (一)》</a>提到过来的handler链式结构：</p>
@@ -6430,12 +6803,12 @@ protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List&lt;Object&gt;
 </ul>
 <p>笔者尝试续写的章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33.Final</em></p>
-<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/" target="_blank" rel="noopener">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
+<h2 id="ByteBuf与ByteBuffer"><a href="#ByteBuf与ByteBuffer" class="headerlink" title="ByteBuf与ByteBuffer"></a>ByteBuf与ByteBuffer</h2><p>我们在<a href="https://segmentfault.com/a/1190000006824155" target="_blank" rel="noopener">《Java NIO 的前生今世 之三 NIO Buffer 详解》</a>以及<a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">《认识 Java NIO》</a>已经详细了解了NIO Buffer。这里先回忆下NIO Buffer的一些特性：</p>
 <ul>
 <li>ByteBuffer底层实现包含四个关键字段，并满足大小关系：mark &lt;= position &lt;= limit &lt;= capacity；</li>
 <li>ByteBuffer存在写模式和读模式两种状态，内部方法可以触发状态切换，比如flip方法从写状态切换为读状态；</li>
@@ -7221,9 +7594,9 @@ c.t.n.u.UnsafeBenchmark.unsafeMethod    thrpt        4  3141320463.164 ± 120448
 </ul>
 <p>续写章节：</p>
 <ul>
-<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/" target="_blank" rel="noopener">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
-<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/" target="_blank" rel="noopener">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
-<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/" target="_blank" rel="noopener">Netty 源码分析之 六 流水线处理器: Handler</a></li>
+<li><a href="https://blog.duval.top/2020/07/04/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%9B%9B-Promise-%E4%B8%8E-Future-%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86/">Netty 源码分析之 四 Promise 与 Future: 双子星的秘密</a></li>
+<li><a href="https://blog.duval.top/2020/07/09/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E4%BA%94-%E5%A5%94%E8%85%BE%E7%9A%84%E8%A1%80%E6%B6%B2-ByteBuf/">Netty 源码分析之 五 奔腾的血液: ByteBuf</a></li>
+<li><a href="https://blog.duval.top/2020/07/15/Netty-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B-%E5%85%AD-%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%A4%84%E7%90%86%E5%99%A8-Handler/">Netty 源码分析之 六 流水线处理器: Handler</a></li>
 </ul>
 <p><em>本文使用的netty版本为4.1.33</em></p>
 <h2 id="Future和Promise的关系"><a href="#Future和Promise的关系" class="headerlink" title="Future和Promise的关系"></a>Future<V>和Promise<V>的关系</h2><p>Netty内部的io.netty.util.concurrent.Future<V> 继承自java.util.concurrent.Future<V>，而Promise<V>是前者的一个特殊实现。<br><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FNetty%20%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8B%20%E5%9B%9B%20Promise%20%E4%B8%8E%20Future%3A%20%E5%8F%8C%E5%AD%90%E6%98%9F%E7%9A%84%E7%A7%98%E5%AF%86%2FFuture%E5%92%8CPromise%E7%B1%BB%E5%9B%BE.png" alt="Future和Promise类图.png"></p>
@@ -8540,7 +8913,7 @@ public class NioEchoServer {
 ......</code></pre>
 <p>上边的列表打印出来了这个JAVA进程的线程号(PID)、CPU占用（%CPU)等信息。呵！可以看到PID为2971和2972的线程排在前边，两个都几乎占了一个CPU核心！想必就是死循环了吧!</p>
 <h2 id="问题诊断"><a href="#问题诊断" class="headerlink" title="问题诊断"></a>问题诊断</h2><p>既然明确了是这两个线程的问题，那就把这两个线程找出来，看看代码逻辑便知。</p>
-<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/" target="_blank" rel="noopener">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
+<p>这里要用到 jstack 命令,这个命令在<a href="https://blog.duval.top/2017/06/18/JVM%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7%E6%80%BB%E7%BB%93/">《JVM性能监控工具总结》</a>讲过，这里不重复。</p>
 <p>这两个线程的PID从<a href="https://tool.oschina.net/hexconvert" target="_blank" rel="noopener">十进制转化为十六进制</a>，分别是b9b和b9c，然后用这两个值去jstack结果里边查找一下，便有如下结果：</p>
 <pre><code class="bash">[prod@xxxxxxxxxxxx xxxx-xxxxxxxxx-service]$ jstack 2652 |egrep -A 8 &quot;b9b|b9c&quot;
 &quot;Pool-Default-schedule-0&quot; #26 prio=5 os_prio=0 tid=0x00007f9eb243e000 nid=0xb9c runnable [0x00007f9e1dff6000]
@@ -8718,7 +9091,7 @@ inline jint     Atomic::cmpxchg    (jint     exchange_value, volatile jint*     
 
 <p>正式开始前先废话一下：</p>
 <div style="margin-top: -20px;"><div class="fold_hider"><div class="close hider_title"><span style="color:gray;font-size:12px">点击显/隐</span></div></div><div class="fold">
-<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/" target="_blank" rel="noopener">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
+<p>之前写了两篇近似于流水账的Spring源码分析，写到后边越来越多看不懂的地方（所以<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">分析1</a>和<a href="http://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%902-%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%B7%E6%96%B0%E8%BF%87%E7%A8%8B/">分析2</a>大家就当是流水账看看罢了，没什么营养）。之后回头细细一想，感觉精力都花在了Spring的上下文环节，至于面向切面编程AOP、控制反转IOC、依赖注入DI等等机制的实现原理都一窍不通。后来我看了一本书<a href="https://pan.baidu.com/s/1dbVQ6QFxwxp9_noNCy6xHg" target="_blank" rel="noopener">《Spring源码深度解析》</a>，终于开始恍然大悟。</p>
 <p>我明白直接研究Spring的核心机制，不应该从RestfultWeb入手，因为那样子其实是从Spring boot层面开始阅读源码了。</p>
 <p>可以阅读这篇文章<a href="https://www.jianshu.com/p/42620a0a2c33" target="_blank" rel="noopener">《Spring,Spring MVC及Spring Boot区别》</a>大致了解。</p>
 <p>所以直接按照书上介绍的内容去啃源码就对了。另外提一下就是书上的Spring版本要比现在的版本老了，但是核心思想一样的，底层的源码改动不大，可以正常阅读。</p>
