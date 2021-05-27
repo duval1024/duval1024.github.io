@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="Java支持三种IO模式，分别是同步阻塞IO（BIO）、同步非阻塞IO（NIO)、多路复用IO（I&#x2F;O multiplexing）以及异步IO(AIO)。本文第一章节将简单介绍这三种IO模式，后续章节将详细介绍同步非阻塞IO（NIO）以及多路复用IO。 (首页图是蔚来NIO图，侵权必删。&#x3D; &#x3D;! )">
 <meta property="og:type" content="article">
 <meta property="og:title" content="认识 Java NIO">
-<meta property="og:url" content="https://duval1024.gitee.io/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/index.html">
+<meta property="og:url" content="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="Java支持三种IO模式，分别是同步阻塞IO（BIO）、同步非阻塞IO（NIO)、多路复用IO（I&#x2F;O multiplexing）以及异步IO(AIO)。本文第一章节将简单介绍这三种IO模式，后续章节将详细介绍同步非阻塞IO（NIO）以及多路复用IO。 (首页图是蔚来NIO图，侵权必删。&#x3D; &#x3D;! )">
 <meta property="og:locale" content="zh_CN">
@@ -72,13 +72,13 @@
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%BA%86%E8%A7%A3Java%20NIO%2FIO%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E6%A8%A1%E5%9E%8B.png">
 <meta property="og:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%BA%86%E8%A7%A3Java%20NIO%2FKQueueSelectorImpl.jpg">
 <meta property="article:published_time" content="2020-05-14T07:27:54.000Z">
-<meta property="article:modified_time" content="2020-06-09T13:35:51.497Z">
+<meta property="article:modified_time" content="2021-05-26T07:16:31.943Z">
 <meta property="article:author" content="杜瓦尔">
 <meta property="article:tag" content="NIO">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2F%E4%BA%86%E8%A7%A3Java%20NIO%2FByteBuffer.png">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">
+<link rel="canonical" href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">
 
 
 <script id="page-configurations">
@@ -225,7 +225,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -631,14 +631,13 @@ serverSocketChannel.close();</code></pre>
 <pre><code class="java">serverSocketChannel.socket().bind(new InetSocketAddress(8080));</code></pre>
 </li>
 <li><p>等待客户度连接</p>
-<pre><code class="java">SocketChannel clientChannel = serverSocketChannel.accept();
-</code></pre>
+<pre><code class="java">SocketChannel clientChannel = serverSocketChannel.accept();</code></pre>
+</li>
+<li><p>指定阻塞或非阻塞</p>
+<pre><code class="java">serverSocketChannel.configureBlocking(false);</code></pre>
 </li>
 </ul>
-<pre><code>
-- 指定阻塞或非阻塞
-```java
-serverSocketChannel.configureBlocking(false);</code></pre><p>ServerSocketChannel初始化后默认是阻塞模式。比方说在阻塞模式下调用accept()方法后会阻塞进程等待直到有新的客户端连接到来，而在非阻塞模式下调用accept()方法不会发生阻塞而立即返回客户端socket（没有客户端连接时候返回null）。</p>
+<p>ServerSocketChannel初始化后默认是阻塞模式。比方说在阻塞模式下调用accept()方法后会阻塞进程等待直到有新的客户端连接到来，而在非阻塞模式下调用accept()方法不会发生阻塞而立即返回客户端socket（没有客户端连接时候返回null）。</p>
 <ul>
 <li>将channel注册到selector中<pre><code class="java">serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);</code></pre>
 Selector是NIO里核心组件，下一个章节将会详细介绍。当channel处于非阻塞模式，可以被注册到Selector中，由Selector代理接收所有的IO事件。</li>
@@ -959,7 +958,7 @@ public class NioEchoServer {
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/" title="认识 Java NIO">https://duval1024.gitee.io/2020/05/14/认识Java-NIO/</a>
+    <a href="https://blog.duval.top/2020/05/14/%E8%AE%A4%E8%AF%86Java-NIO/" title="认识 Java NIO">https://blog.duval.top/2020/05/14/认识Java-NIO/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -1148,7 +1147,7 @@ public class NioEchoServer {
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:57</span>
+    <span title="站点阅读时长">6:56</span>
 
 </div>
 

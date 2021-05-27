@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="Spring框架用的很多了，但是没有深入研究过原理。因为对原理不了解，如果遇到复杂的应用情景，需要修改Spring源码；或者是奇怪的报错，需要通过源码来进行分析的时候，就只能束手无策了。所以现在开始正式阅读Spring源码，这是系列的第一篇，希望能坚持下去。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring源码分析1-RESTfulWeb启动过程">
-<meta property="og:url" content="https://duval1024.gitee.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/index.html">
+<meta property="og:url" content="https://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="Spring框架用的很多了，但是没有深入研究过原理。因为对原理不了解，如果遇到复杂的应用情景，需要修改Spring源码；或者是奇怪的报错，需要通过源码来进行分析的时候，就只能束手无策了。所以现在开始正式阅读Spring源码，这是系列的第一篇，希望能坚持下去。">
 <meta property="og:locale" content="zh_CN">
@@ -74,7 +74,7 @@
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">
+<link rel="canonical" href="https://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">
 
 
 <script id="page-configurations">
@@ -221,7 +221,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -902,10 +902,10 @@ public void addListeners(ApplicationListener&lt;?&gt;... listeners) {
       <div class="popular-posts-title"><a href="/2020/11/26/Spring-Security-学习之使用篇/" rel="bookmark">Spring Security 学习之使用篇</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2020/12/01/Spring-Security-学习之原理篇/" rel="bookmark">Spring Security 学习之原理篇</a></div>
+      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2018/10/12/Spring源码分析3-对Bean循环依赖的处理/" rel="bookmark">Spring源码分析3-对Bean循环依赖的处理</a></div>
+      <div class="popular-posts-title"><a href="/2020/12/01/Spring-Security-学习之原理篇/" rel="bookmark">Spring Security 学习之原理篇</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2020/08/21/再读Spring源码之一-Spring如何对付循环引用/" rel="bookmark">再读Spring源码之一 Spring如何对付循环引用</a></div>
@@ -949,7 +949,7 @@ public void addListeners(ApplicationListener&lt;?&gt;... listeners) {
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" title="Spring源码分析1-RESTfulWeb启动过程">https://duval1024.gitee.io/2018/07/12/Spring源码分析1-RESTful Web启动过程/</a>
+    <a href="https://blog.duval.top/2018/07/12/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%901-RESTful%20Web%E5%90%AF%E5%8A%A8%E8%BF%87%E7%A8%8B/" title="Spring源码分析1-RESTfulWeb启动过程">https://blog.duval.top/2018/07/12/Spring源码分析1-RESTful Web启动过程/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -1139,7 +1139,7 @@ public void addListeners(ApplicationListener&lt;?&gt;... listeners) {
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:57</span>
+    <span title="站点阅读时长">6:56</span>
 
 </div>
 
