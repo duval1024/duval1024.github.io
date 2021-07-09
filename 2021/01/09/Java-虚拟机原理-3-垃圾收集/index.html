@@ -33,7 +33,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://duval1024.gitee.io').hostname,
+    hostname: new URL('https://blog.duval.top').hostname,
     root: '/',
     scheme: 'Muse',
     version: '7.6.0',
@@ -63,7 +63,7 @@
   <meta name="description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java 虚拟机原理 (三) 垃圾收集">
-<meta property="og:url" content="https://duval1024.gitee.io/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/index.html">
+<meta property="og:url" content="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/index.html">
 <meta property="og:site_name" content="杜瓦尔">
 <meta property="og:description" content="Java 虚拟机技术是每个 Java 开发工程师都应该深入掌握的。本系列文章将深入介绍 JVM 相关技术，主要包括内存划分、对象创建回收与分配以及垃圾收集三大部分。本系列文章将力求全面概要地汇总核心知识点，并使知识点串联成面，以方便学习、工作以及备忘复习。本文将介绍第三部分——垃圾收集。">
 <meta property="og:locale" content="zh_CN">
@@ -81,7 +81,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2F%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%A6%96%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.jpg">
 
-<link rel="canonical" href="https://duval1024.gitee.io/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+<link rel="canonical" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
 
 
 <script id="page-configurations">
@@ -228,7 +228,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://duval1024.gitee.io/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
+    <link itemprop="mainEntityOfPage" href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog/advar.jpg">
@@ -470,7 +470,7 @@
 <li>重新标记阶段默认就是多线程（Rescan (parallel)），也就是说 CMSParallelRemarkEnabled 默认开启；</li>
 </ul>
 <h4 id="常见调优思路"><a href="#常见调优思路" class="headerlink" title="常见调优思路"></a>常见调优思路</h4><p><a href="https://tech.meituan.com/2020/11/12/java-9-cms-gc.html" target="_blank" rel="noopener">Java中9种常见的CMS GC问题分析与解决</a></p>
-<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/" target="_blank" rel="noopener">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
+<h3 id="G1-垃圾收集器"><a href="#G1-垃圾收集器" class="headerlink" title="G1 垃圾收集器"></a>G1 垃圾收集器</h3><h4 id="简介-1"><a href="#简介-1" class="headerlink" title="简介"></a>简介</h4><p>G1 垃圾收集器与 CMS 收集器非常相似，但存在本质的区别。读者可以先看下一篇<a href="https://blog.duval.top/2021/01/10/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-4-G1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8%E5%85%A5%E9%97%A8/">《Java 虚拟机原理 (四) G1垃圾收集器入门》</a>进行了解，此处不再重复。</p>
 <p>下边直接来看 G1 的垃圾回收阶段图：</p>
 <p><img src="https://pic-bed-sz.oss-cn-shenzhen.aliyuncs.com/blog%2FJava%20%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86%E4%B9%8B%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%2FG1%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E9%98%B6%E6%AE%B5%E5%9B%BE.png" alt="G1垃圾收集阶段图.png"></p>
 <p>具体各个阶段总结如下：</p>
@@ -833,7 +833,7 @@
       <div class="popular-posts-title"><a href="/2017/06/18/JVM性能监控工具总结/" rel="bookmark">JVM性能监控工具总结</a></div>
     </li>
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="/2021/01/10/Java-虚拟机原理-4-G1垃圾收集器入门/" rel="bookmark">Java 虚拟机原理 (四) G1垃圾收集器入门</a></div>
+      <div class="popular-posts-title"><a href="/2021/04/08/Java-虚拟机原理-6-ZGC-垃圾收集器/" rel="bookmark">Java 虚拟机原理 (六) ZGC 垃圾收集器</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="/2021/01/11/Java-虚拟机原理-5-G1垃圾收集器深入/" rel="bookmark">Java 虚拟机原理 (五) G1垃圾收集器深入</a></div>
@@ -874,7 +874,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://duval1024.gitee.io/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" title="Java 虚拟机原理 (三) 垃圾收集">https://duval1024.gitee.io/2021/01/09/Java-虚拟机原理-3-垃圾收集/</a>
+    <a href="https://blog.duval.top/2021/01/09/Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8E%9F%E7%90%86-3-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86/" title="Java 虚拟机原理 (三) 垃圾收集">https://blog.duval.top/2021/01/09/Java-虚拟机原理-3-垃圾收集/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -982,7 +982,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">51</span>
+          <span class="site-state-item-count">52</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -993,7 +993,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-count">38</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -1060,12 +1060,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">458k</span>
+    <span title="站点总字数">459k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:56</span>
+    <span title="站点阅读时长">6:57</span>
 
 </div>
 
